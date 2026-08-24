@@ -23,10 +23,10 @@ export default defineConfig({
 			editLink: {
 				baseUrl: 'https://github.com/stackblaze/docs/edit/main/',
 			},
-			social: [
-				{ icon: 'github', label: 'GitHub', href: 'https://github.com/stackblaze' },
-				{ icon: 'x.com', label: 'X', href: 'https://x.com/stackblaze' },
-			],
+			components: {
+				SiteTitle: './src/components/SiteTitle.astro',
+				SocialIcons: './src/components/SocialIcons.astro',
+			},
 			sidebar: [
 				{ slug: 'quickstart' },
 				{ slug: 'concepts' },
