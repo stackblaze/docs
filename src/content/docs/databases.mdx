@@ -5,11 +5,13 @@ description: "Every managed database on StackBlaze runs as a Standard single ins
 
 import { LinkCard, CardGrid } from '@astrojs/starlight/components';
 
-Every managed database on StackBlaze can run as a single Standard instance or as a replicated, high-availability deployment. Pick the topology per database when you create it.
+Add a database from **+ Service → Databases**. It lands on the canvas, joins the environment private network, and can inject connection strings through [variables](/security/env-vars/).
+
+Every managed database can run as a single Standard instance or as a replicated, high-availability deployment. Pick the topology when you create it.
 
 ## Standard vs high availability
 
-Each database add-on supports two deployment topologies. You choose between them when you create the instance (and you can scale up later by raising the replica count).
+You choose Standard or HA when you create the instance (you can raise replica count later).
 
 ![Standard deployment is a single database pod with one volume. High-availability deployment is a primary plus replicas spread across nodes, fronted by a service, with streaming replication and automatic failover.](/illustrations/standard-vs-ha.svg)
 
@@ -17,11 +19,11 @@ Each database add-on supports two deployment topologies. You choose between them
 
 ### Standard
 
-A single instance with its own persistent volume. It is the simplest and lowest-cost option, and it is a good fit for development, internal tools, and workloads that can tolerate a short restart during maintenance or a node move. There is no automatic failover: if the pod or its node is rescheduled, the database is briefly unavailable until it comes back.
+A single instance with its own disk. Simplest and cheapest. Fine for development, internal tools, and workloads that can take a short restart. If the instance moves, the database is briefly unavailable until it comes back.
 
 ### High availability (HA)
 
-A clustered deployment with a primary plus one or more replicas spread across different nodes. Writes go to the primary and stream to the replicas; if the primary fails, the cluster promotes a replica automatically so the database stays available. HA also lets you serve reads from replicas to take load off the primary. It uses more resources, so it is the right choice for production and anything with an uptime requirement.
+A primary plus replicas on different nodes. Writes go to the primary and stream to replicas. If the primary fails, a replica is promoted. You can also read from replicas. Use this for production.
 
 | | Standard | High availability |
 | --- | --- | --- |
@@ -37,7 +39,7 @@ Start Standard for development and switch to HA before you carry production traf
 
 ## Available databases
 
-StackBlaze provisions each database through a Kubernetes operator, so the same engine you run locally runs in your cluster with backups, private networking, and zero-config connection strings. The table below lists every managed database and the topologies it supports.
+Each database is a managed service on your canvas: backups, private networking, and connection strings without extra config. The table lists engines and topologies.
 
 ### Relational (SQL)
 

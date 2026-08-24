@@ -3,7 +3,7 @@ title: API Reference
 description: "REST API for StackBlaze: /api/pipelines, /api/apps, deployments, logs, add-ons, and stackblaze.yaml. Authenticate with kbr_pat_ tokens."
 ---
 
-The StackBlaze REST API is the same NestJS control plane the dashboard uses. Paths are namespaced under `/api`. Resources are addressed by project, phase, and app name — not opaque service IDs. The interactive OpenAPI explorer is at [api.stackblaze.cloud/api/docs](https://api.stackblaze.cloud/api/docs).
+The StackBlaze REST API is the same NestJS control plane the dashboard uses. Paths are under `/api`. Docs say project, environment, and service. The API still uses pipeline, phase, and app. OpenAPI: [api.stackblaze.cloud/api/docs](https://api.stackblaze.cloud/api/docs).
 
 | | |
 | --- | --- |
@@ -18,10 +18,10 @@ Marketing copy says project and environment. The API and dashboard use the Kuber
 | Docs | API path | Meaning |
 | --- | --- | --- |
 | Organization | `activeTenantId` on the token | Prisma tenant the token is scoped to |
-| Project | `pipeline` | Top-level app group with phases and a region |
-| Environment | `phase` | production, review, or a custom phase |
-| App | `app` | A workload (web, worker, or cron) |
-| Add-on | `addon` kind | Managed Postgres, Valkey, MariaDB, Kafka, … |
+| Project | `pipeline` | Canvas of services in a region |
+| Environment | `phase` | production, review, or a custom environment |
+| Service | `app` | A Git/Docker/cron workload on the canvas |
+| Database | `addon` kind | Managed Postgres, Valkey, MariaDB, Kafka, … |
 | Function | `function` | Knative function, not an app |
 
 ## Authentication

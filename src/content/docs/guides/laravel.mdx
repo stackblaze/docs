@@ -1,0 +1,35 @@
+---
+title: Laravel
+description: Deploy Laravel on StackBlaze from GitHub or a Dockerfile.
+---
+
+Add a service from your Laravel repo. Nixpacks detects **php** from `composer.json`. A `Dockerfile` in the service root always wins.
+
+Prefer php-fpm + nginx via Dockerfile for production. Set `APP_KEY` as a variable. Attach MySQL or Postgres from the canvas.
+
+## Deploy from GitHub
+
+1. [Dashboard](https://dashboard.stackblaze.cloud) → **New project** (or open an existing canvas).
+2. **+ Service → Git repository**. Pick the repo and branch.
+3. Review [staged changes](/deploy/staged-changes/) and **Deploy**.
+4. Generate a `*.stackblaze.app` domain, or attach a [custom domain](/networking/custom-domains/).
+
+Override install / build / start on the service if detection is wrong. Typical start: `php artisan serve --host=0.0.0.0 --port=$PORT`.
+
+## Docker
+
+If you already have a Dockerfile, StackBlaze uses it. The process must listen on `PORT`.
+
+## Data
+
+**+ Service → Databases** for Postgres, Redis/Valkey, MySQL, and others. Wire `DATABASE_URL` from the service **Variables** tab or `fromDatabase` in [stackblaze.yaml](/blueprint/).
+
+## CLI
+
+```bash
+stackblaze login
+stackblaze init
+stackblaze up
+```
+
+See the [CLI](/cli/).

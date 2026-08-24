@@ -11,9 +11,9 @@ Redis on StackBlaze is served by **Valkey**, the open-source, Redis-compatible f
 
 ## Creating a Redis instance
 
-From the dashboard, click **New service → Database → Redis**. Choose a plan and whether you need persistence. StackBlaze provisions a Kubernetes StatefulSet with a ClusterIP Service providing a stable internal hostname.
+From **+ Service → Databases**, add **Redis**. Pick a plan and whether you need persistence.
 
-Attach Redis to your service from the **Environment** tab. StackBlaze injects `REDIS_URL` automatically.
+Attach it from another service's **Variables**. `REDIS_URL` is injected.
 
 ## Connection strings
 

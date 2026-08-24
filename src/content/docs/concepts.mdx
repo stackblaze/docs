@@ -1,100 +1,98 @@
 ---
-title: Core Concepts
-description: A mental model for how StackBlaze organises and runs your applications.
+title: The Basics
+description: Projects, the canvas, services, variables, environments, deployments, and volumes.
 ---
 
-## Names you will see
+These are the building blocks you work with on StackBlaze.
 
-The dashboard and REST API still use Kubero names. This site usually says the product names. They map one-to-one:
+## In a nutshell
 
-| In these docs | In the API / dashboard | What it is |
-| --- | --- | --- |
-| Organization | Tenant | Billing and RBAC boundary. Tokens carry an active organization. |
-| Project | Pipeline | A named group of phases, apps, and add-ons in one region. |
-| Environment | Phase | A namespace such as production or review. |
-| App | App | A workload: web, worker, or cron. |
-| Add-on | Addon kind | Managed data or mesh: Cluster (Postgres), Valkey, MariaDB, Kafka, … |
-| Function | Function | A Knative function. It is not an app. |
-| Template | Catalog slug | A one-click stack (n8n, WordPress, …), not a CLI tool. |
+- **Dashboard** — every [project](#projects) under your account.
+- **Project** — a canvas of [services](#services) that share a [private network](/networking/private-networking/) in each [environment](#environments).
+- **Service** — a deploy target: Git repo, Docker image, template, or database.
+- **Variables** — config and secrets for a service. Database URLs can be wired from an attached database.
+- **Deployment** — a built image rolled out to a service.
+- **Volume** — disk that survives restarts, attached to one service.
+- **Environment** — an isolated copy of the canvas (production, a custom phase, or a pull-request preview).
 
-## Organizations
+## Dashboard
 
-An **organization** is the tenant you sign in to. API tokens created under `Settings → API tokens` are scoped to that organization. Projects you cannot see from the dashboard are not reachable with that token.
+The dashboard lists your projects. Open a project to land on its **canvas**.
 
 ## Projects
 
-A **project** (pipeline) is the top-level unit. It has a name, an optional base domain, a region (default `us-east-1`), git settings, and a list of phases. Most teams create one project per product.
+A project is the unit you compose infrastructure in. Think of it as an application stack: an API, a worker, Postgres, and Redis as tiles on one board.
 
-Apps and add-ons in the same phase share a private Kubernetes namespace named `{pipeline}-{phase}`. They can reach each other on the cluster network by service name. Traffic to a different project does not use that private DNS.
+Services in the same environment are on a private network scoped to that environment. They reach each other by **service name** (for example `postgres:5432`). Traffic does not cross projects on that network.
 
-## Apps
+### The canvas
 
-An **app** is a single deployable workload in one phase. You create it from a Git repo, a container image, or a catalog template. Apps are addressed as `/api/apps/{pipeline}/{phase}/{app}`.
+The canvas is mission control. From **+ Service** you add:
 
-![Diagram of web, worker, cron, Postgres, and Redis workloads in one project](/illustrations/service-types.svg)
+| Action | What it adds |
+| --- | --- |
+| Git repository | A service built from GitHub or a public git URL |
+| Docker images | A service from a registry image |
+| Templates | A pre-wired group of services and databases |
+| Databases | A managed database on the same canvas |
+| Import | Compose, `render.yaml`, or `fly.toml` mapped onto services |
 
-*Web, worker, and cron apps share a phase. Databases are add-ons attached to an app or shared on the phase.*
+New tiles and config edits are **staged**. [Deploy](/deploy/staged-changes/) applies them.
 
-### Web apps
+## Services
 
-Web apps expose HTTP(S) through an Ingress and a TLS certificate. Set the container port on the app (often 8080). The process should listen on that port.
+A service is a container that StackBlaze builds and runs. Source is a Git repo, a Docker image, or a template. If the repo has a `Dockerfile`, that file is used; otherwise Nixpacks detects the runtime.
 
-### Background workers
+A service can:
 
-Workers run continuously and do not receive public ingress. Use them for queue consumers and other async work. They share the same build path and environment variables as web apps.
+- Listen for HTTP and get a public domain ([public HTTP](/deploy/web-services/))
+- Run continuously with no public domain ([private services](/deploy/background-workers/))
+- Run on a cron schedule until it exits ([cron jobs](/deploy/cron-jobs/))
 
-### Cron jobs
+Databases are services on the canvas too. They are managed add-ons (Postgres, Valkey/Redis, MariaDB, and others), not app processes.
 
-Cron apps run on a schedule you set with standard cron syntax. Each run starts a container, runs the command, and exits.
+Click a tile for source, variables, networking, volumes, metrics, and logs.
 
-### Add-ons
+## Variables
 
-Managed data and mesh services are add-ons, not first-class "database services" in the API. Common kinds include CloudNativePG `Cluster` (PostgreSQL), `Valkey` (Redis-compatible), `MariaDB`, `DocumentDB`, Kafka, RabbitMQ, ClickHouse, OpenSearch, and others. Attach an add-on to an app, or share it on the phase so several apps can use one instance.
+[Variables](/security/env-vars/) are injected at build and runtime. Set them on the service. In `stackblaze.yaml`, point a key at a database with `fromDatabase` instead of hardcoding a URL.
 
-### Functions
-
-Functions are Knative workloads. They are not created through the app create form and do not appear in `app.addons`.
-
-## Phases
-
-Each project has one or more **phases**. Production is the usual live environment. A `review` phase holds pull-request previews when review apps are enabled on the project.
-
-| Phase | When created | Lifespan |
-| --- | --- | --- |
-| production | When you create the project | Permanent |
-| review | When a pull request opens (if review apps are on) | Removed when the PR closes |
-| custom | When you add a phase in project settings | Until you delete it |
-
-Preview apps clone from a source app you configure on the project. Each PR gets its own add-on instances in the review namespace so they do not share production data.
+Shared groups can be referenced from config as code (`fromGroup`). Prefer that over copying the same secret onto every service.
 
 ## Deployments
 
-A deploy is a build of your app image plus a rollout in that phase. Builds are triggered by a git push (when auto-deploy is on), a dashboard action, or `POST /api/deployments/build/{pipeline}/{phase}/{app}`. You can restart a running app without rebuilding, and roll back to a previous revision.
+A deployment builds the service image and rolls it out in the current environment. Triggers:
 
-- A push to the configured branch (webhook auto-deploy)
-- A manual build or restart from the dashboard
-- The deployments API, or a `stackblaze.yaml` apply when IaC is enabled
+- **Deploy** on the canvas (staged changes)
+- A push to the connected branch when auto-deploy is on
+- [Deploy hooks](/cicd/deploy-hooks/) or `POST /api/deployments/build/{project}/{environment}/{service}`
 
-## Private networking
+You can restart without rebuilding, and [roll back](/cicd/rollbacks/) to a previous revision. Automate with the [CLI](/cli/), the [API](/reference/api/), or [MCP](/agents/).
 
-Workloads in the same phase share a namespace. Talk to another app or add-on with its Kubernetes service name, for example a Valkey instance named `cache` at `cache:6379`. That name stays on the cluster network.
+## Volumes
 
-:::tip
-Prefer the connection values the platform injects when you attach an add-on (or `fromDatabase` in `stackblaze.yaml`) instead of hardcoding hosts.
-:::
+[Volumes](/storage/persistent-disks/) keep data across restarts. Attach one to a service and set the mount path. A volume is bound to that service instance; it is not a shared filesystem across replicas.
 
-## Environment variables and files
+## Environments
 
-### Environment variables
+Each project has one or more environments. Production is created with the project. You can add more. [Pull-request previews](/cicd/pr-previews/) use a review environment and clone the source service so previews do not share production data.
 
-Key-value pairs on the app spec. Use them for URLs, feature flags, and secrets. Values marked `sync: false` in a blueprint are prompted at apply time and are not stored in the YAML file.
-
-### App files
-
-The dashboard and API can mount files into a running app (certificates, JSON keys). Manage them from the app's Files tab or `/api/apps/{pipeline}/{phase}/{app}/files/…`.
+See [Environments](/deploy/environments/).
 
 ## Regions
 
-A project is pinned to a region slug such as `us-east-1`. Apps and add-ons in that project run in that region. Dedicated clusters use the same control plane; their workloads stay on the tenant cluster.
+A project is pinned to a region (default `us-east-1`). Services and databases in that project run there.
 
-See the [Introduction](/) and the [API reference](/reference/api/) for how these objects are addressed over HTTP.
+## Names in the API
+
+The dashboard copy says project, environment, and service. Some API paths still use Kubero names. They map one-to-one:
+
+| In these docs | In the API |
+| --- | --- |
+| Organization | Tenant |
+| Project | Pipeline |
+| Environment | Phase |
+| Service | App |
+| Database | Addon kind (`Cluster`, `Valkey`, `MariaDB`, …) |
+
+Address a service as `/api/apps/{pipeline}/{phase}/{app}`. Do not use kubectl — the dashboard and API are the interface.

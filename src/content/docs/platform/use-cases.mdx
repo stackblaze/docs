@@ -1,0 +1,16 @@
+---
+title: Use cases
+description: What people actually run on StackBlaze.
+---
+
+Typical canvases:
+
+- **Web app + API + Postgres + Redis** — one project, private DNS between tiles, public domain on the HTTP service.
+- **Worker / queue consumer** — same Git repo or a second service, no public domain, talks to Redis or Kafka on the private network.
+- **Cron** — scheduled container that exits. Reports, scrapes, digest mail.
+- **Template-first** — n8n, Umami, Ghost, and other catalog stacks, then customize variables.
+- **Preview environments** — every pull request gets an isolated copy of the canvas, including its own database instances.
+- **Functions** — Knative services that scale to zero, invoked over HTTP, next to the always-on app.
+- **Agents** — Cursor / Claude via [MCP](/agents/), or `stackblaze up` from CI.
+
+You do not use StackBlaze as a generic Kubernetes console. If you need raw cluster APIs, this is the wrong product.

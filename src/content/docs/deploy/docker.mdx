@@ -1,13 +1,13 @@
 ---
-title: Docker Deploys
-description: Bring your own Dockerfile for full control over your build and runtime environment.
+title: Docker
+description: Build from a Dockerfile, or run a registry image as a service.
 ---
 
-Provide a Dockerfile for full control over your container. StackBlaze builds it, pushes it, and runs it, with all the same scaling and networking features.
+A service can build from a Dockerfile in the repo, or run an image you paste from a registry (**+ Service → Docker images**).
 
 ## How it works
 
-If a `Dockerfile` is present at the root of your repository (or the configured root directory), StackBlaze uses it for the build — runtime auto-detection is skipped. StackBlaze runs `docker build` in an ephemeral builder, pushes the resulting image to its private registry, and deploys it to the cluster exactly like any other service.
+If a `Dockerfile` is in the service root (or the configured root directory), StackBlaze uses it and skips Nixpacks. It builds in an ephemeral builder, pushes the image to a private registry, and deploys that image as the service.
 
 You get full control over:
 
@@ -23,7 +23,7 @@ StackBlaze reads the port your container listens on from two sources, in priorit
 1. The `PORT` environment variable injected at runtime (takes precedence).
 2. The `EXPOSE` directive in your Dockerfile.
 
-Always make your app read from `$PORT` rather than hardcoding a port — this allows StackBlaze to override the port if necessary.
+Always make the process read `$PORT` rather than hardcoding a port.
 
 ```dockerfile title="Dockerfile"
 FROM node:20-alpine

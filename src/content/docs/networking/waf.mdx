@@ -1,0 +1,21 @@
+---
+title: WAF
+description: App Shield — per-service web application firewall.
+---
+
+**App Shield** is a WAF you attach to a public HTTP service. It is not a separate catalog database; it shows up on the canvas next to the service (`waf-<service>`) with Overview, Protection, and Rules.
+
+Enable it from the service sheet or:
+
+```bash
+stackblaze waf status
+stackblaze waf enable
+stackblaze waf disable
+stackblaze waf under-attack enable
+```
+
+Under-attack mode is a blocking posture for abuse spikes. Turn it off when the event is over.
+
+MCP feature tools are `waf__*`.
+
+App Shield is not a CDN and not a global anycast network. TLS and public routing are still [public networking](/networking/custom-domains/).

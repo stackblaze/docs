@@ -1,0 +1,34 @@
+---
+title: Environments
+description: Production, custom environments, and pull-request previews — isolated copies of the project canvas.
+---
+
+An **environment** is an isolated copy of a project's canvas: the same services and databases, separate runtime and data.
+
+## Production
+
+Created with the project. This is the live environment. Auto-deploy typically tracks your main branch.
+
+## Custom environments
+
+Add an environment from project settings when you need a durable staging or QA copy. Services and databases in that environment have their own [variables](/security/env-vars/) and private network. They do not share disks or database data with production.
+
+## Pull-request previews
+
+When review apps are on, opening a pull request provisions a **review** environment from a source service you configure on the project. Each PR gets its own add-on instances so previews do not share production data. The environment is removed when the PR closes.
+
+See [PR previews](/cicd/pr-previews/) for branch mapping and teardown.
+
+| Environment | When created | Lifespan |
+| --- | --- | --- |
+| production | With the project | Until you delete the project |
+| custom | From project settings | Until you delete it |
+| review | When a PR opens (if enabled) | Until the PR closes |
+
+## Switching environments
+
+The canvas is always showing **one** environment. Use the environment switcher in the project header. Staged changes apply only to the environment you are viewing.
+
+## API names
+
+Environments are `phase` in API paths: `/api/apps/{pipeline}/{phase}/{app}`.

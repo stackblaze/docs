@@ -7,9 +7,9 @@ Managed PostgreSQL 15, 16, and 17 with automated backups, point-in-time recovery
 
 ## Creating a PostgreSQL instance
 
-From the StackBlaze dashboard, add a **PostgreSQL** add-on to your app. Choose your Postgres version (15, 16, or 17), an initial storage size (1 GB to 500 GB), and a compute plan. StackBlaze provisions a dedicated managed instance with persistent storage within seconds.
+From **+ Service → Databases**, add **PostgreSQL**. Pick version (15, 16, or 17), disk size, and plan. It appears on the canvas in seconds.
 
-Once created, navigate to your web service or worker, go to the **Environment** tab, and click **Attach database**. StackBlaze automatically injects `DATABASE_URL` as a secret environment variable.
+Open another service, go to **Variables**, and attach the database. `DATABASE_URL` is injected as a secret. You can also wire it in `stackblaze.yaml` with `fromDatabase`.
 
 ## Connection strings
 
@@ -17,7 +17,7 @@ StackBlaze exposes two connection strings per database: an internal one for serv
 
 ### Internal (recommended)
 
-Services in the same project communicate over the cluster's private network using the service's internal hostname. No TLS configuration is required, traffic never leaves the cluster.
+Services in the same environment talk over the private network using the database service name. Traffic stays inside the environment.
 
 ```text title="Connection string (internal)"
 postgresql://user:password@[service-name]:5432/dbname

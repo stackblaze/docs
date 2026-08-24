@@ -1,0 +1,90 @@
+---
+title: CLI
+description: Install the StackBlaze CLI, log in, and deploy from your terminal.
+---
+
+The CLI is a thin client over the same REST API as the dashboard. It cannot do more than your token allows.
+
+Infrastructure as Code (`plan` / `apply`) is opt-in per organization. Run `stackblaze status` to see if it is on.
+
+## Install
+
+Linux and macOS:
+
+```bash
+curl -fsSL https://stackblaze.com/install.sh | sh
+```
+
+npm:
+
+```bash
+npm install -g @stackblaze/cli
+```
+
+Upgrade in place:
+
+```bash
+stackblaze upgrade
+```
+
+## Login
+
+```bash
+stackblaze login
+```
+
+This opens a one-click sign-in page and stores a token in `~/.config/stackblaze/config.json`.
+
+CI / scripts — pass a dashboard PAT (`kbr_pat_…`):
+
+```bash
+export STACKBLAZE_TOKEN=kbr_pat_…
+export STACKBLAZE_API_URL=https://api.stackblaze.cloud
+stackblaze whoami
+```
+
+`stackblaze logout` clears saved credentials.
+
+## Deploy this directory
+
+```bash
+stackblaze init
+stackblaze up
+stackblaze logs -f
+```
+
+`up --ci` streams NDJSON and exits when the git build finishes (exit `1` on failure). Add `--wait` to also poll until the service is running.
+
+## Global options
+
+Most commands accept:
+
+| Flag | Purpose |
+| --- | --- |
+| `--pipeline` / `-p` | Project (API: pipeline) |
+| `--phase` | Environment (API: phase) |
+| `--app` / `-a` | Service (API: app) |
+| `--token` | Override saved / env token |
+| `--api-url` | Override API host |
+| `--json` | Machine-readable output |
+| `-y` / `--yes` | Skip confirmations on destructive commands |
+
+If the current directory is [linked](/cli/link/), pipeline / phase / app default from `.stackblaze/project.json`.
+
+## Command index
+
+Auth and project: [login](/cli/login/), [logout](/cli/logout/), [whoami](/cli/whoami/), [init](/cli/init/), [link](/cli/link/), [unlink](/cli/unlink/), [context](/cli/context/), [list](/cli/list/), [status](/cli/status/), [open](/cli/open/).
+
+Deploy: [up](/cli/up/), [down](/cli/down/), [wait](/cli/wait/), [restart](/cli/restart/), [redeploy](/cli/redeploy/), [scale](/cli/scale/), [inspect](/cli/inspect/).
+
+Runtime: [logs](/cli/logs/), [metrics](/cli/metrics/), [run](/cli/run/), [shell](/cli/shell/), [ssh](/cli/ssh/), [connect](/cli/connect/), [diagnose](/cli/diagnose/).
+
+Topology: [apps](/cli/apps/), [pipelines](/cli/pipelines/), [phases](/cli/phases/), [builds](/cli/builds/), [deployments](/cli/deployments/), [domain](/cli/domain/), [variables](/cli/variables/), [env](/cli/env/), [addons](/cli/addons/), [templates](/cli/templates/), [functions](/cli/functions/), [waf](/cli/waf/), [volume](/cli/volume/), [snapshots](/cli/snapshots/), [files](/cli/files/).
+
+IaC: [plan](/cli/plan/), [apply](/cli/apply/), [export](/cli/export/), [destroy](/cli/destroy/).
+
+Agent: [agent](/cli/agent/), [mcp](/cli/mcp/), [skills](/cli/skills/), [setup](/cli/setup/).
+
+Other: [billing](/cli/billing/), [audit](/cli/audit/), [completion](/cli/completion/), [upgrade](/cli/upgrade/), [docs](/cli/docs/).
+
+The REST surface is in the [API reference](/reference/api/).

@@ -1,11 +1,13 @@
 ---
-title: Agents
-description: Point an MCP client at StackBlaze and operate projects with the same API the dashboard uses.
+title: StackBlaze for Agents
+description: Point an MCP client at StackBlaze and operate the canvas with the same API the dashboard uses.
 ---
+
+**Stack MCP** is how agents and editors create projects, add services, deploy, and read logs. The [CLI](/cli/) (`stackblaze setup mcp`) can write the client config for you.
 
 ## Stack MCP
 
-MCP is at `https://mcp.stackblaze.cloud`. Send a Bearer token from `Settings → API tokens`. The value starts with `kbr_pat_` and inherits your organization and permissions. Per-session `Authorization` is required so each user keeps their own RBAC — do not share a privileged fallback token.
+MCP is at `https://mcp.stackblaze.cloud`. Send a Bearer token from **Settings → API tokens**. The value starts with `kbr_pat_` and inherits your organization and permissions. Per-session `Authorization` is required so each user keeps their own RBAC — do not share a privileged fallback token.
 
 :::note
 Tool names in code are unprefixed: `get_app`, `deploy_app`, `search_logs`. Some docs and prompts write `stackblaze_*` — use the unprefixed name when calling a tool.
@@ -30,6 +32,6 @@ In Cursor, Claude, or any MCP-compatible client, add a server pointing at the MC
 
 ## What to use it for
 
-Read app specs, queue builds, search logs, and provision managed add-ons without leaving the editor. Prefer log search (`search_logs`) over a raw tail — an empty live stream is not the same as “no logs.”
+Read service specs, queue builds, search logs, and add databases without leaving the editor. Prefer log search (`search_logs`) over a raw tail — an empty live stream is not the same as “no logs.”
 
-For curl examples and `stackblaze.yaml` plan/apply, see [Automation](/reference/cli/) and the [REST API reference](/reference/api/).
+For the CLI, curl, and `stackblaze.yaml` plan/apply, see the [CLI](/cli/) and the [REST API reference](/reference/api/). More MCP detail: [MCP server](/ai/mcp/).

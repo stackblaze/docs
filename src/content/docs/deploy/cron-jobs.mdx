@@ -3,13 +3,13 @@ title: Cron Jobs
 description: Schedule recurring tasks with standard cron syntax. Each run is a fresh, isolated container.
 ---
 
-Run tasks on a schedule using standard cron syntax. Every run is an isolated container that starts, executes your command, and exits.
+A **cron service** is a canvas tile with a schedule. At the scheduled time StackBlaze starts the container, runs the start command, and exits. Same Git/Docker source and [variables](/security/env-vars/) as an always-on service — it just does not stay running.
+
+Add one from **+ Service** (Git or Docker), then set the schedule on the service.
 
 ## How cron jobs work
 
-At the scheduled time, StackBlaze creates an isolated run that executes your container, runs the start command, and then terminates. Each run is completely isolated — no shared state between runs except what you persist to a database or object storage.
-
-Cron jobs share the same build pipeline as web services and workers. You use the same repository, build command, and environment variables. The difference is that instead of running forever, your process is expected to complete with exit code 0.
+Each run is isolated. Nothing is shared between runs except what you persist to a database or object storage. The process should exit 0.
 
 ## Schedule syntax
 

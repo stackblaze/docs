@@ -1,0 +1,35 @@
+---
+title: Staged changes
+description: Canvas edits are collected into a changeset. Review, then deploy — or discard.
+---
+
+Edits on the project canvas are **staged** until you deploy. Adding a service, attaching a database, changing variables, or removing a tile does not hit production until you confirm.
+
+This is the same idea as a reviewable changeset: you compose, then apply.
+
+## What gets staged
+
+- New services (Git, Docker, template, import)
+- New databases
+- Config changes on an existing service
+- Removals (shown as a delete preview on the canvas)
+
+Staged tiles render on the canvas so you can see the topology before it exists.
+
+## Deploy
+
+Open the staged-changes panel, review the list, and **Deploy**. StackBlaze applies the changeset: create services, provision databases, roll out config. A commit message is stored with the deploy.
+
+If a build fails, already-running services stay on the previous revision.
+
+## Discard
+
+Discard drops the staged changeset. Live services are untouched.
+
+## After deploy
+
+Watch build and deploy logs on the service sheet. Generate a domain when the revision is healthy. Further git pushes can [auto-deploy](/cicd/auto-deploy/) without staging a new tile.
+
+## Config as code
+
+`POST /api/iac/blueprint/compile` stages services from a `stackblaze.yaml` file onto the canvas. You still deploy from the dashboard to apply. [Config as Code](/blueprint/) `apply` upserts without deleting.

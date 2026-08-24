@@ -1,0 +1,12 @@
+---
+title: AI
+description: MCP, editor connectors, and the CLI agent — how models operate a StackBlaze canvas.
+---
+
+StackBlaze does not run your model. It exposes the same control plane the dashboard uses so an agent can create projects, add services, deploy, and read logs.
+
+- **[MCP server](/ai/mcp/)** — `https://mcp.stackblaze.cloud` with a `kbr_pat_` bearer token. Tool names are unprefixed (`get_app`, `deploy_app`, `search_logs`).
+- **[Connectors](/ai/connectors/)** — Cursor, Claude, and other MCP clients.
+- **CLI** — `stackblaze setup mcp`, `stackblaze setup skills`, `stackblaze agent`.
+
+The top-level [StackBlaze for Agents](/agents/) page is the short version of this.

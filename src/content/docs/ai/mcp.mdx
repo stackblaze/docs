@@ -1,0 +1,27 @@
+---
+title: MCP server
+description: Point an MCP client at mcp.stackblaze.cloud.
+---
+
+MCP is at `https://mcp.stackblaze.cloud`. Authenticate with `Authorization: Bearer kbr_pat_…` from **Settings → API tokens**. Per-session auth is required so each user keeps their own RBAC.
+
+Tool names in code are **unprefixed**: `get_app`, `deploy_app`, `search_logs`. Feature tools use prefixes (`pg__*`, `redis__*`, `waf__*`, `fn__*`).
+
+```json title="mcp.json"
+{
+  "mcpServers": {
+    "stackblaze": {
+      "url": "https://mcp.stackblaze.cloud",
+      "headers": {
+        "Authorization": "Bearer kbr_pat_…"
+      }
+    }
+  }
+}
+```
+
+Wire this from the CLI with `stackblaze setup mcp`.
+
+Prefer `search_logs` over a raw tail. An empty live stream is not “no logs.”
+
+See [StackBlaze for Agents](/agents/) and [API](/reference/api/).

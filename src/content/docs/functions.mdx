@@ -1,0 +1,33 @@
+---
+title: Functions
+description: Knative services that scale to zero. Not the same thing as a canvas app.
+---
+
+A **function** is a request-driven container (Knative Serving). It scales to zero when idle and cold-starts on the first request. It is **not** an always-on [service](/build-deploy/apps/).
+
+Functions live in the same project environment as your apps and can use the same private add-ons. The public invoke URL looks like:
+
+```text
+https://<name>-<project>-<environment>.fn.<domain>
+```
+
+The image must already exist in a registry the cluster can pull. StackBlaze does not build functions from source — you push a prebuilt image.
+
+## Dashboard
+
+On the canvas, add a function from the functions surface for that environment. Set image, port, env, and scale bounds.
+
+## CLI
+
+```bash
+stackblaze functions list
+stackblaze functions new --name hello --image ghcr.io/org/fn:tag
+stackblaze functions invoke hello
+stackblaze functions delete hello
+```
+
+## MCP
+
+Feature tools are `fn__*` (`list_functions`, `get_function`, `deploy_function`). Same image-already-built rule.
+
+If you need a long-running HTTP API, use a [service](/build-deploy/apps/) instead.

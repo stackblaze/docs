@@ -1,93 +1,62 @@
 ---
-title: Apps and processes
-description: Web services, background workers, cron jobs, and databases — when to use each.
+title: Services
+description: A service is a deploy target on the project canvas — Git, Docker, a template, a cron job, or a database.
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 
-![Service topology: web, worker, cron, and a managed database on the private network](/illustrations/service-types.svg)
+A **service** is a container StackBlaze builds and runs. Add one from the canvas with **+ Service**. Source is a Git repository, a Docker image, or a template. Databases are services on the same board.
 
-A StackBlaze **app** is a single deployable unit built from your repo or a container image. One app can run three kinds of process: a **web** process with a public HTTPS URL, background **workers**, and scheduled **cron jobs**, each scaled independently.
+Web, worker, and cron are **settings** on a service (public domain, no domain, or a schedule) — not separate products.
 
-Anything stateful — a database, cache, or queue — is a **managed add-on** you attach to the app rather than a process it runs. The diagram shows how an app and its add-ons connect over the project's private network.
+## Types of services
 
-## Comparison
+### Always-on
 
-### Web Service
+The default. The container stays running. Use this for HTTP APIs, frontends, queue consumers, and anything that must not exit.
 
-Public HTTPS endpoint. Use when you need to serve HTTP traffic.
+- Give it a public domain for HTTP → [Public HTTP](/deploy/web-services/)
+- Leave it private for workers → [Private services](/deploy/background-workers/)
 
-| | |
-| --- | --- |
-| Public URL | Yes, HTTPS endpoint |
-| Replicas | Configurable (default 1) |
-| Autoscaling | Available |
-| Use when | You need to serve HTTP traffic |
+### Scheduled
 
-See [Web services](/deploy/web-services/).
+A [cron job](/deploy/cron-jobs/) runs until completion on a cron expression, then exits. Same build path as always-on services.
 
-### Worker
+### Databases
 
-No public URL. Use when processing queues or background jobs.
+From **+ Service → Databases**, provision Postgres, Redis/Valkey, MySQL, and other managed engines. They join the environment's [private network](/networking/private-networking/). Wire connection strings with [variables](/security/env-vars/) (`fromDatabase` in config as code).
 
-| | |
-| --- | --- |
-| Public URL | No |
-| Replicas | Configurable |
-| Autoscaling | Available |
-| Use when | Processing queues or background jobs |
-
-See [Background workers](/deploy/background-workers/).
-
-### Cron Job
-
-No public URL. Use for scheduled periodic tasks.
-
-| | |
-| --- | --- |
-| Public URL | No |
-| Schedule | Standard cron expression |
-| Concurrency | Forbid / Allow / Replace |
-| Use when | Scheduled periodic tasks |
-
-See [Cron jobs](/deploy/cron-jobs/).
-
-### Managed add-on
-
-Private network only. Use when you need a database, cache, or queue.
-
-| | |
-| --- | --- |
-| Public URL | No, private network only |
-| Provisioned as | Dedicated managed instance |
-| Storage | Persistent volume |
-| Backups | Scheduled & on-demand snapshots |
-| Use when | You need a database, cache, or queue |
-
-## Working with service types
+## Create a service
 
 <Steps>
 
-1. **One app bundles web, workers, and cron**
+1. Open a project. You are on the environment canvas (production unless you switched).
 
-   A single app is built once from your repo or image, then runs whatever processes you enable: a web process that serves HTTP, background workers, and scheduled cron jobs. You set replica counts per process, so scaling the web tier and the worker tier are independent.
+2. Click **+ Service** and pick a source:
 
-2. **Attach managed add-ons for anything stateful**
+   - **Git repository** — GitHub or a public git URL
+   - **Docker images** — registry image
+   - **Templates** — a pre-wired stack
+   - **Databases** — managed engine
+   - **Import** — Compose, `render.yaml`, or `fly.toml`
 
-   Databases, caches, and queues are not app processes — they are managed add-ons you attach to your app. Each one runs as its own dedicated instance with persistent storage, and its connection string is injected into your app as an environment variable.
-
-3. **Connect over the private network**
-
-   Everything in a project shares a private network. Your app reaches another app or an add-on by its internal service name — no public URL, no load balancer, no egress. Attached add-ons expose their host and credentials to your app automatically.
-
-4. **Promote across pipeline phases**
-
-   Apps live in a pipeline made up of phases such as staging and production. Deploy to staging, verify, then promote the same build to production, so what you tested is exactly what ships.
+3. Review the [staged change](/deploy/staged-changes/) and **Deploy**.
 
 </Steps>
 
+## Service source
+
+If a `Dockerfile` is in the repo, StackBlaze uses it. Otherwise Nixpacks detects the runtime from files such as `package.json` or `requirements.txt`. Override install, build, and start commands in the service sheet.
+
+Change source later from the service **Settings** tab.
+
+## Monorepos
+
+Set a root directory so one repo can back several services. See [Monorepo](/cicd/monorepo/).
+
 ## Next steps
 
-- [Connect a GitHub repository](/deploy/github/)
-- [Provision a PostgreSQL database](/databases/postgresql/)
-- [Set up Redis caching](/databases/redis/)
+- [Variables](/security/env-vars/)
+- [Staged changes](/deploy/staged-changes/)
+- [Deploy from GitHub](/deploy/github/)
+- [Config as Code](/blueprint/)

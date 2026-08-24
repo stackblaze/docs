@@ -3,9 +3,9 @@ title: PR Preview Environments
 description: Every pull request automatically gets a live, isolated preview environment on StackBlaze. Learn how PR previews work, how to configure databases in previews, and how namespaces are torn down on merge.
 ---
 
-Every pull request automatically gets a live, isolated environment with its own URL. Preview environments let you review changes in a real deployment before merging, no manual setup, no staging servers to maintain.
+Each pull request can get its own [environment](/deploy/environments/) — a copy of the canvas with its own URL. Review the real stack before you merge. No extra staging project to keep around.
 
-Each preview runs in its own Kubernetes namespace with its own ingress, TLS certificate, and optionally its own ephemeral database. The namespace is destroyed within 60 seconds of PR close or merge, leaving no lingering infrastructure or cost.
+The preview is torn down when the PR closes or merges. Databases in that environment are separate from production.
 
 ![Diagram of isolated PR preview with web, Postgres, and Redis services](/illustrations/pr-previews.svg)
 
@@ -17,8 +17,7 @@ Each preview runs in its own Kubernetes namespace with its own ingress, TLS cert
 # Preview URL automatically posted as PR comment
 https://pr-42--my-frontend.preview.stackblaze.cloud
 
-# Kubernetes namespace:
-Namespace: stackblaze-preview-my-repo-pr-42
+# Isolated from production data and domains
 ```
 
 ## Automatic PR comment

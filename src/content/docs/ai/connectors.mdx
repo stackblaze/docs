@@ -1,0 +1,20 @@
+---
+title: Agent connectors
+description: Cursor, Claude, and other MCP clients.
+---
+
+Any client that speaks MCP HTTP can drive StackBlaze. We test:
+
+- **Cursor** — MCP server entry in `mcp.json` (see [MCP server](/ai/mcp/)).
+- **Claude** (Desktop / Code) — same URL and bearer header.
+- **Other editors** — anything that can set `Authorization` on the MCP transport.
+
+The CLI can write the config for you:
+
+```bash
+stackblaze setup mcp
+stackblaze setup skills
+stackblaze setup agent
+```
+
+There is no Slack or Discord “StackBlaze Agent” bot on this control plane. Operate the canvas from an editor, the dashboard, or CI (`stackblaze up --ci`).

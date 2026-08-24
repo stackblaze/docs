@@ -10,7 +10,7 @@ You can create multiple hooks per service, one per CI provider, one per branch, 
 ## Triggering a deploy
 
 ```bash title="terminal"
-# Queue a build for project/phase/app
+# Queue a build: project / environment / service
 curl -X POST "https://api.stackblaze.cloud/api/deployments/build/acme-app/production/api" \
     -H "Authorization: Bearer $STACKBLAZE_TOKEN"
 
@@ -62,8 +62,8 @@ Prefer the project's git webhook for push-to-deploy. Use the deployments build A
 
 :::note[Under the hood]
 - **Personal access token**: `kbr_pat_` tokens inherit the creator's organization and RBAC. Revoke them from Settings → API tokens.
-- **Build queue**: `POST /api/deployments/build/{pipeline}/{phase}/{app}` starts or queues a build for that app.
-- **Phases**: production and review (or a custom phase) are separate namespaces. Address them in the path, not with a hook query string.
+- **Build queue**: `POST /api/deployments/build/{pipeline}/{phase}/{app}` starts a build. Those path segments are project, environment, and service.
+- **Environments**: production, review, and custom environments are separate. Put the environment name in the path.
 :::
 
 ## Step by step

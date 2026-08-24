@@ -1,15 +1,15 @@
 ---
 title: StackBlaze Documentation
-description: Deploy apps, managed add-ons, and jobs on StackBlaze without running a cluster.
+description: Provision infrastructure, deploy from Git, and run databases on a project canvas — without operating a cluster.
 template: splash
 hero:
-  tagline: Deploy apps, managed add-ons, and jobs without running a cluster.
+  tagline: Provision infrastructure, deploy from Git, and run databases on a project canvas.
   actions:
-    - text: Quick start
+    - text: Quick Start
       link: /quickstart/
       icon: right-arrow
     - text: Open dashboard
-      link: https://dashboard.stackblaze.cloud
+      link: 'https://dashboard.stackblaze.cloud'
       icon: external
       variant: minimal
 ---
@@ -19,33 +19,33 @@ import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 ## Start here
 
 <CardGrid>
-	<Card title="Quick start" icon="rocket">
-		Ship your first app in minutes from GitHub, a template, or a container image.
+	<Card title="Quick Start" icon="rocket">
+		Create a project, add a service from GitHub or a template, and deploy from the canvas.
 		[Get started →](/quickstart/)
 	</Card>
 	<Card title="Agents" icon="laptop">
 		Build with Stack MCP from Cursor, Claude, or any MCP client.
 		[Connect MCP →](/agents/)
 	</Card>
-	<Card title="Automation" icon="document">
-		REST API, `stackblaze.yaml`, and MCP. Tokens use the `kbr_pat_` prefix.
-		[Automation →](/reference/cli/)
+	<Card title="Config as Code" icon="document">
+		Describe a project in `stackblaze.yaml`. Tokens use the `kbr_pat_` prefix.
+		[Config as Code →](/blueprint/)
 	</Card>
 	<Card title="Templates" icon="puzzle">
-		One-click deploys for n8n, Postgres, Redis, and other popular stacks.
+		One-click stacks for n8n, Postgres, Redis, and other common apps.
 		[Browse templates →](https://stackblaze.com/templates)
 	</Card>
 </CardGrid>
 
-## Browse by topic
+## Build it your way
 
 <CardGrid>
-	<LinkCard title="Platform" href="/platform/" description="What StackBlaze is, comparisons, and migrating an existing app." />
-	<LinkCard title="Build & deploy" href="/build-deploy/" description="Apps, GitHub, Docker, CI/CD, and scaling." />
-	<LinkCard title="Data & storage" href="/data-storage/" description="Managed databases, volumes, backups, and messaging." />
-	<LinkCard title="Networking" href="/networking/" description="Public URLs, custom domains, TLS, and private DNS." />
+	<LinkCard title="The Basics" href="/concepts/" description="Projects, the canvas, services, variables, environments, and deployments." />
+	<LinkCard title="Services" href="/build-deploy/apps/" description="Git repos, Docker images, cron jobs, and databases as tiles on the canvas." />
+	<LinkCard title="Variables" href="/security/env-vars/" description="Service config, secrets, and values wired from databases." />
+	<LinkCard title="Databases" href="/databases/" description="Managed Postgres, Redis, MySQL, MongoDB, and more on the private network." />
+	<LinkCard title="Networking" href="/networking/" description="Public domains, TLS, and private DNS between services." />
+	<LinkCard title="Volumes" href="/storage/persistent-disks/" description="Disks that survive restarts and redeploys." />
 	<LinkCard title="Observability" href="/observability/" description="Coroot metrics, logs, traces, and troubleshooting." />
-	<LinkCard title="Access" href="/access/" description="Env vars, secrets, team roles, 2FA, and IP allowlisting." />
-	<LinkCard title="Reference" href="/reference/" description="REST API, automation, limits, and plans." />
 	<LinkCard title="Guides" href="/guides/" description="Step-by-step how-tos across the same tree as the sidebar." />
 </CardGrid>

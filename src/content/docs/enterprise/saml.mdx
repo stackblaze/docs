@@ -1,0 +1,14 @@
+---
+title: SAML SSO
+description: Enterprise single sign-on with Okta, Google Workspace, or Microsoft Entra.
+---
+
+SAML 2.0 SSO is an **Enterprise** organization setting. Owners configure the identity provider (Okta, Google Workspace, Microsoft Entra / Azure AD). Members sign in through that IdP instead of a password.
+
+SCIM provisioning is available on the same plan for joiner/leaver sync.
+
+SSO does not replace [role-based access](/security/team-permissions/) on a project. After a user lands in the org, Owner / Admin / Developer / Viewer still decide what they can deploy.
+
+Enforced [2FA](/security/two-factor-auth/) can be required in addition to SSO.
+
+Setup is done with StackBlaze support — you do not upload IdP XML yourself in the dashboard today. Contact sales or your TAM with the ACS URL and entity ID they issue for your org.

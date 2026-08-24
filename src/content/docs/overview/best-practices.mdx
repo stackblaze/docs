@@ -1,0 +1,48 @@
+---
+title: Best practices
+description: How to compose projects, networks, and variables so a StackBlaze stack stays fast and cheap to run.
+---
+
+These patterns match how the canvas actually works. They are the same ideas Railway documents for a project-and-service model.
+
+## Use private networking when you can
+
+Services in the same [environment](/deploy/environments/) already share a private network. Talk to databases and internal APIs by **service name**, not a public `*.stackblaze.app` URL.
+
+When you set variables, prefer the injected connection string (`fromDatabase` in `stackblaze.yaml`, or Attach on the service) over a hardcoded public host.
+
+Private traffic stays in the environment. It is faster and does not go out through the public edge.
+
+## Put related services in one project
+
+A [project](/concepts/#projects) is one canvas. API, worker, Postgres, and Redis belong on **that** board — not four separate projects.
+
+Same project means:
+
+- One private network per environment
+- One place to [stage and deploy](/deploy/staged-changes/)
+- Variables and databases you can attach without copying secrets around
+
+Use **+ Service** on the canvas instead of **New project** every time you add a database.
+
+## Wire databases instead of pasting URLs
+
+Do not copy `DATABASE_URL` by hand. Attach the database from the service **Variables** tab, or in config as code:
+
+```yaml
+envVars:
+  - key: DATABASE_URL
+    fromDatabase:
+      name: postgres
+      property: connectionString
+```
+
+If the database credentials rotate, the service stays in sync.
+
+## Stage, then deploy
+
+Canvas edits are a changeset. Review them, then **Deploy**. That is how you avoid half-applied topology.
+
+## Health-check public HTTP
+
+If a service takes public traffic, set a health check path so the new revision is ready before traffic moves. See [health checks](/storage/health-checks/).

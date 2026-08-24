@@ -1,0 +1,35 @@
+---
+title: Gatsby
+description: Deploy Gatsby on StackBlaze from GitHub or a Dockerfile.
+---
+
+Add a service from your Gatsby repo. Nixpacks detects **node** from `package.json`. A `Dockerfile` in the service root always wins.
+
+Build produces static HTML. Serve the public folder or `gatsby serve`.
+
+## Deploy from GitHub
+
+1. [Dashboard](https://dashboard.stackblaze.cloud) → **New project** (or open an existing canvas).
+2. **+ Service → Git repository**. Pick the repo and branch.
+3. Review [staged changes](/deploy/staged-changes/) and **Deploy**.
+4. Generate a `*.stackblaze.app` domain, or attach a [custom domain](/networking/custom-domains/).
+
+Override install / build / start on the service if detection is wrong. Typical start: `npx gatsby serve --port $PORT`.
+
+## Docker
+
+If you already have a Dockerfile, StackBlaze uses it. The process must listen on `PORT`.
+
+## Data
+
+**+ Service → Databases** for Postgres, Redis/Valkey, MySQL, and others. Wire `DATABASE_URL` from the service **Variables** tab or `fromDatabase` in [stackblaze.yaml](/blueprint/).
+
+## CLI
+
+```bash
+stackblaze login
+stackblaze init
+stackblaze up
+```
+
+See the [CLI](/cli/).

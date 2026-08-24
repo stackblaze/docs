@@ -1,0 +1,17 @@
+---
+title: Philosophy
+description: Why StackBlaze looks like a canvas of services, not a cluster console.
+---
+
+StackBlaze is a managed PaaS. You compose **projects**, **environments**, and **services** in a dashboard. The control plane runs Kubernetes underneath; you never kubectl, edit CRDs, or pick a node pool.
+
+That is a deliberate product bet:
+
+- **One canvas per environment.** Git services, Docker images, databases, cron, functions, and WAF sit on the same board and share a private network.
+- **Staged changes.** Topology edits accumulate, then you deploy. Half-applied graphs are the failure mode we optimize against.
+- **Config as code is optional.** Most teams click. `stackblaze.yaml` is there when you want plan/apply and git review. Apply never deletes.
+- **Your token, your RBAC.** Dashboard, CLI, API, and MCP all use a PAT (`kbr_pat_`). A privileged platform token is only a fallback.
+
+Compare that to operating a cluster: you would own upgrades, ingress, certificates, storage classes, and RBAC. Here those are settings on a service.
+
+See [The basics](/concepts/) for the object model and [Platform](/platform/) for how a deploy actually runs.

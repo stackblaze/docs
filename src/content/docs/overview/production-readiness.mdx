@@ -1,0 +1,39 @@
+---
+title: Production readiness checklist
+description: What to confirm before a StackBlaze project carries production traffic.
+---
+
+Use this as a pre-launch pass. It is the same shape as Railway’s production checklist, mapped to features that exist here.
+
+## Performance and reliability
+
+- **Region** — the project is pinned at create time (default `us-east-1`). Keep chatty services and their databases in that project.
+- **Private networking** — app-to-database and app-to-app traffic uses [service names](/networking/private-networking/), not public URLs.
+- **Replicas** — run at least two replicas on public HTTP if you cannot afford a single-instance blip. See [horizontal scaling](/scaling/horizontal/).
+- **Health checks** — set a path so rolling deploys wait for ready. See [health checks](/storage/health-checks/).
+- **Database topology** — use HA for production data stores. See [databases](/databases/).
+
+## Observability
+
+- Open [Coroot](/operations/observability/) from the service and confirm logs and metrics.
+- Prefer `search_logs` over a raw tail in MCP.
+
+## Quality
+
+- Keep a non-production [environment](/deploy/environments/) for staging.
+- Turn on [PR previews](/cicd/pr-previews/) if you want a live canvas per pull request.
+- Keep topology in [stackblaze.yaml](/blueprint/) if you want git-reviewed infra.
+- Know how to [roll back](/cicd/rollbacks/) a revision.
+
+## Security
+
+- Secrets in [variables](/security/env-vars/), not in git.
+- [2FA](/security/two-factor-auth/) on the account.
+- [IP allowlisting](/security/ip-allowlist/) if the dashboard or app should be source-restricted.
+- Do not expose databases on the public internet.
+
+## Recovery
+
+- Enable [backups](/databases/backups/) on stateful databases.
+- Know [PITR](/databases/pitr/) for Postgres if you need point-in-time restore.
+- [Volumes](/storage/persistent-disks/) are per instance — they are not a backup strategy by themselves.

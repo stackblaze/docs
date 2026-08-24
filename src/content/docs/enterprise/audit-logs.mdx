@@ -1,0 +1,16 @@
+---
+title: Audit logs
+description: Who changed a project, when, and from where.
+---
+
+Enterprise organizations retain an audit log of admin actions: member invites, role changes, SSO, IP allowlist edits, and destructive canvas operations. Entries include timestamp, actor, and source IP.
+
+In the dashboard, open organization settings → **Audit**.
+
+From the CLI:
+
+```bash
+stackblaze audit
+```
+
+Retention is 90 days on Enterprise. This is not a substitute for application logs — those live in [Observability](/operations/observability/).

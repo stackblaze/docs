@@ -1,102 +1,75 @@
 ---
-title: Quick Start
-description: Go from a GitHub repository to a live URL in under two minutes.
+title: Quick start
+description: Deploy your first StackBlaze service from GitHub, the CLI, a Docker image, or a template.
 ---
 
-![Quick start deploy flow from repository to live application](/illustrations/deploy-lifecycle.svg)
+StackBlaze is a deployment platform. You provision infrastructure on a **project canvas**, develop against that infrastructure, and deploy from Git, a Docker image, the CLI, or a template.
 
-*Connect GitHub, configure your service, and deploy, typically under two minutes.*
+This guide covers two ways to get going:
 
-## Prerequisites
+1. **Deploying your project** — bring your code.
+   - [From GitHub](#deploying-your-project--from-github)
+   - [With the CLI](#deploying-your-project--with-the-cli)
+   - [From a Docker image](#deploying-your-project--from-a-docker-image)
+2. **Deploying a template** — pre-wired software from the catalog.
 
-All you need is a GitHub account and a repository containing your application code. StackBlaze will handle building, containerizing, and running it. No Dockerfile required, though you can provide one if you want full control.
+## Deploying your project — from GitHub
 
-## Step-by-step
+1. Open [the dashboard](https://dashboard.stackblaze.cloud) → **New project**.
+2. Choose **Git repository**. Link GitHub if prompted, then pick the repo and branch.
+3. The service is **staged** on the canvas. Review the changeset and click **Deploy** (or deploy immediately if the flow offers it).
 
-1. **Sign up for StackBlaze**
+You land on the **project canvas**. StackBlaze clones the commit, builds with Nixpacks (or your Dockerfile), and rolls the service out. When the deployment is healthy, generate a `*.stackblaze.app` domain from the service.
 
-   Go to [stackblaze.com/signup](https://stackblaze.com/signup) and create a free account. No credit card required to get started.
+If the build fails, open **Logs** on the service and scroll the full build log — the useful error is often not the last line.
 
-2. **Connect your GitHub account**
+## Deploying your project — with the CLI
 
-   From the dashboard, click **Connect GitHub**. StackBlaze requests the `repo` scope for only the specific repositories you select, not your entire account. You can add more repos later from Settings.
+Install, then from your app directory:
 
-3. **Create a new service**
-
-   Click **New Service → Web Service**, then select your repository and the branch you want to deploy (usually `main`).
-
-4. **Review auto-detected settings**
-
-   StackBlaze scans your repo and pre-fills the build command, install command, and start command based on your language and framework. Review these and adjust if needed. See the runtime detection table below for what gets auto-detected.
-
-5. **Set environment variables**
-
-   Add any environment variables your app needs, database URLs, API keys, etc. Values are encrypted at rest and injected into the container at runtime. You can also reference internal service hostnames here, e.g. `redis://my-redis:6379`.
-
-6. **Deploy**
-
-   Click **Deploy**. StackBlaze clones your repo, installs dependencies, builds your app, pushes a Docker image, and rolls it out to the cluster. Watch the build logs stream in real time.
-
-7. **Visit your live URL**
-
-   Once the health check passes, your service is live at `https://your-app.stackblaze.app`. You can add a [custom domain](/networking/custom-domains/) any time.
-
-## Runtime auto-detection
-
-StackBlaze inspects your repository to determine the runtime. The following table shows what file triggers detection, the default install command, and the default start command. All of these can be overridden in Service Settings.
-
-| Runtime | Detected by | Install command | Start command |
-| --- | --- | --- | --- |
-| Node.js | `package.json` | `npm install` | `npm start` |
-| Python | `requirements.txt` | `pip install -r requirements.txt` | `python main.py` |
-| Ruby | `Gemfile` | `bundle install` | `bundle exec ruby app.rb` |
-| Go | `go.mod` | `go mod download` | `go run .` |
-| Rust | `Cargo.toml` | `cargo build --release` | `./target/release/app` |
-| PHP | `composer.json` | `composer install` | `php -S 0.0.0.0:$PORT` |
-| Java | `pom.xml / build.gradle` | `mvn package -DskipTests` | `java -jar target/*.jar` |
-| Dockerfile | `Dockerfile` | (not applicable) | (from CMD / ENTRYPOINT) |
-
-:::tip
-If your project has a `Dockerfile`, StackBlaze always uses it, runtime detection is skipped. This gives you full control over the build and runtime environment.
-:::
-
-## What happens during a deploy
-
-Understanding the deploy pipeline helps you debug build failures quickly. Here's what each phase means in the build log:
-
-### Clone
-
-StackBlaze clones the exact commit SHA that triggered the deploy into an ephemeral build container. Submodules are initialized if present. The clone is shallow by default (depth 50) to keep it fast.
-
-### Install
-
-The install command runs. Dependency caches are shared across builds for the same service, so subsequent deploys are significantly faster. Cache invalidation happens automatically when lock files change (`package-lock.json`, `Pipfile.lock`, etc.).
-
-### Build
-
-The build command runs (e.g., `npm run build`). Build output is written to the image layer. If your build command exits with a non-zero status, the deploy fails here and your currently-running service is unaffected.
-
-### Push
-
-The built image is tagged with the commit SHA and pushed to StackBlaze's private registry. Images are retained for 90 days, enabling [one-click rollbacks](/cicd/rollbacks/).
-
-### Health check & traffic switchover
-
-New pods must pass the readiness probe before traffic is routed to them. By default, StackBlaze sends HTTP GET requests to `/` every 10 seconds. The first successful response marks the pod ready. Old pods are terminated only after all new pods are healthy, ensuring zero downtime.
-
-## Deploy from CI or curl
-
-There is no `@stackblaze/cli` on this control plane. Create a `kbr_pat_` token under Settings → API tokens, then call the API:
-
-```bash title="terminal"
-export STACKBLAZE_TOKEN=kbr_pat_…
-curl -sS -X POST \
-  https://api.stackblaze.cloud/api/deployments/build/acme-app/production/api \
-  -H "Authorization: Bearer $STACKBLAZE_TOKEN"
+```bash
+curl -fsSL https://stackblaze.com/install.sh | sh
+stackblaze login
+stackblaze init
+stackblaze up
 ```
 
-Or connect MCP at `https://mcp.stackblaze.cloud` with the same token. See [API Reference](/reference/api/).
+`init` creates a project (or links this folder to one). `up` uploads the repo and starts a git build. Then:
 
-:::note
-Ready to go deeper? Read the [Core Concepts](/concepts/) page to understand how Projects, Environments, and Deployments relate to each other.
-:::
+```bash
+stackblaze open
+```
+
+That prints the canvas URL. CI: `stackblaze up --ci` streams NDJSON and exits when the build finishes. See [CLI](/cli/).
+
+## Deploying your project — from a Docker image
+
+1. **New project** (empty canvas).
+2. **+ Service → Docker images**.
+3. Paste an image such as `ghcr.io/org/app:tag` (Docker Hub, GHCR, GitLab, and Quay work). Use the full URL for anything that is not Docker Hub.
+4. **Deploy**.
+
+The process must listen on `PORT`. Private registries need credentials on the service.
+
+## The canvas
+
+GitHub, CLI, Docker, and templates all end on the same **project canvas**. This is mission control: services, databases, environments, variables, and [staged changes](/deploy/staged-changes/).
+
+Click a tile for source, variables, networking, volumes, metrics, and logs. **+ Service** adds Git, Docker, templates, databases, or an import (Compose / `render.yaml` / `fly.toml`).
+
+## Deploying a template
+
+1. **New project** → **Templates**, or **+ Service → Templates** on an existing canvas.
+2. Search the [catalog](https://stackblaze.com/templates).
+3. Fill in any prompted values.
+4. **Deploy**.
+
+The canvas provisions every service and database the template defines.
+
+## What to explore next
+
+- [The basics](/concepts/) — projects, services, variables, environments
+- [Environments](/deploy/environments/) — production, staging, PR previews
+- [Staged changes](/deploy/staged-changes/) — review, then apply
+- [Observability](/observability/) — logs and metrics (Coroot)
+- [Project members](/security/team-permissions/) — invite your team

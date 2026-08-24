@@ -3,7 +3,7 @@ title: Auto Deploy on Push
 description: Configure GitHub-triggered automatic deployments on StackBlaze. Learn how the git push → build → rolling deploy pipeline works, how to skip deploys with [skip ci], and how to restrict trigger paths in a monorepo.
 ---
 
-Every StackBlaze web service and worker connected to GitHub deploys automatically on every push to the configured branch. The pipeline, from `git push` to live traffic, typically completes in **60 to 180 seconds** depending on your build time and image size.
+A Git-connected service [auto-deploys](/deploy/github/) on every push to its branch unless you skip the commit. Typical path from `git push` to live traffic is **60–180 seconds**, depending on build time.
 
 You can skip a deploy by adding `[skip ci]` to your commit message. You can also restrict which file paths trigger a deploy, useful for monorepos where documentation changes shouldn't rebuild your API server.
 
@@ -38,18 +38,15 @@ You can skip a deploy by adding `[skip ci]` to your commit message. You can also
 - **Trigger branch**: Deploy when commits are pushed to this branch (example: `main`).
 - **Build filters (ignored paths)**: Pushes that only change these paths will not trigger a build. Example patterns: `docs/**`, `README.md`, `*.test.ts`, `.github/**`.
 
-:::note[Under the hood]
-- **GitHub webhook**: StackBlaze registers a `push` event webhook secured with a per-project HMAC-SHA256 secret. Payloads are verified before any build triggers, preventing spoofed deploys.
-- **Kubernetes Job for the build**: each build runs as an isolated Kubernetes Job in a dedicated build namespace. The Job clones your repo, runs your build command inside a rootless Kaniko container, and pushes the image to the internal OCI registry.
-- **Rolling update**: deployment uses `maxSurge: 1, maxUnavailable: 0`. A new pod starts and passes its readiness probe before any old pod is removed, keeping capacity at 100% throughout the update.
-- **Layer caching**: Docker layer cache is persisted between builds on a per-service volume. Unchanged base image and dependency layers are reused, saving 30–60 seconds off typical build times.
+:::note
+GitHub `push` webhooks are verified before a build starts. Builds run in an isolated builder, push an image to the private registry, then roll out: the new revision must pass its health check before traffic moves. Layer cache is kept per service so unchanged dependencies reuse.
 :::
 
 ## Step by step
 
 1. **Connect your GitHub repository**
 
-   When you create a web service or worker from a GitHub repository, StackBlaze automatically installs a webhook on the repo. No manual setup is required, you'll see a stackblaze.com entry under GitHub → Settings → Webhooks. The webhook is secured with a per-project HMAC-SHA256 secret.
+   Connecting a GitHub repo as a service installs the webhook. No extra setup. You will see a StackBlaze entry under GitHub → Settings → Webhooks.
 
 2. **Configure the trigger branch**
 

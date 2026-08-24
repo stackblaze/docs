@@ -1,0 +1,16 @@
+---
+title: Logs
+description: Runtime logs on the service, search, and the CLI.
+---
+
+Every service has a **Logs** tab. That is stdout/stderr from the running revision.
+
+Search uses the durable index (dashboard search, MCP `search_logs`, or `stackblaze logs --search`). An empty live tail is not the same as “no logs” — the pod may have rotated.
+
+```bash
+stackblaze logs
+stackblaze logs -f
+stackblaze logs --search -q error --minutes 60
+```
+
+Retention follows the [plan](/reference/pricing/). Metrics and traces are [Coroot](/operations/observability/).

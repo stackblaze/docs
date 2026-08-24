@@ -1,73 +1,45 @@
 ---
 title: Platform
-description: What StackBlaze is, how it compares to other platforms, and how to migrate an existing app.
+description: What StackBlaze is, how a deploy works, and how to migrate an existing app.
 ---
 
 import { LinkCard, CardGrid } from '@astrojs/starlight/components';
 
-## What is StackBlaze?
+StackBlaze is an all-in-one deployment platform. You compose **services** and **databases** on a **project canvas**, deploy from Git or a Docker image, and get private networking, TLS, volumes, and observability without operating a cluster.
 
-StackBlaze is a platform-as-a-service (PaaS) built on top of Kubernetes. It gives teams the simplicity of Heroku with the power and reliability of a modern container orchestrator. You connect a GitHub repository, configure a start command, and StackBlaze handles the rest: building a Docker image, pushing it to a private registry, scheduling it onto a cluster, wiring up a TLS-terminated URL, and keeping it running.
+You work in the dashboard (or [MCP](/agents/) / the [API](/reference/api/)). You do not write Kubernetes manifests or run kubectl.
 
-Every service on StackBlaze is a Kubernetes workload under the hood, but you interact with it through a clean dashboard and API, not YAML manifests or kubectl commands.
+## How a deploy works
 
-## How it works
+1. **Add a service** on the canvas from GitHub, a Docker image, a template, or an import.
+2. **Stage and deploy.** The change sits on the canvas until you deploy.
+3. **Build.** StackBlaze clones the commit (or pulls the image). A `Dockerfile` wins; otherwise Nixpacks detects the runtime.
+4. **Rollout.** A new revision comes up behind a health check, then traffic moves over.
+5. **URL.** Generate a `*.stackblaze.app` domain or attach a [custom domain](/networking/custom-domains/).
 
-The deploy lifecycle looks like this:
+Every push to the connected branch can [auto-deploy](/cicd/auto-deploy/). Add `[skip ci]` to a commit message to skip.
 
-![Diagram: GitHub push flows through build, Kubernetes deploy, and live URL](/illustrations/deploy-lifecycle.svg)
+## Mental model
 
-From git push to a live TLS-terminated URL, StackBlaze handles each step automatically.
+| Piece | Role |
+| --- | --- |
+| Project | Canvas of services that share a private network per environment |
+| Service | Git, image, cron, or database |
+| Environment | Isolated copy of the canvas (production, custom, PR preview) |
+| Variables | Config and secrets, including `fromDatabase` |
+| Volume | Disk attached to one service |
 
-1. **Connect your repo.** Authorize StackBlaze via GitHub OAuth. Select the repository and branch you want to deploy.
-2. **Auto-detect runtime.** StackBlaze scans your repository for a `Dockerfile`, `package.json`, `requirements.txt`, and other markers to determine how to build and run your app.
-3. **Build.** Your code is cloned into an ephemeral build container. Dependencies are installed, your build command runs, and the resulting image is pushed to StackBlaze's private registry.
-4. **Deploy to Kubernetes.** StackBlaze creates or updates a Kubernetes Deployment, Service, and Ingress. A rolling update ensures zero downtime: new pods become healthy before old ones are terminated.
-5. **Get a URL.** Your service is live at `https://your-app.stackblaze.app` with a free TLS certificate managed automatically via cert-manager.
-
-:::tip
-Every push to your configured branch triggers an automatic redeploy. Add `[skip ci]` to your commit message to bypass it.
-:::
-
-## Service types
-
-StackBlaze supports five kinds of services. All share the same build pipeline and environment variable system; they differ in how they run and how (or whether) they're exposed to the internet.
-
-| Type | Description | Public URL |
-| --- | --- | --- |
-| Web Service | Runs a long-lived HTTP server. Receives public traffic via an Ingress. | Yes |
-| Background Worker | Runs continuously, no inbound traffic. Perfect for queue consumers. | No |
-| Cron Job | Runs on a schedule (standard cron syntax). Each run is a fresh container. | No |
-| Static Site | Built and served from a CDN edge network. No server runtime. | Yes |
-| Database | Managed PostgreSQL, MySQL, Redis, or MongoDB with automated backups. | Internal only |
+See [The Basics](/concepts/).
 
 ## Regions
 
-StackBlaze clusters are available in multiple regions. When you create a service, you choose a region. All services within a project in the same region can communicate over private networking (ClusterIP DNS) without any additional configuration.
+A project is pinned to a region. Default tenant region is `us-east-1`. Services in the same environment talk over private DNS; they do not cross projects on that network.
 
-### Available regions
-
-| Region | Location | Code |
-| --- | --- | --- |
-| US East | Northern Virginia, USA | `us-east-1` |
-| US West | Oregon, USA | `us-west-2` |
-| EU West | Frankfurt, Germany | `eu-west-1` |
-| Asia Pacific | Singapore | `ap-southeast-1` |
-
-Follow the [Quick Start guide](/quickstart/) to go from a GitHub repository to a live URL in under two minutes. Or read [Core Concepts](/concepts/) if you want a deeper understanding of how StackBlaze is structured before you begin.
-
-## In this section
+## Migrate and compare
 
 <CardGrid>
-  <LinkCard title="Migrate from Heroku" href="/platform/migrate-from-heroku/" description="Move your app, config vars, and add-ons to StackBlaze with minimal downtime." />
-</CardGrid>
-
-## Compare to StackBlaze
-
-<CardGrid>
-  <LinkCard title="Compare to Heroku" href="https://stackblaze.com/compare/heroku" description="Procfile workflows without dyno sleep or opaque add-on bills." />
-  <LinkCard title="Compare to Render" href="https://stackblaze.com/compare/render" description="Always-on services, private networking, and managed add-ons." />
-  <LinkCard title="Compare to Fly.io" href="https://stackblaze.com/compare/fly-io" description="A full PaaS instead of machines you operate yourself." />
-  <LinkCard title="Compare to Railway" href="https://stackblaze.com/compare/railway" description="Kubernetes-backed deploys with tenant isolation and Coroot." />
-  <LinkCard title="Compare to Vercel" href="https://stackblaze.com/compare/vercel" description="Long-running apps, workers, cron, and databases in one place." />
+  <LinkCard title="Migrate from Heroku" href="/platform/migrate-from-heroku/" description="Move the app, config vars, and add-ons with minimal downtime." />
+  <LinkCard title="Compare to Railway" href="https://stackblaze.com/compare/railway" description="Canvas, services, and environments — on Kubernetes with tenant isolation." />
+  <LinkCard title="Compare to Heroku" href="https://stackblaze.com/compare/heroku" description="Git deploys without dyno sleep." />
+  <LinkCard title="Compare to Render" href="https://stackblaze.com/compare/render" description="One service model instead of a catalog of product types." />
 </CardGrid>

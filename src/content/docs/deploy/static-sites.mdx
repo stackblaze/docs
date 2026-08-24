@@ -1,15 +1,13 @@
 ---
-title: Static Sites
-description: Deploy static sites to a global CDN with zero configuration. Supports Next.js, Vite, CRA, Hugo, Gatsby, and more.
+title: Static sites
+description: Build a frontend and serve the output as a StackBlaze service.
 ---
 
-Build once, serve globally. StackBlaze builds your static site and distributes it to a CDN edge network, no server process needed.
+A static site is still a **service**. StackBlaze runs the build, then serves the output over HTTP with TLS. If you need server-side rendering, API routes, or a database at request time, use [public HTTP](/deploy/web-services/) on a runtime service instead.
 
-## What is a Static Site?
+## What gets served
 
-A static site is a collection of pre-built HTML, CSS, JavaScript, and asset files served directly from a CDN. There is no server runtime — requests hit the nearest edge node and are served without any compute. This makes static sites extremely fast, cheap to run, and virtually infinitely scalable.
-
-Static sites cannot run server-side code. If you need server-side rendering, API routes, or database access at request time, deploy a [Web Service](/deploy/web-services/) instead.
+The build produces HTML, CSS, JavaScript, and assets. Those files are what the service returns. There is no separate CDN product — it is the same public-HTTP path as any other service.
 
 ## Framework auto-detection
 

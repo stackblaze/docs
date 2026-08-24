@@ -1,11 +1,11 @@
 ---
-title: Data & storage
-description: Managed databases, volumes, backups, and messaging add-ons on the private network.
+title: Databases
+description: Managed databases, volumes, backups, and messaging on the private network.
 ---
 
 import { LinkCard, CardGrid } from '@astrojs/starlight/components';
 
-Managed databases, volumes, backups, and messaging add-ons on the private network.
+Add a database from **+ Service → Databases**. It lands on the canvas, joins the environment's private network, and can inject connection strings via [variables](/security/env-vars/).
 
 ## Databases
 
@@ -31,7 +31,7 @@ Every managed database runs as Standard or high-availability. Pick a topology wh
 ## Volumes
 
 <CardGrid>
-  <LinkCard title="Persistent disks" href="/storage/persistent-disks/" description="Block storage that survives restarts and redeploys." />
+  <LinkCard title="Volumes" href="/storage/persistent-disks/" description="Disk attached to a service; survives restarts and redeploys." />
 </CardGrid>
 
 ## Messaging

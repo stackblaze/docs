@@ -1,0 +1,14 @@
+---
+title: Up
+description: stackblaze up
+---
+
+Deploy the current directory (git build) or `--image` for a registry image. `--ci` streams NDJSON for pipelines.
+
+```bash
+stackblaze up --wait
+```
+
+Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+
+See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).

@@ -1,61 +1,9 @@
 ---
 title: Automation
-description: Deploy and operate StackBlaze from CI using the REST API, stackblaze.yaml, or MCP. Tokens use the kbr_pat_ prefix.
+description: Deploy from CI with the CLI, REST API, stackblaze.yaml, or MCP.
 ---
 
-Operate projects from CI or an MCP client using the same API the dashboard calls.
-
-## There is no npm CLI on this control plane
-
-Ignore any older mention of `@stackblaze/cli` or `stackblaze login`. Create a token in the dashboard, then call `https://api.stackblaze.cloud`.
-
-:::tip
-Interactive OpenAPI is at [https://api.stackblaze.cloud/api/docs](https://api.stackblaze.cloud/api/docs). MCP is at [mcp.stackblaze.cloud](https://mcp.stackblaze.cloud). Send the same Bearer token.
-:::
-
-## Authentication
-
-Dashboard → `Settings → API tokens → Generate token`. The value starts with `kbr_pat_` and is shown once. It inherits your organization and permissions.
-
-```bash title="terminal"
-export STACKBLAZE_TOKEN=kbr_pat_…
-
-curl -sS https://api.stackblaze.cloud/api/pipelines \
-  -H "Authorization: Bearer $STACKBLAZE_TOKEN"
-```
-
-## Trigger a build
-
-After your own CI tests pass, queue a platform build. Names are the project, phase, and app — not a service id.
-
-```bash title="terminal"
-curl -sS -X POST \
-  https://api.stackblaze.cloud/api/deployments/build/acme-app/production/api \
-  -H "Authorization: Bearer $STACKBLAZE_TOKEN" \
-  -H "Content-Type: application/json"
-```
-
-| Action | Method and path |
-| --- | --- |
-| Restart without rebuild | `GET /api/apps/{p}/{phase}/{app}/restart` |
-| App status | `GET /api/apps/{p}/{phase}/{app}/status` |
-| Rollback | `POST /api/deployments/rollback/{p}/{phase}/{app}/{revisionId}` |
-| Live logs | `GET /api/logs/{p}/{phase}/{app}/` |
-
-## Apply a blueprint
-
-When Infrastructure as Code is enabled on the project, plan and apply `stackblaze.yaml`. Apply never deletes.
-
-```bash title="terminal"
-curl -sS -X POST https://api.stackblaze.cloud/api/iac/blueprint/plan \
-  -H "Authorization: Bearer $STACKBLAZE_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d "{\"yaml\": $(jq -Rs . < stackblaze.yaml)}"
-```
-
-See [Blueprint](/blueprint/) for the file format.
-
-### GitHub Actions sketch
+Use the [CLI](/cli/) from GitHub Actions or GitLab CI:
 
 ```yaml title=".github/workflows/deploy.yml"
 name: Deploy
@@ -67,17 +15,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Queue StackBlaze build
+      - name: Install StackBlaze CLI
+        run: curl -fsSL https://stackblaze.com/install.sh | sh
+      - name: Deploy
         env:
+          STACKBLAZE_API_URL: https://api.stackblaze.cloud
           STACKBLAZE_TOKEN: ${{ secrets.STACKBLAZE_TOKEN }}
-        run: |
-          curl -sS -X POST \
-            https://api.stackblaze.cloud/api/deployments/build/acme-app/production/api \
-            -H "Authorization: Bearer $STACKBLAZE_TOKEN"
+        run: stackblaze up --ci -y --pipeline my-app --phase production --app web
 ```
 
-If the project already auto-deploys on git push, you do not need this workflow — the GitHub webhook is enough.
+If the project already [auto-deploys](/cicd/auto-deploy/) on git push, you do not need this workflow.
 
-## MCP
-
-Point an MCP client at `https://mcp.stackblaze.cloud` and pass your token in `Authorization`. Tool names in code are unprefixed (`get_app`, `deploy_app`, `search_logs`).
+You can also `POST /api/deployments/build/{pipeline}/{phase}/{app}` with a `kbr_pat_` bearer token. OpenAPI: [https://api.stackblaze.cloud/api/docs](https://api.stackblaze.cloud/api/docs). MCP: see [StackBlaze for Agents](/agents/).

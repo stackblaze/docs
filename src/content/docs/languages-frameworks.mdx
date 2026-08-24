@@ -1,0 +1,24 @@
+---
+title: Languages & frameworks
+description: Nixpacks detects the runtime. A Dockerfile always wins.
+---
+
+You do not pick a “language product.” Add a [service](/build-deploy/apps/) from Git. Nixpacks detects the runtime from the repo. If a `Dockerfile` is present, that file is used instead.
+
+| Runtime | Detected by |
+| --- | --- |
+| Node.js | `package.json` |
+| Python | `requirements.txt`, `pyproject.toml`, `Pipfile` |
+| Go | `go.mod` |
+| Ruby | `Gemfile` |
+| Rust | `Cargo.toml` |
+| PHP | `composer.json` |
+| Java | `pom.xml`, `build.gradle` |
+| Elixir | `mix.exs` |
+| Docker | `Dockerfile` |
+
+Override install, build, and start on the service if detection is wrong.
+
+Frameworks are just Node/Python/Ruby/Go apps on that path. Generate a domain if they serve HTTP. Attach databases from **+ Service → Databases**.
+
+Per-framework notes live under **Languages & frameworks** in the sidebar — [Next.js](/guides/nextjs/), [Django](/guides/django/), [Rails](/guides/rails/), [FastAPI](/guides/fastapi/), and the rest of the Railway-shaped catalog.

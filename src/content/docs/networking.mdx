@@ -1,18 +1,18 @@
 ---
 title: Networking
-description: Public URLs, custom domains, TLS, private DNS, WebSockets, and redirects.
+description: Public domains, TLS, private DNS between services, WebSockets, and redirects.
 ---
 
 import { LinkCard, CardGrid } from '@astrojs/starlight/components';
 
-Public URLs, custom domains, TLS, private DNS, WebSockets, and redirects.
+Services talk to the internet over **public networking**, and to each other over **private networking** in the same environment.
 
 ## In this section
 
 <CardGrid>
-  <LinkCard title="Custom domains" href="/networking/custom-domains/" description="Point your domain and get automatic TLS." />
+  <LinkCard title="Public networking" href="/networking/custom-domains/" description="Platform domains, custom hostnames, and automatic TLS." />
   <LinkCard title="SSL / TLS" href="/networking/ssl/" description="Certificates, HTTPS redirects, and cipher defaults." />
-  <LinkCard title="Private networking" href="/networking/private-networking/" description="Cluster DNS between apps in the same phase." />
+  <LinkCard title="Private networking" href="/networking/private-networking/" description="Service-name DNS inside an environment." />
   <LinkCard title="WebSockets" href="/networking/websockets/" description="Long-lived connections without extra platform config." />
   <LinkCard title="Redirects" href="/networking/redirects/" description="HTTP redirects at the edge." />
 </CardGrid>

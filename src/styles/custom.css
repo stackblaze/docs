@@ -129,6 +129,10 @@ header.header,
 	border-bottom: 1px solid var(--sl-color-hairline);
 	background: var(--sl-color-bg-nav);
 	backdrop-filter: blur(10px);
+	/* Starlight uses width:100% on a fixed header, which slides under the
+	   Windows scrollbar. Stretch with insets instead. */
+	width: auto;
+	inset-inline-end: 0;
 }
 
 site-search button[data-open-modal] {
@@ -146,6 +150,13 @@ site-search button[data-open-modal]:hover {
 
 /* Sidebar — quieter, Railway-like */
 .sidebar-content {
+	padding-top: 0.75rem;
+}
+
+/* Railway-style divider between the ungrouped intro links and the first folder. */
+.sidebar-content nav > ul > li:not(:has(details)) + li:has(details) {
+	border-top: 1px solid var(--sl-color-hairline);
+	margin-top: 0.65rem;
 	padding-top: 0.75rem;
 }
 
@@ -169,11 +180,13 @@ site-search button[data-open-modal]:hover {
 	color: var(--sl-color-accent-high);
 }
 
-.sidebar .group-label {
-	font-size: 0.75rem;
-	font-weight: 500;
-	letter-spacing: 0.01em;
-	color: var(--sl-color-gray-3);
+.sidebar .group-label,
+.sidebar .large,
+.sidebar summary {
+	font-size: 0.875rem;
+	font-weight: 400;
+	letter-spacing: 0;
+	color: var(--sl-color-gray-2);
 	text-transform: none;
 }
 
@@ -267,6 +280,26 @@ site-search button[data-open-modal]:hover {
 /* Right TOC */
 .right-sidebar-panel {
 	font-size: 0.8125rem;
+}
+
+/*
+ * Starlight pins .right-sidebar at top:0 / height:100vh with overflow-y:auto.
+ * scrollbar-width:none hides that bar in Firefox only, so Chromium/Windows
+ * draws a classic scrollbar through the fixed header (up-arrow + thumb).
+ */
+@media (min-width: 72rem) {
+	.right-sidebar {
+		top: var(--sl-nav-height);
+		height: calc(100vh - var(--sl-nav-height));
+		padding-top: 0.75rem;
+		z-index: 1;
+		scrollbar-width: none;
+	}
+
+	.right-sidebar::-webkit-scrollbar {
+		width: 0;
+		height: 0;
+	}
 }
 
 /* Pagination */

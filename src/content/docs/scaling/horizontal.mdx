@@ -7,7 +7,7 @@ Run multiple replicas of your service to handle higher traffic and improve avail
 
 ## Setting replica count
 
-Navigate to your service in the dashboard, click **Scaling** in the left menu, and adjust the **Replicas** slider. Changes take effect immediately, StackBlaze scales the Kubernetes Deployment and traffic is redistributed without downtime.
+Open the service → **Scaling** and set **Replicas**. New instances come up, pass health checks, then take traffic.
 
 ## Replica limits by plan
 
@@ -20,9 +20,7 @@ Navigate to your service in the dashboard, click **Scaling** in the left menu, a
 
 ## Traffic distribution
 
-Incoming requests are distributed across all healthy replicas using round-robin load balancing via the Kubernetes ClusterIP Service. The Ingress controller sends each new connection to the next available pod in rotation.
-
-There is no session affinity (sticky sessions) by default. Each request may be handled by a different replica. This is intentional, it encourages stateless service design and ensures requests continue to be served even if a pod restarts.
+Requests are spread across healthy replicas. There is no sticky session by default — any replica may handle the next request. Keep services stateless (sessions in Redis, files in object storage).
 
 ## Designing for horizontal scaling
 
@@ -30,7 +28,7 @@ For horizontal scaling to work reliably, your service should be stateless. Here'
 
 - **Don't store user sessions in memory.** Use Redis or a database-backed session store so any replica can serve any request.
 - **Don't store uploaded files on disk.** Use object storage (S3-compatible) so files are accessible from all replicas.
-- **Don't use local cache variables for shared state.** Each pod has its own memory. Use Redis for shared caching.
+- **Don't use in-memory caches for shared state.** Each replica has its own memory. Use Redis for shared cache.
 - **Use database-level locking for coordination.** If multiple replicas might process the same job, use advisory locks or atomic updates to prevent double-processing.
 
 ### Stateless session example

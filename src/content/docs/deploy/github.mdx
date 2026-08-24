@@ -1,13 +1,13 @@
 ---
 title: Deploy from GitHub
-description: Connect your GitHub repository for automatic deploys on every push.
+description: Connect a repo on the canvas and deploy on every push.
 ---
 
-Connect a GitHub repository and get automatic deploys on every push to your configured branch, no CI pipeline to configure.
+From **+ Service → Git repository**, connect GitHub and pick a repo. Pushes to the connected branch [auto-deploy](/cicd/auto-deploy/). Pull requests can get their own [environment](/deploy/environments/).
 
 ## GitHub OAuth flow
 
-When you create a new service, StackBlaze initiates the GitHub OAuth flow. You'll be redirected to GitHub and asked to authorize StackBlaze. You can choose to grant access to all repositories or select specific ones.
+The first time you add a Git service, StackBlaze sends you to GitHub to authorize access. You can grant all repositories or only the ones you select.
 
 StackBlaze requests the minimum required scope:
 
@@ -30,9 +30,9 @@ StackBlaze installs a GitHub App (not a personal OAuth token). This means access
 
 ## Branch selection
 
-When creating a service, you choose the branch to deploy from. StackBlaze deploys the latest commit on this branch automatically on every push. The most common configuration is to deploy from `main` to production.
+When you add the service, pick the branch. StackBlaze deploys the latest commit on that branch. Production usually tracks `main`.
 
-You can change the deploy branch at any time in Service Settings → Deploy → Branch. Changing the branch triggers an immediate deploy from the new branch's HEAD.
+Change it later in the service sheet → **Settings → Deploy → Branch**. Changing the branch deploys HEAD of the new branch.
 
 ## Auto-deploy on push
 
@@ -67,9 +67,9 @@ packages/types/**
 Always include your shared packages in the build filter, otherwise changes to shared code won't trigger a redeploy of the services that depend on it.
 :::
 
-## PR Preview environments
+## Pull-request environments
 
-When a pull request is opened against your deploy branch, StackBlaze automatically creates a preview environment — a full copy of your production stack with a unique URL. Preview environments are updated on every push to the PR branch.
+When review apps are on, opening a pull request against the deploy branch provisions a [preview environment](/cicd/pr-previews/) — a copy of the canvas with its own URL. It updates on every push to the PR branch.
 
 Preview URLs follow the pattern:
 

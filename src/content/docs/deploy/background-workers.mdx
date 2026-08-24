@@ -1,13 +1,13 @@
 ---
-title: Background Workers
-description: Run persistent background processes for queue consumers, event processors, and async workloads.
+title: Private services
+description: Always-on services with no public domain — queue consumers, processors, and other private workloads.
 ---
 
-Run long-lived processes that consume queues, process events, or handle async workloads, with no public endpoint.
+A **private service** is an always-on service with no public domain. Same canvas tile and build path as public HTTP; it just is not exposed to the internet. Use it for queue consumers, processors, and other private workloads.
 
-## What is a Background Worker?
+## When to leave a service private
 
-A background worker is a service that runs continuously but is never exposed to the internet. It has no public URL and no port binding requirement. Workers are ideal for:
+Skip generating a domain when the process does not serve public HTTP:
 
 - Queue consumers (BullMQ, Celery, Sidekiq, NATS, RabbitMQ)
 - Event stream processors (Kafka, Redis Streams)
@@ -145,12 +145,13 @@ From the dashboard, go to Service → Settings → Scaling and set the replica c
 Workers don't have HTTP health checks (no port to probe). StackBlaze monitors the process exit code instead. You can view worker logs in real time from the dashboard, or search history with `search_logs` in MCP / chat:
 
 ```bash title="terminal"
+# project / environment / service
 curl -sS "https://api.stackblaze.cloud/api/logs/{pipeline}/{phase}/{app}/" \
   -H "Authorization: Bearer $STACKBLAZE_TOKEN"
 ```
 
-For deeper observability, emit structured JSON logs and open [Coroot](/operations/observability/) from the app.
+For deeper observability, emit structured JSON logs and open [Coroot](/operations/observability/) from the service.
 
 ## Related
 
-If your worker should run on a schedule rather than continuously, use a [Cron Job](/deploy/cron-jobs/) instead. For persistent storage between worker runs, attach a [Persistent Disk](/storage/persistent-disks/).
+If the work should run on a schedule, use a [cron service](/deploy/cron-jobs/). For disk that survives restarts, attach a [volume](/storage/persistent-disks/).

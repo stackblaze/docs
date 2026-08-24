@@ -1,11 +1,11 @@
 ---
-title: Persistent Disks
-description: Attach durable block storage to any StackBlaze service. Data survives restarts, redeployments, and pod rescheduling. Learn how to configure mount paths, resize disks, and use SQLite on persistent storage.
+title: Volumes
+description: Attach a disk to a service so data survives restarts and redeploys.
 ---
 
-By default, files written inside a container are ephemeral, they disappear when the container restarts. Persistent disks give your service a durable block storage volume that survives restarts, redeployments, and pod rescheduling. Mount it at any path and use it like a normal filesystem.
+Files inside a container are ephemeral. A **volume** is block storage mounted into a service so data survives restarts and redeploys. Use it for SQLite, uploads, model caches, and similar.
 
-Persistent disks are ideal for SQLite databases, uploaded files, ML model caches, and any other data that must survive deploys. For data that needs to be shared across multiple service replicas, use object storage (S3-compatible) instead, block storage is attached to a single pod.
+A volume is attached to one service instance. It is not shared across replicas. For data every replica must see, use object storage or a database on the canvas.
 
 ## Performance specifications
 
@@ -20,7 +20,7 @@ Persistent disks are ideal for SQLite databases, uploaded files, ML model caches
 | Billing | Per GB-month (provisioned size) |
 
 :::caution[One disk per service instance, not shared across replicas]
-A persistent disk is mounted on a single pod. If your service runs with 3 replicas, each replica gets its own disk instance, they do not share data. For shared file storage across replicas (e.g. user uploads accessible from any pod), use an S3-compatible object storage service instead.
+A volume is attached to one service instance. It is not shared across replicas. For data every replica must see, use object storage or a database on the canvas.
 :::
 
 ## Disk configuration

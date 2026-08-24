@@ -1,13 +1,13 @@
 ---
-title: Using Docker Compose
-description: Write your stack with Docker Compose locally, then import it to StackBlaze — each Compose service becomes an independent StackBlaze app.
+title: Import
+description: Import Compose, render.yaml, or fly.toml onto the project canvas.
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 
-Docker Compose is great for local development. StackBlaze runs the same pieces, but splits them by responsibility: your application containers become **apps**, and the databases and caches you used to run as Compose services become **managed add-ons**.
+From **+ Service → Import**, drop a Compose file, `render.yaml`, or `fly.toml` onto the canvas. Application containers become **services**. Databases and caches become **managed databases** on the same board, with backups and private networking.
 
-Doing the mapping once gets you backups, version upgrades, optional high availability, and a private network for free, instead of babysitting database containers in production. The translation is almost always mechanical; the table below covers the common cases.
+The mapping is usually mechanical. The Compose example below is the common case; Render and Fly imports follow the same canvas result.
 
 ## Example `docker-compose.yml`
 
@@ -43,34 +43,34 @@ volumes:
 
 ## What you end up with
 
-| Kind | Name | On StackBlaze |
+| Kind | Name | On the canvas |
 | --- | --- | --- |
-| app | `web` | Deployed from your Dockerfile, port 3000 |
-| add-on | `postgres` | Managed PostgreSQL, attached to web |
-| add-on | `redis` | Managed Redis-compatible cache |
-| volume | `/data` | Persistent disk on the app |
+| service | `web` | Built from your Dockerfile, port 3000 |
+| database | `postgres` | Managed PostgreSQL |
+| database | `redis` | Managed Redis-compatible cache |
+| volume | `/data` | Volume on the web service |
 
-There is no import command — you recreate each Compose service as an app or an add-on in the dashboard or a [Blueprint](/blueprint/).
+Import stages the tiles. [Deploy](/deploy/staged-changes/) applies them. You can also describe the same stack in [config as code](/blueprint/).
 
 ## Compose → StackBlaze
 
 | Compose key | StackBlaze equivalent |
 | --- | --- |
-| `build: .` | App (from Dockerfile) |
-| `image: postgres:16` | Managed PostgreSQL add-on |
-| `image: redis:7-alpine` | Managed Redis-compatible add-on |
-| `volumes:` | Persistent disk |
-| `environment:` | Environment variables / secrets |
+| `build: .` | Service (from Dockerfile) |
+| `image: postgres:16` | Managed PostgreSQL |
+| `image: redis:7-alpine` | Managed Redis-compatible database |
+| `volumes:` | Volume |
+| `environment:` | [Variables](/security/env-vars/) |
 
 ## Under the hood
 
-The translation follows a few consistent rules, so you always know which Compose service becomes an app and which becomes a managed add-on:
+The mapping is consistent:
 
-- **build / image**: services built from source (`build`) or shipped as your own image become **apps**, keeping the same port and start command.
-- **known datastores**: services using a stock image such as `postgres`, `redis`, `mysql`, or `mongo` become **managed add-ons**, run and maintained for you rather than as raw containers.
-- **volumes**: named volumes on an app service become **persistent disks** mounted at the same path. Add-on storage is managed for you, so datastore volumes don't carry over.
-- **environment**: plain values become **environment variables**; the ones you mark sensitive become **secrets**. Add-on connection strings are injected for you, so you can drop the hard-coded `DATABASE_URL` from your Compose file.
-- **networking**: Compose's default network becomes your project's **private network**. Each service is still reachable by its name, so inter-service URLs mostly carry over unchanged.
+- **build / image**: source builds and your own images become **services**, same port and start command.
+- **known datastores**: stock images such as `postgres`, `redis`, `mysql`, or `mongo` become **managed databases**.
+- **volumes**: named volumes on a service become **volumes** at the same path. Database storage is managed for you.
+- **environment**: values become [variables](/security/env-vars/). Database URLs are injected, so drop hardcoded `DATABASE_URL` from Compose.
+- **networking**: Compose's default network becomes the environment's [private network](/networking/private-networking/). Names still resolve.
 
 ## Step by step
 
@@ -78,19 +78,19 @@ The translation follows a few consistent rules, so you always know which Compose
 
 1. **Keep your docker-compose.yml as the reference**
 
-   Your Compose file already lists everything your app needs. On StackBlaze you translate it into one app plus a few managed add-ons, rather than running every container yourself. Keep the file open — it is your checklist.
+   Your Compose file is the checklist. Import it, then deploy the staged canvas.
 
-2. **App services become StackBlaze apps**
+2. **App containers become services**
 
-   Any service you build from source (`build:`) or ship as your own image becomes a StackBlaze app, deployed from the same Dockerfile or image, with the same port and command. This is the part of the stack that is actually your code.
+   Anything you `build` or ship as your own image becomes a service from that Dockerfile or image, same port and command.
 
-3. **Datastore services become managed add-ons**
+3. **Datastore containers become managed databases**
 
-   Don't run your own postgres or redis container. Swap each datastore service for a managed add-on you attach to the app — you get backups, version upgrades, and optional high availability instead of an unmanaged container.
+   Do not run your own postgres or redis container. Import maps those images to managed databases with backups and optional HA.
 
 4. **Wire them together**
 
-   Attach the add-ons and their connection strings are injected into the app as environment variables. Other apps are reachable by their service name on the private network, so `depends_on` and the Compose network are handled for you.
+   Connection strings land as variables. Other services are reachable by name on the private network, so `depends_on` is handled for you.
 
 </Steps>
 

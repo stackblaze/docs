@@ -6,7 +6,7 @@ description: Managed MySQL 8.0 and 8.4 with automated backups, point-in-time rec
 Managed MySQL with automated backups and private internal networking.
 
 :::note[Powered by MariaDB]
-MySQL on StackBlaze is served by **MariaDB**, a drop-in, MySQL-compatible engine with a first-class Kubernetes operator. Your MySQL drivers, connection strings, and SQL work unchanged. We use MariaDB so we can ship a MySQL-compatible database under a permissive license with built-in clustering.
+MySQL on StackBlaze is **MariaDB**, a MySQL-compatible engine. Drivers, connection strings, and SQL stay the same.
 :::
 
 ## Supported versions
@@ -20,15 +20,15 @@ StackBlaze supports MySQL 8.0 and MySQL 8.4. MySQL 8.4 is the current LTS releas
 
 ## Creating a MySQL instance
 
-From the dashboard, click **New service → Database → MySQL**. Select a version, storage size (1 GB to 500 GB), and plan. StackBlaze provisions a Kubernetes StatefulSet with a PersistentVolumeClaim and a stable ClusterIP Service.
+From **+ Service → Databases**, add **MySQL**. Pick version, disk size, and plan.
 
-To connect your MySQL instance to a service, go to the service's **Environment** tab and click **Attach database**. StackBlaze injects `DATABASE_URL` automatically.
+Attach it from another service's **Variables**. `DATABASE_URL` is injected.
 
 ## Connection strings
 
 ### Internal (recommended for production)
 
-Services in the same project connect to MySQL via its internal hostname, which resolves to a stable ClusterIP. No internet exposure, no TLS overhead.
+Services in the same environment reach MySQL by service name on the private network. No public exposure.
 
 ```text title="Connection string (internal)"
 mysql://user:password@[service-name]:3306/dbname

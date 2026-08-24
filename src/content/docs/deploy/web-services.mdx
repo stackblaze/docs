@@ -1,15 +1,15 @@
 ---
-title: Web Services
-description: Deploy HTTP services with automatic TLS, health checks, and zero-downtime rolling updates.
+title: Public HTTP
+description: Give a service a public URL, TLS, health checks, and rolling deploys.
 ---
 
-Deploy HTTP servers that receive public traffic. StackBlaze handles TLS, load balancing, health checks, and zero-downtime rolling updates.
+A service becomes public HTTP when you generate a domain on it. StackBlaze terminates TLS, load-balances, health-checks, and rolls out new revisions without a separate “web service” product.
 
-## What is a Web Service?
+## Public HTTP on a service
 
-A web service is any process that listens on a TCP port and serves HTTP(S) traffic. StackBlaze provisions a public URL in the form `https://your-service.stackblaze.app`. You can also attach a [custom domain](/networking/custom-domains/).
+Any always-on service that listens on a TCP port can receive internet traffic. Generate a `https://your-service.stackblaze.app` domain from the service sheet, or attach a [custom domain](/networking/custom-domains/).
 
-Web services support HTTP/1.1, HTTP/2, and WebSockets. There is no need to terminate TLS yourself — the platform handles it and forwards plain HTTP to your container.
+HTTP/1.1, HTTP/2, and WebSockets work without extra config. Do not terminate TLS in the container — the platform forwards HTTP to it.
 
 ## Port detection
 

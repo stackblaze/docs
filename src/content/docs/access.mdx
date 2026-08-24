@@ -1,16 +1,16 @@
 ---
-title: Access
-description: Environment variables, secrets, team roles, 2FA, and IP allowlisting.
+title: Account
+description: Secret files, team roles, 2FA, and IP allowlisting.
 ---
 
 import { LinkCard, CardGrid } from '@astrojs/starlight/components';
 
-Environment variables, secrets, team roles, 2FA, and IP allowlisting.
+Team access and account security. Service [variables](/security/env-vars/) live under Develop.
 
 ## In this section
 
 <CardGrid>
-  <LinkCard title="Environment variables" href="/security/env-vars/" description="Per-phase config, secrets, and shared values." />
+  <LinkCard title="Variables" href="/security/env-vars/" description="Service config, secrets, and database-linked values." />
   <LinkCard title="Secret files" href="/security/secret-files/" description="Mount files that should not live in git." />
   <LinkCard title="Team & permissions" href="/security/team-permissions/" description="Owner, Admin, Developer, and Viewer roles." />
   <LinkCard title="Two-factor auth" href="/security/two-factor-auth/" description="TOTP 2FA and recovery codes." />
