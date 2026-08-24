@@ -1,0 +1,55 @@
+---
+title: Troubleshooting
+description: Common deployment failures, health check issues, DNS problems, and database connection errors, with fixes.
+---
+
+A checklist for the issues support sees most often. Start here before opening a ticket.
+
+## Deployment failures
+
+Open **Service → Deploys → [failed deploy] → Logs** and find the first red step. Most failures fall into one of these buckets:
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| Build exits 1 immediately | Wrong root directory or missing lockfile | Set root directory in Settings; commit package-lock.json or yarn.lock |
+| Module not found at runtime | Dev dependency used in production | Move the package to dependencies or set NODE_ENV=production in build |
+| Container exits after start | Process binds to localhost only | Listen on 0.0.0.0 and use process.env.PORT |
+| Deploy stuck on "Starting" | Health check never passes | See Health checks below |
+
+## Health checks
+
+StackBlaze only routes traffic to replicas that return `200` on your health path (default `/health`). A common mistake is checking a dependency that is not ready on cold start.
+
+:::tip
+Temporarily point the health path at a static `/health` that returns 200 with no DB checks. If deploys succeed, fix the dependency timeout or add a startup grace period (up to 300s).
+:::
+
+See [Health checks](/storage/health-checks/) for probe configuration.
+
+## Environment variables
+
+Changes to env vars trigger a redeploy. If the app still sees old values, confirm you edited the correct **environment** (production vs preview) and that the service is attached to the right project.
+
+### DATABASE_URL missing
+
+Attach the database from the service's Environment tab. StackBlaze injects `DATABASE_URL` automatically — do not paste a localhost URL from your laptop.
+
+## Custom domains and SSL
+
+DNS can take up to 48 hours to propagate. Verify the CNAME or A record matches the value in **Domains**. Certificate issuance fails if Cloudflare orange-cloud proxies the record — use DNS-only (grey cloud) during verification.
+
+## Database connection errors
+
+Managed databases are reachable at their internal service hostname from services in the same project. Connection refused usually means the service and database are in different projects or the app is using a public URL from local `.env`.
+
+## Out of memory (OOM)
+
+Check **Metrics → Memory**. If the line hits the plan limit and the instance restarts, upgrade the plan or reduce in-process cache size. Node apps should pass `--max-old-space-size` below the container limit.
+
+See [Memory & CPU limits](/scaling/limits/).
+
+## Still stuck?
+
+Email [support@stackblaze.com](mailto:support@stackblaze.com) with the service ID, deploy ID, and the last 50 lines of build/runtime logs. Pro and Enterprise plans can use in-dashboard live chat.
+
+Related: [Support center](https://stackblaze.com/support) · [Observability](/operations/observability/) · [Status page](https://stackblaze.com/status)

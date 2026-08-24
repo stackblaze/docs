@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" fill="none">
+  <rect width="1200" height="400" fill="#07070d"/>
+  <text x="80" y="55" fill="#ffffff" fill-opacity="0.5" font-family="ui-sans-serif, system-ui, sans-serif" font-size="22" font-weight="600">Rolling update timeline</text>
+  <text x="120" y="120" fill="#ffffff" fill-opacity="0.3" font-family="ui-monospace, monospace" font-size="12">t0</text>
+  <rect x="160" y="95" width="100" height="56" rx="10" fill="#312e81" stroke="#a78bfa" stroke-opacity="0.5"/>
+  <rect x="280" y="95" width="100" height="56" rx="10" fill="#312e81" stroke="#a78bfa" stroke-opacity="0.5"/>
+  <text x="200" y="130" fill="#c4b5fd" font-family="ui-monospace, monospace" font-size="13">v1</text>
+  <text x="320" y="130" fill="#c4b5fd" font-family="ui-monospace, monospace" font-size="13">v1</text>
+  <text x="480" y="120" fill="#ffffff" fill-opacity="0.3" font-family="ui-monospace, monospace" font-size="12">t1</text>
+  <rect x="520" y="95" width="100" height="56" rx="10" fill="#064e3b" stroke="#34d399" stroke-opacity="0.5"/>
+  <rect x="640" y="95" width="100" height="56" rx="10" fill="#312e81" stroke="#a78bfa" stroke-opacity="0.5"/>
+  <text x="560" y="130" fill="#6ee7b7" font-family="ui-monospace, monospace" font-size="13">v2 ready</text>
+  <text x="680" y="130" fill="#c4b5fd" font-family="ui-monospace, monospace" font-size="13">v1</text>
+  <text x="840" y="120" fill="#ffffff" fill-opacity="0.3" font-family="ui-monospace, monospace" font-size="12">t2</text>
+  <rect x="880" y="95" width="100" height="56" rx="10" fill="#064e3b" stroke="#34d399" stroke-opacity="0.5"/>
+  <rect x="1000" y="95" width="100" height="56" rx="10" fill="#064e3b" stroke="#34d399" stroke-opacity="0.5"/>
+  <text x="920" y="130" fill="#6ee7b7" font-family="ui-monospace, monospace" font-size="13">v2</text>
+  <text x="1040" y="130" fill="#6ee7b7" font-family="ui-monospace, monospace" font-size="13">v2</text>
+  <path d="M80 200 H1120" stroke="#ffffff" stroke-opacity="0.08"/>
+  <text x="80" y="250" fill="#34d399" font-family="ui-monospace, monospace" font-size="14">readinessProbe passes | traffic shifts | old pod drains</text>
+  <text x="80" y="290" fill="#ffffff" fill-opacity="0.35" font-family="ui-monospace, monospace" font-size="13">maxUnavailable: 0 | preStop sleep | zero dropped requests</text>
+</svg>

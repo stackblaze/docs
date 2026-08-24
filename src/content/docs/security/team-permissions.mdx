@@ -1,0 +1,106 @@
+---
+title: Team & Permissions
+description: Manage team members and roles on StackBlaze. Understand the Owner, Admin, Developer, and Viewer roles, how to invite members, and Enterprise features like SAML SSO, enforce 2FA, and audit logs.
+---
+
+StackBlaze uses role-based access control (RBAC) with four roles: Owner, Admin, Developer, and Viewer. Each role defines what actions a team member can perform across the project. Role changes take effect immediately without a redeploy.
+
+Enterprise plans support SAML 2.0 SSO (Okta, Google Workspace, Azure AD) and allow workspace owners to enforce 2FA for all members. All admin actions are logged in the audit log with timestamp, user identity, and IP address.
+
+## Roles
+
+### Owner
+
+Full access to all project resources. Can manage billing, delete the project, and transfer ownership.
+
+- All service operations (deploy, delete, scale)
+- Invite and remove members
+- Change member roles
+- Manage billing and subscription
+- Delete the project
+- Transfer ownership
+- Configure IP allowlist and SSO (Enterprise)
+
+### Admin
+
+All service operations and team management, excluding billing and project deletion.
+
+- All service operations (deploy, delete, scale)
+- Invite and remove members
+- Change member roles (up to Admin)
+- View and edit all environment variables
+- Create and delete databases
+- Cannot access billing
+- Cannot delete the project
+
+### Developer
+
+Can deploy, view logs, and manage environment variables. Cannot delete services or manage team members.
+
+- Deploy services (manual and auto)
+- View real-time and historical logs
+- Set and unset environment variables
+- Trigger rollbacks
+- View all service settings
+- Cannot delete services or databases
+- Cannot invite or remove members
+
+### Viewer
+
+Read-only access to the dashboard and logs. Cannot make any changes.
+
+- View service status and overview
+- View historical and live logs
+- View environment variable keys (not secret values)
+- View deployment history
+- Cannot deploy, rollback, or change settings
+- Cannot view or edit team members
+
+## Team members view
+
+A typical team might look like:
+
+| Name | Email | Role |
+| --- | --- | --- |
+| Alex Chen | alex@acmecorp.com | Owner |
+| Sam Rivera | sam@acmecorp.com | Admin |
+| Jordan Lee | jordan@acmecorp.com | Developer |
+| Taylor Kim | taylor@acmecorp.com | Viewer |
+
+## Enterprise features
+
+### SAML 2.0 SSO
+
+Connect your identity provider, Okta, Google Workspace, or Azure AD. Members sign in with their existing corporate credentials. Provisioning and deprovisioning can be automated via SCIM.
+
+### Audit log
+
+All admin actions, deploys, setting changes, member invites, deletions, are recorded with timestamp, user identity, and IP address. Export to SIEM via webhook or API. Retained for 90 days.
+
+### Enforce 2FA
+
+Workspace owners can require all members to enable two-factor authentication. Members who have not enabled 2FA are locked out of the dashboard until they comply.
+
+### IP allowlisting
+
+Restrict dashboard and API access to specific IP ranges. Requests from unlisted IPs receive 403. Combine with a corporate VPN for network-level access control.
+
+## Step by step
+
+1. **Invite a team member**
+
+   Go to Project → Settings → Team → Invite Member. Enter the email address and select a role. StackBlaze sends an invitation email. The member must accept the invitation to gain access. Pending invitations are shown in the Team tab.
+
+2. **Change a member's role**
+
+   Click the role badge next to a team member's name in the Team tab. Select the new role from the dropdown. The change takes effect immediately, no redeploy required. Only Owners and Admins can change roles, and Admins cannot promote to Owner.
+
+3. **Remove a member**
+
+   Click the three-dot menu next to a team member and select "Remove from project". Access is revoked immediately. Any API keys created by that user remain valid until revoked separately from Account Settings → API Keys.
+
+## Next steps
+
+- [Two-factor authentication](/security/two-factor-auth/)
+- [IP allowlisting (Enterprise)](/security/ip-allowlist/)
+- [Environment variable access control](/security/env-vars/)

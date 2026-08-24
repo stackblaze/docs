@@ -1,0 +1,143 @@
+---
+title: MySQL
+description: Managed MySQL 8.0 and 8.4 with automated backups, point-in-time recovery, and private cluster networking for web services and workers.
+---
+
+Managed MySQL with automated backups and private internal networking.
+
+:::note[Powered by MariaDB]
+MySQL on StackBlaze is served by **MariaDB**, a drop-in, MySQL-compatible engine with a first-class Kubernetes operator. Your MySQL drivers, connection strings, and SQL work unchanged. We use MariaDB so we can ship a MySQL-compatible database under a permissive license with built-in clustering.
+:::
+
+## Supported versions
+
+StackBlaze supports MySQL 8.0 and MySQL 8.4. MySQL 8.4 is the current LTS release and is recommended for new projects. Both versions include full InnoDB support, JSON functions, window functions, and CTEs.
+
+| Version | Status | Notes |
+| --- | --- | --- |
+| MySQL 8.4 | Recommended | LTS release, default for new instances |
+| MySQL 8.0 | Supported | EOL January 2026, consider migrating |
+
+## Creating a MySQL instance
+
+From the dashboard, click **New service → Database → MySQL**. Select a version, storage size (1 GB to 500 GB), and plan. StackBlaze provisions a Kubernetes StatefulSet with a PersistentVolumeClaim and a stable ClusterIP Service.
+
+To connect your MySQL instance to a service, go to the service's **Environment** tab and click **Attach database**. StackBlaze injects `DATABASE_URL` automatically.
+
+## Connection strings
+
+### Internal (recommended for production)
+
+Services in the same project connect to MySQL via its internal hostname, which resolves to a stable ClusterIP. No internet exposure, no TLS overhead.
+
+```text title="Connection string (internal)"
+mysql://user:password@[service-name]:3306/dbname
+```
+
+### External (for local development tools)
+
+Use the external connection string for GUI clients like TablePlus, MySQL Workbench, or DBeaver. Connections are secured via SSL. Find the external URL in **Settings → Connection**.
+
+```text title="Connection string (external)"
+mysql://user:password@db.stackblaze.cloud:3306/dbname?ssl=true
+```
+
+## Running migrations
+
+Configure a pre-deploy command under **Settings → Deploy → Pre-deploy command** to ensure migrations run before new traffic is routed to your service.
+
+### Prisma
+
+```bash title="Pre-deploy command"
+npx prisma migrate deploy
+```
+
+### Flyway
+
+```bash title="Pre-deploy command"
+flyway -url=jdbc:mysql://[service-name]:3306/dbname \
+        -user=$DB_USER \
+        -password=$DB_PASSWORD \
+        migrate
+```
+
+### Liquibase
+
+```bash title="Pre-deploy command"
+liquibase \
+  --url=jdbc:mysql://[service-name]:3306/dbname \
+  --username=$DB_USER \
+  --password=$DB_PASSWORD \
+  --changeLogFile=db/changelog/changelog.xml \
+  update
+```
+
+### Node.js / Knex
+
+```bash title="Pre-deploy command"
+npx knex migrate:latest
+```
+
+:::tip
+The `DATABASE_URL` environment variable is available in your pre-deploy container. Most ORMs and migration tools pick it up automatically. For JDBC-based tools (Flyway, Liquibase), parse the URL components into separate variables in your CI/CD configuration.
+:::
+
+## Automated backups
+
+All plans include daily automated snapshots, plus on-demand snapshots you can take before a risky change. Backups are encrypted at rest and stored separately from your data.
+
+To restore from a snapshot: navigate to your database → **Backups** → select a snapshot → **Restore**. You can restore to a new instance without interrupting your live database.
+
+| Plan | Snapshot retention |
+| --- | --- |
+| Free | 1 day |
+| Starter | 3 days |
+| Pro | 7 days |
+| Enterprise | 30 days |
+
+## Character sets and collations
+
+New MySQL instances default to `utf8mb4` charset with `utf8mb4_unicode_ci` collation, the correct choice for modern applications that need full Unicode support including emoji.
+
+```sql title="Verify charset"
+SHOW VARIABLES LIKE 'character_set%';
+SHOW VARIABLES LIKE 'collation%';
+```
+
+## Connecting with common ORMs
+
+### Prisma (MySQL provider)
+
+```prisma title="prisma/schema.prisma"
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+```
+
+### TypeORM
+
+```ts title="data-source.ts"
+import { DataSource } from 'typeorm'
+
+export const AppDataSource = new DataSource({
+  type: 'mysql',
+  url: process.env.DATABASE_URL,
+  entities: ['src/entities/**/*.ts'],
+  migrations: ['src/migrations/**/*.ts'],
+})
+```
+
+### SQLAlchemy (Python)
+
+```python title="database.py"
+from sqlalchemy import create_engine
+
+# Replace mysql:// with mysql+pymysql:// for PyMySQL driver
+url = os.environ["DATABASE_URL"].replace("mysql://", "mysql+pymysql://", 1)
+engine = create_engine(url, pool_pre_ping=True)
+```
+
+:::note[Under the hood]
+MySQL runs as a Kubernetes **StatefulSet** with a dedicated **PersistentVolumeClaim** backed by SSD storage. A **ClusterIP Service** provides the stable DNS name `[service-name]`. The StatefulSet uses `podManagementPolicy: OrderedReady` to ensure clean startup and shutdown ordering.
+:::

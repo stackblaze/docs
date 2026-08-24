@@ -1,0 +1,78 @@
+---
+title: Auto Deploy on Push
+description: Configure GitHub-triggered automatic deployments on StackBlaze. Learn how the git push → build → rolling deploy pipeline works, how to skip deploys with [skip ci], and how to restrict trigger paths in a monorepo.
+---
+
+Every StackBlaze web service and worker connected to GitHub deploys automatically on every push to the configured branch. The pipeline, from `git push` to live traffic, typically completes in **60 to 180 seconds** depending on your build time and image size.
+
+You can skip a deploy by adding `[skip ci]` to your commit message. You can also restrict which file paths trigger a deploy, useful for monorepos where documentation changes shouldn't rebuild your API server.
+
+## Deploy pipeline
+
+`git push` (commit) → Webhook (received) → Build (Docker image) → Registry (image pushed) → Rolling (deploy) → Live (healthy)
+
+## Build log
+
+```text title="Build #47, my-api, commit a3f9c12"
+00:00  Cloning github.com/acmecorp/my-api (branch: main)
+00:01  Checked out commit a3f9c12 — "feat: add rate limiting middleware"
+00:02  Detected Node.js 22 (package.json engines field)
+00:02  Installing dependencies with npm ci...
+00:18  Dependencies installed (638 packages in 16.4s)
+00:18  Building production image...
+00:39  Layer cache hit: base image (saved 14s)
+00:41  Image built: sha256:d4e8f1a2b3c9... (182 MB)
+00:42  Pushing to internal registry...
+00:48  Image pushed successfully
+00:49  Rolling update starting (3 replicas)...
+01:02  replica-1: updated, readiness probe passed
+01:09  replica-2: updated, readiness probe passed
+01:16  replica-3: updated, readiness probe passed
+01:17  Health check passed — GET /health 200 (12ms)
+01:17  Deploy complete. Live: https://my-api.stackblaze.app
+```
+
+## Deploy settings
+
+- **Auto-deploy**: Trigger a deploy on every push to the branch below (on by default).
+- **Trigger branch**: Deploy when commits are pushed to this branch (example: `main`).
+- **Build filters (ignored paths)**: Pushes that only change these paths will not trigger a build. Example patterns: `docs/**`, `README.md`, `*.test.ts`, `.github/**`.
+
+:::note[Under the hood]
+- **GitHub webhook**: StackBlaze registers a `push` event webhook secured with a per-project HMAC-SHA256 secret. Payloads are verified before any build triggers, preventing spoofed deploys.
+- **Kubernetes Job for the build**: each build runs as an isolated Kubernetes Job in a dedicated build namespace. The Job clones your repo, runs your build command inside a rootless Kaniko container, and pushes the image to the internal OCI registry.
+- **Rolling update**: deployment uses `maxSurge: 1, maxUnavailable: 0`. A new pod starts and passes its readiness probe before any old pod is removed, keeping capacity at 100% throughout the update.
+- **Layer caching**: Docker layer cache is persisted between builds on a per-service volume. Unchanged base image and dependency layers are reused, saving 30–60 seconds off typical build times.
+:::
+
+## Step by step
+
+1. **Connect your GitHub repository**
+
+   When you create a web service or worker from a GitHub repository, StackBlaze automatically installs a webhook on the repo. No manual setup is required, you'll see a stackblaze.com entry under GitHub → Settings → Webhooks. The webhook is secured with a per-project HMAC-SHA256 secret.
+
+2. **Configure the trigger branch**
+
+   Navigate to Service → Settings → Build & Deploy. The default trigger branch is "main" (falling back to "master"). You can change this to any branch name, or use a glob pattern like "release/*" to trigger on all release branches simultaneously.
+
+3. **Set build filters (optional)**
+
+   Add ignored path patterns to prevent unnecessary builds. For example, add `docs/**` and `README.md` so that documentation-only changes don't trigger a rebuild. Patterns follow gitignore glob syntax. Useful for monorepos where multiple services share a single repository.
+
+4. **Push a commit**
+
+   Push any commit to the configured branch. To skip a deploy, include `[skip ci]` or `[no deploy]` anywhere in the commit message. StackBlaze checks the webhook payload commit message and skips the build if either marker is present, leaving the current deployment untouched.
+
+5. **Watch the build logs**
+
+   Open Service → Deployments to see the in-progress build. Logs stream in real time, you'll see clone, install, build, and push phases followed by the rolling update. Each phase is timestamped. Click any line to copy it to your clipboard.
+
+6. **Service goes live**
+
+   Once the rolling update completes and all health checks pass, 100% of traffic is routed to the new version. The previous deployment image is retained for rollback. Rollbacks re-deploy the prior image without a rebuild, typically completing in under 30 seconds.
+
+## Next steps
+
+- [PR preview environments](/cicd/pr-previews/)
+- [Rolling back a deployment](/cicd/rollbacks/)
+- [Deploy hooks for external CI](/cicd/deploy-hooks/)

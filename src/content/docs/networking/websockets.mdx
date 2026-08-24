@@ -1,0 +1,182 @@
+---
+title: WebSockets
+description: WebSockets and Server-Sent Events work out of the box on StackBlaze with no configuration. Long-lived connections supported with a 3600s proxy timeout.
+---
+
+WebSockets work out of the box on StackBlaze. Long-lived connections are fully supported with no proxy timeout issues.
+
+## No configuration needed
+
+WebSocket connections are supported on all StackBlaze web services without any configuration. The Ingress controller passes `Upgrade: websocket` headers through to your service, and long-lived connections are maintained with a 3600-second proxy read timeout, far longer than any typical idle connection.
+
+Server-Sent Events (SSE) are also fully supported with the same timeout settings.
+
+## WebSocket libraries
+
+All major WebSocket libraries work on StackBlaze without modification:
+
+### ws (Node.js)
+
+```ts title="server.ts"
+import { WebSocketServer } from 'ws'
+import { createServer } from 'http'
+
+const server = createServer(app)
+const wss = new WebSocketServer({ server })
+
+wss.on('connection', (ws, req) => {
+  console.log('Client connected')
+
+  ws.on('message', (data) => {
+    // Echo back to sender
+    ws.send(data.toString())
+  })
+
+  ws.on('close', () => {
+    console.log('Client disconnected')
+  })
+
+  // Send a ping every 30s to keep the connection alive
+  const interval = setInterval(() => ws.ping(), 30_000)
+  ws.on('close', () => clearInterval(interval))
+})
+
+server.listen(process.env.PORT || 8080)
+```
+
+### Socket.IO
+
+```ts title="server.ts"
+import { createServer } from 'http'
+import { Server } from 'socket.io'
+
+const httpServer = createServer(app)
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.ALLOWED_ORIGINS?.split(',') ?? '*',
+    methods: ['GET', 'POST'],
+  },
+  // Socket.IO will use WebSockets by default, falling back to polling
+  transports: ['websocket', 'polling'],
+})
+
+io.on('connection', (socket) => {
+  socket.on('join-room', (roomId) => {
+    socket.join(roomId)
+  })
+
+  socket.on('message', (roomId, data) => {
+    socket.to(roomId).emit('message', data)
+  })
+})
+
+httpServer.listen(process.env.PORT || 8080)
+```
+
+### Server-Sent Events (SSE)
+
+```ts title="server.ts"
+app.get('/events', (req, res) => {
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no', // Disable nginx buffering for SSE
+  })
+
+  const send = (data: object) => {
+    res.write(`data: ${JSON.stringify(data)}\n\n`)
+  }
+
+  send({ type: 'connected' })
+
+  const interval = setInterval(() => {
+    send({ type: 'heartbeat', timestamp: Date.now() })
+  }, 15_000)
+
+  req.on('close', () => {
+    clearInterval(interval)
+  })
+})
+```
+
+:::tip[Tip, disable nginx buffering for SSE]
+Add the `X-Accel-Buffering: no` response header in your SSE endpoint to prevent the Ingress controller's nginx proxy from buffering your event stream. Without this, events may be delayed until the buffer fills.
+:::
+
+## Scaling WebSocket services horizontally
+
+A WebSocket connection is pinned to a single pod for its lifetime. When you scale your service to multiple replicas, each new connection is routed to a pod by the Kubernetes Service load balancer (round-robin), but existing connections stay on their current pod.
+
+This means if you need to broadcast an event to all connected clients (e.g. a chat message), you must use a shared pub/sub mechanism so all pods can forward the event to their locally-connected clients.
+
+### Broadcasting with Redis pub/sub (Socket.IO adapter)
+
+```ts title="server.ts"
+import { createAdapter } from '@socket.io/redis-adapter'
+import { createClient } from 'redis'
+
+const pubClient = createClient({ url: process.env.REDIS_URL })
+const subClient = pubClient.duplicate()
+
+await Promise.all([pubClient.connect(), subClient.connect()])
+
+io.adapter(createAdapter(pubClient, subClient))
+
+// Now io.emit() and socket.to(room).emit() work across all pods
+io.emit('announcement', { message: 'Server update in 5 minutes' })
+```
+
+### Broadcasting with ws + Redis
+
+```ts title="broadcast.ts"
+import { createClient } from 'redis'
+import { WebSocketServer } from 'ws'
+
+const publisher = createClient({ url: process.env.REDIS_URL })
+const subscriber = publisher.duplicate()
+await Promise.all([publisher.connect(), subscriber.connect()])
+
+const wss = new WebSocketServer({ port: 8080 })
+const clients = new Set<WebSocket>()
+
+wss.on('connection', (ws) => {
+  clients.add(ws)
+  ws.on('close', () => clients.delete(ws))
+})
+
+// Subscribe to broadcast channel, runs on all pods
+await subscriber.subscribe('broadcast', (message) => {
+  for (const client of clients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message)
+    }
+  }
+})
+
+// To broadcast from any pod:
+export function broadcast(data: object) {
+  publisher.publish('broadcast', JSON.stringify(data))
+}
+```
+
+## Connection timeouts
+
+StackBlaze sets a proxy read timeout of 3600 seconds (1 hour) on the Ingress controller. Connections idle for more than 1 hour will be closed by the proxy. To keep long-lived connections open, implement a heartbeat/ping mechanism in your application:
+
+```ts title="Client-side keep-alive"
+// Send a ping every 30 seconds from the client
+const ws = new WebSocket('wss://my-service.stackblaze.cloud/ws')
+
+const ping = setInterval(() => {
+  if (ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'ping' }))
+  }
+}, 30_000)
+
+ws.addEventListener('close', () => clearInterval(ping))
+```
+
+:::note[Under the hood]
+WebSocket upgrade requests pass through the Kubernetes Ingress controller (nginx). The nginx configuration includes `proxy_read_timeout 3600s` and `proxy_send_timeout 3600s` to support long-lived connections. The `Upgrade` and `Connection` headers are forwarded to the upstream pod. Sticky sessions are not configured, a WebSocket connection is naturally sticky because it maintains a persistent TCP connection to the same pod.
+:::

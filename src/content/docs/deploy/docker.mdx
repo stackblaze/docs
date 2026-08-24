@@ -1,0 +1,188 @@
+---
+title: Docker Deploys
+description: Bring your own Dockerfile for full control over your build and runtime environment.
+---
+
+Provide a Dockerfile for full control over your container. StackBlaze builds it, pushes it, and runs it, with all the same scaling and networking features.
+
+## How it works
+
+If a `Dockerfile` is present at the root of your repository (or the configured root directory), StackBlaze uses it for the build — runtime auto-detection is skipped. StackBlaze runs `docker build` in an ephemeral builder, pushes the resulting image to its private registry, and deploys it to the cluster exactly like any other service.
+
+You get full control over:
+
+- Base image (OS, language version, system libraries)
+- Build steps and layer caching
+- Runtime user (avoid running as root)
+- `ENTRYPOINT` and `CMD`
+
+## Port configuration
+
+StackBlaze reads the port your container listens on from two sources, in priority order:
+
+1. The `PORT` environment variable injected at runtime (takes precedence).
+2. The `EXPOSE` directive in your Dockerfile.
+
+Always make your app read from `$PORT` rather than hardcoding a port — this allows StackBlaze to override the port if necessary.
+
+```dockerfile title="Dockerfile"
+FROM node:20-alpine
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY . .
+RUN npm run build
+
+EXPOSE 8080
+
+CMD ["node", "dist/server.js"]
+```
+
+## Multi-stage builds (recommended)
+
+Multi-stage builds produce dramatically smaller images by separating the build environment from the runtime environment. A smaller image means faster pushes, faster startup, and a smaller attack surface.
+
+```dockerfile title="Dockerfile"
+# Stage 1: Build
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci                          # install dev deps for build
+COPY . .
+RUN npm run build                   # compile TypeScript, bundle, etc.
+
+# Stage 2: Runtime
+FROM node:20-alpine AS runtime
+
+# Run as non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production        # only production deps
+
+# Copy built artifacts from builder
+COPY --from=builder /app/dist ./dist
+
+EXPOSE 8080
+CMD ["node", "dist/server.js"]
+```
+
+### Python multi-stage example
+
+```dockerfile title="Dockerfile"
+# Stage 1: Dependencies
+FROM python:3.12-slim AS deps
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --user --no-cache-dir -r requirements.txt
+
+# Stage 2: Runtime
+FROM python:3.12-slim AS runtime
+
+RUN useradd -m appuser
+USER appuser
+
+WORKDIR /app
+COPY --from=deps /root/.local /home/appuser/.local
+COPY . .
+
+ENV PATH=/home/appuser/.local/bin:$PATH
+
+EXPOSE 8080
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+```
+
+## Go example (tiny binary)
+
+Go compiles to a single static binary, enabling minimal Docker images:
+
+```dockerfile title="Dockerfile"
+# Stage 1: Build
+FROM golang:1.22-alpine AS builder
+
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o /server ./cmd/server
+
+# Stage 2: Runtime
+FROM scratch AS runtime     # empty base image, only the binary
+
+COPY --from=builder /server /server
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+EXPOSE 8080
+ENTRYPOINT ["/server"]
+```
+
+:::tip
+Using `FROM scratch` for Go produces images under 10 MB. Make sure to copy SSL certificates if your app makes outbound HTTPS requests.
+:::
+
+## Base image layer caching
+
+StackBlaze caches Docker layer builds across deploys. To get the best cache hit rates:
+
+- Copy and install dependencies *before* copying your source code
+- Separate dependency installation into its own layer (a lock file change invalidates the cache; source changes don't)
+- Use `--no-cache-dir` (pip) or `--no-cache` (npm) to avoid storing package manager caches inside the image layer
+
+## Build arguments
+
+Pass build-time arguments to your Dockerfile using `ARG`. Set them in Service Settings → Build → Build Arguments. Build args are *not* the same as environment variables — they are only available during the build, not at runtime.
+
+```dockerfile title="Dockerfile"
+ARG NODE_ENV=production
+ARG APP_VERSION=unknown
+
+RUN echo "Building version ${APP_VERSION} for env ${NODE_ENV}"
+```
+
+:::caution
+Build args are visible in the image's layer metadata (`docker history`). Never pass secrets as build args. Use runtime environment variables for secrets.
+:::
+
+## Import from Docker Compose
+
+If you have a `docker-compose.yml` that defines multiple services, map each Compose service to a StackBlaze app or managed add-on. See [Docker Compose](/deploy/docker-compose/).
+
+StackBlaze reads the service definitions and creates corresponding StackBlaze services for each container. Services of type `db`, `redis`, or `postgres` are converted to managed database services.
+
+### Supported compose fields
+
+| Compose field | StackBlaze equivalent |
+| --- | --- |
+| `image` | Pre-built image (bypasses build step) |
+| `build` | Dockerfile + context path |
+| `ports` | Service port (first mapped port) |
+| `environment` | Environment variables |
+| `depends_on` | Service startup ordering |
+| `command` | Start command override |
+
+## Using a pre-built image
+
+If you already have a Docker image in a registry, you can deploy it directly without connecting a GitHub repository. Create or update the app with `deploymentstrategy: docker` and the image on the spec, or apply a `stackblaze.yaml` service with `runtime: image`.
+
+```yaml title="stackblaze.yaml"
+services:
+  - name: api
+    type: web
+    runtime: image
+    image:
+      url: ghcr.io/my-org/my-app
+      tag: latest
+```
+
+For private registries, configure registry credentials in Project Settings → Integrations → Container Registries.
+
+## Dockerfile location
+
+By default, StackBlaze looks for `Dockerfile` at the root of the repository (or the service's `rootDir` if set). You can specify a custom path in Service Settings → Build → Dockerfile Path.

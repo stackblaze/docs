@@ -1,0 +1,65 @@
+---
+title: Memory & CPU Limits
+description: Understanding CPU throttling and OOM kills on StackBlaze. How to diagnose resource issues and configure limits for your plan.
+---
+
+Pod sizes, requests, and what happens at the cap. This page is about **per-app CPU and memory**, not plan quotas. For app counts, bandwidth, and other plan caps, see [Limits & quotas](/reference/limits/). For adding replicas, see [Horizontal scaling](/scaling/horizontal/).
+
+## Configure CPU and memory
+
+Every app has a **pod size** plus CPU and memory **requests** and **limits**. Set them in the dashboard under the app's **Resources** settings:
+
+| Setting | What it means |
+| --- | --- |
+| Pod size | A preset that fills in CPU and memory for you |
+| CPU request | Millicores reserved for the app so it can be scheduled |
+| CPU limit | The CPU cap. Usage above this is throttled |
+| Memory request | Memory reserved for the app (shown in Gi) |
+| Memory limit | The memory cap. Crossing it OOM-kills the process |
+
+Requests reserve capacity. Limits are the hard ceiling. You can pick a larger pod size or raise the limits on the same app without changing how many replicas you run.
+
+## At the CPU cap
+
+When an instance hits its CPU limit, StackBlaze **throttles** it. The process keeps running, but it gets less CPU time, so request latency goes up and background work slows down. Throttling is not a crash.
+
+If Metrics → CPU sits on the limit for a long stretch:
+
+- Raise the CPU limit or choose a larger pod size
+- Or add replicas so load is split ([horizontal scaling](/scaling/horizontal/) / [autoscaling](/scaling/autoscaling/))
+
+Autoscaling thresholds are percentages of the **configured CPU limit**, so right-sizing the cap and setting replica policy go together.
+
+## At the memory cap
+
+When an instance hits its memory limit, the process is **OOM-killed** and restarted. Unlike CPU, memory is not throttled — there is no graceful slowdown.
+
+Check **Metrics → Memory**. If RSS climbs to the line and the instance restarts:
+
+- Raise the memory limit or choose a larger pod size
+- Shrink in-process caches
+- For Node.js, pass `--max-old-space-size` **below** the container memory limit so V8 GCs before the platform kills the process
+
+Open [Coroot](/operations/observability/) from the app to confirm OOMs and see CPU / RSS over time.
+
+## Requests vs limits
+
+- **Request** — what the scheduler reserves. Set this close to typical usage so the app is not starved on a busy node.
+- **Limit** — the cap. CPU above the limit is throttled; memory above the limit is OOM-killed.
+
+A request larger than the limit is invalid. A limit far above the request is allowed but wastes headroom other apps could use.
+
+## Diagnose from the dashboard
+
+1. Open the app → **Metrics** and watch CPU (mCPU) and memory (MiB) against the configured caps.
+2. If CPU is flat at the limit and latency is high, you are being throttled.
+3. If memory hits the limit and the instance restarts, you were OOM-killed. Check **Logs** and [search_logs](/operations/observability/) around the restart.
+4. Adjust **Resources** on the app, then redeploy if the form requires it. Replica count is a separate control.
+
+## Related
+
+- [Limits & quotas](/reference/limits/) — plan caps for apps, add-ons, builds, and bandwidth
+- [Horizontal scaling](/scaling/horizontal/) — replica counts
+- [Autoscaling](/scaling/autoscaling/) — scale from CPU or memory thresholds
+- [Observability](/operations/observability/) — Coroot metrics, logs, and traces
+- [Troubleshooting](/operations/troubleshooting/) — OOM and health-check checklist

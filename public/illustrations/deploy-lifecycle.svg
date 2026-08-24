@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" fill="none">
+  <rect width="1200" height="400" fill="#07070d"/>
+  <circle cx="200" cy="120" r="140" fill="#8b5cf6" opacity="0.12"/>
+  <circle cx="1000" cy="280" r="160" fill="#3b82f6" opacity="0.1"/>
+  <text x="80" y="60" fill="#ffffff" fill-opacity="0.5" font-family="ui-sans-serif, system-ui, sans-serif" font-size="22" font-weight="600">Deploy lifecycle</text>
+  <rect x="80" y="140" width="130" height="72" rx="14" fill="#312e81" stroke="#a78bfa" stroke-opacity="0.35"/>
+  <text x="105" y="185" fill="#c4b5fd" font-family="ui-monospace, monospace" font-size="16">GitHub</text>
+  <path d="M220 176 H280" stroke="#ffffff" stroke-opacity="0.2" stroke-width="2" stroke-dasharray="6 4"/>
+  <polygon points="280,176 268,170 268,182" fill="#ffffff" fill-opacity="0.3"/>
+  <rect x="290" y="140" width="130" height="72" rx="14" fill="#1c1917" stroke="#ffffff" stroke-opacity="0.1"/>
+  <text x="318" y="185" fill="#fbbf24" font-family="ui-monospace, monospace" font-size="16">Build</text>
+  <path d="M430 176 H490" stroke="#ffffff" stroke-opacity="0.2" stroke-width="2" stroke-dasharray="6 4"/>
+  <polygon points="490,176 478,170 478,182" fill="#ffffff" fill-opacity="0.3"/>
+  <rect x="500" y="140" width="150" height="72" rx="14" fill="#1c1917" stroke="#ffffff" stroke-opacity="0.1"/>
+  <text x="520" y="185" fill="#67e8f9" font-family="ui-monospace, monospace" font-size="16">Kubernetes</text>
+  <path d="M660 176 H720" stroke="#ffffff" stroke-opacity="0.2" stroke-width="2" stroke-dasharray="6 4"/>
+  <polygon points="720,176 708,170 708,182" fill="#ffffff" fill-opacity="0.3"/>
+  <rect x="730" y="140" width="130" height="72" rx="14" fill="#064e3b" stroke="#34d399" stroke-opacity="0.4"/>
+  <text x="758" y="185" fill="#6ee7b7" font-family="ui-monospace, monospace" font-size="16">Live URL</text>
+  <text x="80" y="280" fill="#ffffff" fill-opacity="0.35" font-family="ui-monospace, monospace" font-size="15">git push | image | rolling deploy | https://*.stackblaze.app</text>
+</svg>

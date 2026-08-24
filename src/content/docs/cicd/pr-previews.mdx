@@ -1,0 +1,82 @@
+---
+title: PR Preview Environments
+description: Every pull request automatically gets a live, isolated preview environment on StackBlaze. Learn how PR previews work, how to configure databases in previews, and how namespaces are torn down on merge.
+---
+
+Every pull request automatically gets a live, isolated environment with its own URL. Preview environments let you review changes in a real deployment before merging, no manual setup, no staging servers to maintain.
+
+Each preview runs in its own Kubernetes namespace with its own ingress, TLS certificate, and optionally its own ephemeral database. The namespace is destroyed within 60 seconds of PR close or merge, leaving no lingering infrastructure or cost.
+
+![Diagram of isolated PR preview with web, Postgres, and Redis services](/illustrations/pr-previews.svg)
+
+*Each pull request gets a full-stack preview URL, web, workers, and databases provisioned together.*
+
+## Preview URL format
+
+```text title="PR #42, my-frontend"
+# Preview URL automatically posted as PR comment
+https://pr-42--my-frontend.preview.stackblaze.cloud
+
+# Kubernetes namespace:
+Namespace: stackblaze-preview-my-repo-pr-42
+```
+
+## Automatic PR comment
+
+StackBlaze posts an automated comment when the preview is ready, for example:
+
+> Your preview environment is ready!
+>
+> - my-frontend: `pr-42--my-frontend.preview.stackblaze.cloud`
+> - my-api: `pr-42--my-api.preview.stackblaze.cloud`
+
+## Databases in preview environments
+
+Preview environments can spin up their own ephemeral databases. This means PRs can test schema migrations, seed data, and data mutations without touching the production database.
+
+**Ephemeral database (default)**
+
+A fresh empty database is provisioned for each PR. Your app's migration command (if configured) runs automatically on deploy. Database is destroyed when the PR closes.
+
+**Seeded from snapshot**
+
+Configure a snapshot source in Settings → Preview Environments → Database Seed. StackBlaze restores the snapshot into the ephemeral database before the preview is made live. Useful for testing with realistic data.
+
+:::note[Under the hood]
+- **Kubernetes Namespace per PR**: each preview lives in a dedicated namespace (`stackblaze-preview-{repo}-pr-{number}`). All services in the project are deployed into this namespace, giving complete isolation from production and other previews.
+- **Wildcard TLS certificate**: a wildcard cert for `*.preview.stackblaze.cloud` is managed by cert-manager. New preview URLs get HTTPS automatically with no cert issuance delay.
+- **CoreDNS resolution**: services within a preview namespace discover each other via Kubernetes DNS. Your API URL environment variable is automatically rewritten to point to the preview API service, not the production one.
+- **Teardown**: StackBlaze watches the GitHub `pull_request` closed event. On receipt, it deletes the preview namespace, which cascades and removes all resources including PVCs within 60 seconds.
+:::
+
+## Step by step
+
+1. **Enable PR previews per service**
+
+   Navigate to Service → Settings → Preview Environments and toggle "Enable PR preview environments" on. You can enable this on some services and not others, for example, enable on your frontend and API but skip standalone workers that have no external traffic.
+
+2. **Open a pull request**
+
+   Open a pull request against the configured base branch (typically main). StackBlaze detects the PR via the GitHub webhook and begins provisioning a new isolated Kubernetes namespace named `stackblaze-preview-{repo}-pr-{number}`.
+
+3. **Get the preview URL from the PR comment**
+
+   Within 2–3 minutes, StackBlaze posts an automated comment on the PR with the live preview URL: `pr-{number}--{service}.preview.stackblaze.cloud`. The URL is also available in the StackBlaze dashboard under the Previews tab.
+
+4. **Configure preview-specific environment variables**
+
+   If your preview environments need different values for certain variables (e.g. a different Stripe key or feature flag), add them under Service → Settings → Preview Environments → Override Variables. Preview values take precedence over production values for that namespace only.
+
+5. **Preview updates on new commits**
+
+   Every push to the PR branch triggers a rebuild of the preview environment. The preview URL stays the same; its content is updated in place. This makes it easy to iterate and share a stable link with reviewers throughout the review cycle.
+
+6. **Automatic teardown on merge or close**
+
+   When the PR is merged or closed, StackBlaze deletes the preview namespace within 60 seconds. All pods, services, ingress rules, and ephemeral database volumes are removed. Nothing is left running or billed after teardown.
+
+## Next steps
+
+- [Auto deploy on push](/cicd/auto-deploy/)
+- [Rolling back a deployment](/cicd/rollbacks/)
+- [Environment variables](/security/env-vars/)

@@ -1,0 +1,42 @@
+---
+title: Point-in-time database recovery
+description: Restore managed PostgreSQL to any point in the last 7 days using the StackBlaze dashboard.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+![Point-in-time recovery from continuous WAL archives](/illustrations/pitr-backup.svg)
+
+Accidental `DROP TABLE`, a bad migration, or a bad deploy can corrupt data in seconds. PITR is how you roll the database clock back without restoring from a stale daily backup.
+
+This guide covers the dashboard workflow and the API. For WAL architecture and retention details, see the [backups documentation](/databases/backups/).
+
+<Steps>
+
+1. **Understand what PITR covers**
+
+   Point-in-time recovery (PITR) lets you restore a managed PostgreSQL database to any moment within your plan's retention window. StackBlaze continuously archives write-ahead logs and takes scheduled base backups, so you are not limited to the last daily snapshot.
+
+2. **Pick a recovery timestamp**
+
+   Open your database in the dashboard → Backups → Point-in-time recovery. Choose a timestamp in UTC. Use the deploy timeline or application logs to narrow the window — for example, five minutes before a bad migration ran.
+
+3. **Restore to a new instance**
+
+   PITR always creates a new database instance at the selected time — your current database keeps running until you switch over. Attach the restored instance to a staging service first, run smoke tests, then update `DATABASE_URL` on production when ready.
+
+4. **Automate with the API (optional)**
+
+   For runbooks and incident response, you can trigger a point-in-time restore through the StackBlaze API by passing the source database and a target timestamp. It returns a new database you can attach like any other managed Postgres.
+
+</Steps>
+
+:::caution
+Before you cut over production, verify row counts and run application health checks against the restored instance. PITR cannot undo writes made after the recovery timestamp on the original database — plan a maintenance window if you need to merge divergent data.
+:::
+
+## Next steps
+
+- [Provision PostgreSQL](/databases/postgresql/)
+- [Set up Redis caching](/databases/redis/)
+- [Apps & managed add-ons](/build-deploy/apps/)

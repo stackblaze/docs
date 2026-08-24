@@ -1,0 +1,102 @@
+---
+title: Quick Start
+description: Go from a GitHub repository to a live URL in under two minutes.
+---
+
+![Quick start deploy flow from repository to live application](/illustrations/deploy-lifecycle.svg)
+
+*Connect GitHub, configure your service, and deploy, typically under two minutes.*
+
+## Prerequisites
+
+All you need is a GitHub account and a repository containing your application code. StackBlaze will handle building, containerizing, and running it. No Dockerfile required, though you can provide one if you want full control.
+
+## Step-by-step
+
+1. **Sign up for StackBlaze**
+
+   Go to [stackblaze.com/signup](https://stackblaze.com/signup) and create a free account. No credit card required to get started.
+
+2. **Connect your GitHub account**
+
+   From the dashboard, click **Connect GitHub**. StackBlaze requests the `repo` scope for only the specific repositories you select, not your entire account. You can add more repos later from Settings.
+
+3. **Create a new service**
+
+   Click **New Service → Web Service**, then select your repository and the branch you want to deploy (usually `main`).
+
+4. **Review auto-detected settings**
+
+   StackBlaze scans your repo and pre-fills the build command, install command, and start command based on your language and framework. Review these and adjust if needed. See the runtime detection table below for what gets auto-detected.
+
+5. **Set environment variables**
+
+   Add any environment variables your app needs, database URLs, API keys, etc. Values are encrypted at rest and injected into the container at runtime. You can also reference internal service hostnames here, e.g. `redis://my-redis:6379`.
+
+6. **Deploy**
+
+   Click **Deploy**. StackBlaze clones your repo, installs dependencies, builds your app, pushes a Docker image, and rolls it out to the cluster. Watch the build logs stream in real time.
+
+7. **Visit your live URL**
+
+   Once the health check passes, your service is live at `https://your-app.stackblaze.app`. You can add a [custom domain](/networking/custom-domains/) any time.
+
+## Runtime auto-detection
+
+StackBlaze inspects your repository to determine the runtime. The following table shows what file triggers detection, the default install command, and the default start command. All of these can be overridden in Service Settings.
+
+| Runtime | Detected by | Install command | Start command |
+| --- | --- | --- | --- |
+| Node.js | `package.json` | `npm install` | `npm start` |
+| Python | `requirements.txt` | `pip install -r requirements.txt` | `python main.py` |
+| Ruby | `Gemfile` | `bundle install` | `bundle exec ruby app.rb` |
+| Go | `go.mod` | `go mod download` | `go run .` |
+| Rust | `Cargo.toml` | `cargo build --release` | `./target/release/app` |
+| PHP | `composer.json` | `composer install` | `php -S 0.0.0.0:$PORT` |
+| Java | `pom.xml / build.gradle` | `mvn package -DskipTests` | `java -jar target/*.jar` |
+| Dockerfile | `Dockerfile` | (not applicable) | (from CMD / ENTRYPOINT) |
+
+:::tip
+If your project has a `Dockerfile`, StackBlaze always uses it, runtime detection is skipped. This gives you full control over the build and runtime environment.
+:::
+
+## What happens during a deploy
+
+Understanding the deploy pipeline helps you debug build failures quickly. Here's what each phase means in the build log:
+
+### Clone
+
+StackBlaze clones the exact commit SHA that triggered the deploy into an ephemeral build container. Submodules are initialized if present. The clone is shallow by default (depth 50) to keep it fast.
+
+### Install
+
+The install command runs. Dependency caches are shared across builds for the same service, so subsequent deploys are significantly faster. Cache invalidation happens automatically when lock files change (`package-lock.json`, `Pipfile.lock`, etc.).
+
+### Build
+
+The build command runs (e.g., `npm run build`). Build output is written to the image layer. If your build command exits with a non-zero status, the deploy fails here and your currently-running service is unaffected.
+
+### Push
+
+The built image is tagged with the commit SHA and pushed to StackBlaze's private registry. Images are retained for 90 days, enabling [one-click rollbacks](/cicd/rollbacks/).
+
+### Health check & traffic switchover
+
+New pods must pass the readiness probe before traffic is routed to them. By default, StackBlaze sends HTTP GET requests to `/` every 10 seconds. The first successful response marks the pod ready. Old pods are terminated only after all new pods are healthy, ensuring zero downtime.
+
+## Deploy from CI or curl
+
+There is no `@stackblaze/cli` on this control plane. Create a `kbr_pat_` token under Settings → API tokens, then call the API:
+
+```bash title="terminal"
+export STACKBLAZE_TOKEN=kbr_pat_…
+curl -sS -X POST \
+  https://api.stackblaze.cloud/api/deployments/build/acme-app/production/api \
+  -H "Authorization: Bearer $STACKBLAZE_TOKEN"
+```
+
+Or connect MCP at `https://mcp.stackblaze.cloud` with the same token. See [API Reference](/reference/api/).
+
+:::note
+Ready to go deeper? Read the [Core Concepts](/concepts/) page to understand how Projects, Environments, and Deployments relate to each other.
+:::

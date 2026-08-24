@@ -1,0 +1,84 @@
+---
+title: Horizontal Scaling
+description: Run multiple replicas of your service for higher throughput and availability. Zero-downtime scaling with round-robin load balancing.
+---
+
+Run multiple replicas of your service to handle higher traffic and improve availability. New replicas become ready before traffic is redistributed.
+
+## Setting replica count
+
+Navigate to your service in the dashboard, click **Scaling** in the left menu, and adjust the **Replicas** slider. Changes take effect immediately, StackBlaze scales the Kubernetes Deployment and traffic is redistributed without downtime.
+
+## Replica limits by plan
+
+| Plan | Min replicas | Max replicas |
+| --- | --- | --- |
+| Free | 1 | 1 (no scaling) |
+| Starter | 1 | 3 |
+| Pro | 1 | 10 |
+| Enterprise | 1 | Unlimited |
+
+## Traffic distribution
+
+Incoming requests are distributed across all healthy replicas using round-robin load balancing via the Kubernetes ClusterIP Service. The Ingress controller sends each new connection to the next available pod in rotation.
+
+There is no session affinity (sticky sessions) by default. Each request may be handled by a different replica. This is intentional, it encourages stateless service design and ensures requests continue to be served even if a pod restarts.
+
+## Designing for horizontal scaling
+
+For horizontal scaling to work reliably, your service should be stateless. Here's what "stateless" means in practice:
+
+- **Don't store user sessions in memory.** Use Redis or a database-backed session store so any replica can serve any request.
+- **Don't store uploaded files on disk.** Use object storage (S3-compatible) so files are accessible from all replicas.
+- **Don't use local cache variables for shared state.** Each pod has its own memory. Use Redis for shared caching.
+- **Use database-level locking for coordination.** If multiple replicas might process the same job, use advisory locks or atomic updates to prevent double-processing.
+
+### Stateless session example
+
+```ts title="server.ts"
+import session from 'express-session'
+import { createClient } from 'redis'
+import { RedisStore } from 'connect-redis'
+
+// Sessions stored in Redis, accessible from all replicas
+const client = createClient({ url: process.env.REDIS_URL })
+await client.connect()
+
+app.use(session({
+  store: new RedisStore({ client }),
+  secret: process.env.SESSION_SECRET!,
+  resave: false,
+  saveUninitialized: false,
+}))
+```
+
+## Zero-downtime scaling
+
+When you increase replica count, Kubernetes starts new pods and waits for them to pass their readiness probe before sending traffic to them. When you decrease replica count, pods are terminated gracefully, they finish processing in-flight requests before shutting down.
+
+This means scaling up or down never causes a request error for your users, as long as your service implements graceful shutdown correctly.
+
+### Graceful shutdown (Node.js)
+
+```ts title="server.ts"
+const server = app.listen(process.env.PORT || 8080)
+
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, draining connections')
+  server.close(() => {
+    console.log('Server closed')
+    process.exit(0)
+  })
+
+  // Force exit after 30s if connections don't drain
+  setTimeout(() => process.exit(0), 30_000)
+})
+```
+
+:::tip
+Kubernetes sends `SIGTERM` when terminating a pod. Your application has 30 seconds (configurable via `terminationGracePeriodSeconds`) to finish in-flight requests before being force-killed. Always handle `SIGTERM` in your application.
+:::
+
+:::note[Under the hood]
+Horizontal scaling updates the `.spec.replicas` field on the Kubernetes **Deployment** object. The ReplicaSet controller reconciles the actual pod count to match. Traffic is load-balanced by the **ClusterIP Service** across all `Ready` pods. Pods are only added to the Service's endpoints list after passing their readiness probe.
+:::

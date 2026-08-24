@@ -1,0 +1,51 @@
+---
+title: StackBlaze Docs
+description: Deploy apps, managed add-ons, and jobs on StackBlaze without running a cluster.
+template: splash
+hero:
+  tagline: Deploy apps, managed add-ons, and jobs without running a cluster.
+  actions:
+    - text: Quick start
+      link: /quickstart/
+      icon: right-arrow
+    - text: Open dashboard
+      link: https://dashboard.stackblaze.cloud
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## Start here
+
+<CardGrid stagger>
+	<Card title="Quick start" icon="rocket">
+		Ship your first app in minutes from GitHub, a template, or a container image.
+		[Get started →](/quickstart/)
+	</Card>
+	<Card title="Agents" icon="laptop">
+		Build with Stack MCP from Cursor, Claude, or any MCP client.
+		[Connect MCP →](/agents/)
+	</Card>
+	<Card title="Automation" icon="document">
+		REST API, `stackblaze.yaml`, and MCP. Tokens use the `kbr_pat_` prefix.
+		[Automation →](/reference/cli/)
+	</Card>
+	<Card title="Templates" icon="puzzle">
+		One-click deploys for n8n, Postgres, Redis, and other popular stacks.
+		[Browse templates →](https://stackblaze.com/templates)
+	</Card>
+</CardGrid>
+
+## Browse by topic
+
+<CardGrid>
+	<LinkCard title="Platform" href="/platform/" description="What StackBlaze is, comparisons, and migrating an existing app." />
+	<LinkCard title="Build & deploy" href="/build-deploy/" description="Apps, GitHub, Docker, CI/CD, and scaling." />
+	<LinkCard title="Data & storage" href="/data-storage/" description="Managed databases, volumes, backups, and messaging." />
+	<LinkCard title="Networking" href="/networking/" description="Public URLs, custom domains, TLS, and private DNS." />
+	<LinkCard title="Observability" href="/observability/" description="Coroot metrics, logs, traces, and troubleshooting." />
+	<LinkCard title="Access" href="/access/" description="Env vars, secrets, team roles, 2FA, and IP allowlisting." />
+	<LinkCard title="Reference" href="/reference/" description="REST API, automation, limits, and plans." />
+	<LinkCard title="Guides" href="/guides/" description="Step-by-step how-tos across the same tree as the sidebar." />
+</CardGrid>

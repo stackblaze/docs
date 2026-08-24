@@ -1,0 +1,111 @@
+---
+title: Deploy from GitHub
+description: Connect your GitHub repository for automatic deploys on every push.
+---
+
+Connect a GitHub repository and get automatic deploys on every push to your configured branch, no CI pipeline to configure.
+
+## GitHub OAuth flow
+
+When you create a new service, StackBlaze initiates the GitHub OAuth flow. You'll be redirected to GitHub and asked to authorize StackBlaze. You can choose to grant access to all repositories or select specific ones.
+
+StackBlaze requests the minimum required scope:
+
+| Scope | Why it is needed |
+| --- | --- |
+| `repo` | Read repository contents to clone and build your code |
+| `admin:repo_hook` | Install the webhook that triggers auto-deploys on push |
+
+StackBlaze never stores your repository code. It clones each commit into an ephemeral build container, builds the image, and then discards the source. Only the built Docker image is retained.
+
+## Repository permissions
+
+You can limit which repositories StackBlaze can access. During the OAuth flow, choose "Only select repositories" to grant access to specific repos. You can add more repositories later in:
+
+GitHub → Settings → Applications → StackBlaze → Repository access → Add repository
+
+:::note
+StackBlaze installs a GitHub App (not a personal OAuth token). This means access is tied to the app installation, not your personal account. You can revoke access per-repository without affecting other repos.
+:::
+
+## Branch selection
+
+When creating a service, you choose the branch to deploy from. StackBlaze deploys the latest commit on this branch automatically on every push. The most common configuration is to deploy from `main` to production.
+
+You can change the deploy branch at any time in Service Settings → Deploy → Branch. Changing the branch triggers an immediate deploy from the new branch's HEAD.
+
+## Auto-deploy on push
+
+When you push a commit to the configured branch, GitHub fires a webhook to StackBlaze. StackBlaze picks up the webhook payload, checks the commit message for skip markers, and queues a build if the push should trigger a deploy.
+
+### Skipping a deploy
+
+Add any of the following to your commit message to skip the auto-deploy:
+
+| Marker | Example commit message |
+| --- | --- |
+| `[skip ci]` | Update README [skip ci] |
+| `[no deploy]` | Fix typo in docs [no deploy] |
+| `[skip deploy]` | Minor cleanup [skip deploy] |
+
+## Build filters for monorepos
+
+In a monorepo, you usually only want to redeploy a service when files in its subdirectory change. Configure build filters in Service Settings → Deploy → Build Filters.
+
+Specify glob patterns (one per line). A deploy is triggered only if at least one changed file matches at least one pattern. If no changed file matches, the deploy is skipped.
+
+```text title="build-filter examples"
+# Only trigger when files in the api package change
+packages/api/**
+
+# Also trigger when shared packages change
+packages/shared/**
+packages/types/**
+```
+
+:::tip
+Always include your shared packages in the build filter, otherwise changes to shared code won't trigger a redeploy of the services that depend on it.
+:::
+
+## PR Preview environments
+
+When a pull request is opened against your deploy branch, StackBlaze automatically creates a preview environment — a full copy of your production stack with a unique URL. Preview environments are updated on every push to the PR branch.
+
+Preview URLs follow the pattern:
+
+`https://pr-123-my-service.stackblaze.app`
+
+StackBlaze posts a comment on the PR with the preview URL. Preview environments are automatically deleted when the PR is merged or closed.
+
+### Draft PRs
+
+By default, StackBlaze does not create preview environments for draft PRs. Enable draft PR previews in Project Settings → GitHub → Deploy draft PRs.
+
+## Deploy notifications
+
+StackBlaze posts deployment status updates to GitHub. You'll see a check on each commit showing whether the deploy succeeded, failed, or is in progress. This integrates with GitHub required status checks — you can block merges until the deploy check passes.
+
+### GitHub commit status
+
+| Status | Meaning |
+| --- | --- |
+| pending | Build is queued or in progress |
+| success | Deploy completed, health check passed |
+| failure | Build or deploy failed |
+| error | Internal error (rare, contact support) |
+
+## Adding more repositories
+
+Navigate to Project Settings → Integrations → GitHub → Manage repositories.
+
+## Revoking access
+
+To revoke StackBlaze's access to a repository, go to:
+
+GitHub → Settings → Applications → StackBlaze → Repository access → Remove repository
+
+This does not delete the service from StackBlaze — it will just stop receiving auto-deploys. You can still trigger manual deploys from the dashboard or [the API](/deploy/cli/).
+
+## Related
+
+See [Auto Deploy on Push](/cicd/auto-deploy/) for the full CI/CD pipeline documentation, including build caching, skip markers, and parallel builds. For triggering deploys from outside GitHub (e.g., from CI systems like Jenkins or CircleCI), see [Deploy Hooks](/cicd/deploy-hooks/).

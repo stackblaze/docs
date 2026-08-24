@@ -1,0 +1,104 @@
+---
+title: Private Networking
+description: Services in the same project communicate via internal hostnames on a private cluster network. No public internet exposure, no firewall rules.
+---
+
+Services in the same project communicate over a private cluster network using stable internal hostnames, no public internet exposure required.
+
+## How it works
+
+Every service and database you deploy is reachable by its name on the project's private network. That hostname resolves to a stable ClusterIP address that is only accessible within the same project's network. Traffic between services never leaves the cluster.
+
+![Diagram showing public HTTPS to API and private connections to Postgres and Redis](/illustrations/private-networking.svg)
+
+*Public traffic hits your web service; app-to-database traffic uses internal service hostnames on the private fabric.*
+
+## Internal hostname format
+
+```text title="Internal hostname"
+[service-name]
+```
+
+The service name is the name you gave the service when creating it in the dashboard. Spaces are replaced with hyphens and the name is lowercased.
+
+```text title="Examples"
+# Web API service named "api"
+http://api:8080
+
+# PostgreSQL database named "postgres"
+postgresql://user:pass@postgres:5432/dbname
+
+# Redis cache named "cache"
+redis://:password@cache:6379
+
+# Worker service named "background-worker"
+http://background-worker:3000
+```
+
+## Ports
+
+The internal hostname resolves to whatever port(s) your service or database listens on:
+
+- Web services: the port defined in your service settings (default `8080`)
+- PostgreSQL: `5432`
+- MySQL: `3306`
+- Redis: `6379`
+- MongoDB: `27017`
+
+## Service-to-service communication
+
+Internal requests don't go through the public load balancer or the Ingress controller, they travel directly between pods over the cluster network. This means:
+
+- Lower latency (typically under 1ms within a region)
+- No TLS overhead required (traffic is private to the cluster)
+- No egress costs
+- No firewall rules to configure
+
+### Example: API calling an internal worker
+
+```ts title="api/src/jobs.ts"
+// Call a background worker service over the internal network
+const response = await fetch('http://worker:3000/process', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ jobId: '123', payload: data }),
+})
+
+const result = await response.json()
+```
+
+## Authentication on the internal network
+
+Internal network access is not authenticated by default, any service in the same project can reach any other service by its internal hostname. If your services handle sensitive data, implement application-level authentication using a shared secret environment variable or mTLS.
+
+```js title="Simple shared secret auth"
+// In your worker service, verify caller is legitimate
+app.use('/internal', (req, res, next) => {
+  const secret = req.headers['x-internal-secret']
+  if (secret !== process.env.INTERNAL_API_SECRET) {
+    return res.status(403).json({ error: 'Forbidden' })
+  }
+  next()
+})
+```
+
+:::tip
+Add `INTERNAL_API_SECRET` as a shared environment variable to both the calling service and the worker. Rotate it from the dashboard when needed.
+:::
+
+## Cross-project communication
+
+The private network is scoped to a single project. Services in different projects cannot reach each other via internal hostnames.
+
+If you need cross-project communication, the options are:
+
+- **Public URL**: call the service's public `stackblaze.cloud` URL. Traffic goes through the load balancer and Ingress. Secure with API keys.
+- **VPC peering (Enterprise)**: connect two projects over a private network without internet exposure. Contact support to configure.
+
+:::caution[Don't use public URLs for database connections]
+Databases are not exposed publicly and have no public URL. Always use the internal hostname for database connections. If you need to access a database from your local machine, use the external connection string provided in the dashboard (which routes through a secure proxy).
+:::
+
+:::note[Under the hood]
+Internal hostnames are resolved by **CoreDNS** running in the cluster. Each service gets a Kubernetes **ClusterIP Service**: a stable virtual IP that load-balances across all healthy pods for that service. The ClusterIP does not change when pods restart or the service is redeployed. Namespace-scoped **NetworkPolicy** resources restrict traffic so services in one project cannot accidentally reach services in another project.
+:::

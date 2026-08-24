@@ -1,0 +1,191 @@
+---
+title: Blueprint
+description: Describe a project as stackblaze.yaml. Export it from a live phase, review a plan, and apply it when Infrastructure as Code is enabled.
+---
+
+## What is a Blueprint?
+
+A Blueprint is a `stackblaze.yaml` file that names a project (pipeline) and lists its apps and databases. The format follows Render's `render.yaml` closely so migrations stay familiar. You can also import `fly.toml`.
+
+Export a live phase from the dashboard or `GET /api/iac/blueprint/export?pipeline=…&phase=…`. Apply requires Infrastructure as Code to be turned on for that project.
+
+:::tip
+Blueprints are optional. You can manage apps and add-ons in the dashboard. Enable IaC when you want plan/apply and git-reviewed changes. Apply never deletes resources.
+:::
+
+## File format
+
+Put `stackblaze.yaml` at the repo root. The public JSON Schema is `GET /api/iac/blueprint/schema` (no auth).
+
+### Top-level structure
+
+```yaml title="stackblaze.yaml"
+pipeline: acme-app          # required — project name
+domain: acme-app.stackblaze.app
+previews:
+  generation: automatic     # automatic | manual | off
+  expireAfterDays: 7
+
+services:
+  - ...
+
+databases:
+  - ...
+```
+
+### Service definition
+
+```yaml title="stackblaze.yaml"
+services:
+  - name: api
+    type: web                 # web | worker | cron
+    runtime: node             # node|python|go|ruby|rust|elixir|docker|image
+    plan: small               # pod size name from the platform catalog
+    rootDir: packages/api
+    dockerfilePath: Dockerfile
+    startCommand: node dist/server.js
+    port: 8080
+    healthCheckPath: /health
+    numInstances: 2
+    scaling:
+      minInstances: 1
+      maxInstances: 6
+      targetCPUPercent: 70
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 10
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        sync: false           # prompted at apply; never stored in the file
+      - key: DATABASE_URL
+        fromDatabase:
+          name: main-db
+          property: connectionString
+```
+
+### Database definition
+
+```yaml title="stackblaze.yaml"
+databases:
+  - name: main-db
+    type: postgres            # postgres | valkey | redis | mariadb | mysql
+                              # kafka | clickhouse | rabbitmq | documentdb
+                              # mongodb | rustfs | s3 | …
+    databaseName: acme
+    user: acme
+```
+
+## Full example
+
+A Node API, a worker, a cron job, Postgres, and Valkey. Connection strings come from `fromDatabase` — do not put secrets in the file.
+
+```yaml title="stackblaze.yaml"
+pipeline: acme-app
+domain: acme-app.stackblaze.app
+
+databases:
+  - name: postgres
+    type: postgres
+    databaseName: acme
+  - name: cache
+    type: valkey
+
+services:
+  - name: api
+    type: web
+    runtime: node
+    rootDir: packages/api
+    startCommand: node dist/index.js
+    port: 3000
+    plan: standard
+    healthCheckPath: /health
+    scaling:
+      minInstances: 2
+      maxInstances: 10
+      targetCPUPercent: 70
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase: { name: postgres, property: connectionString }
+      - key: REDIS_URL
+        fromDatabase: { name: cache, property: connectionString }
+
+  - name: worker
+    type: worker
+    runtime: node
+    rootDir: packages/worker
+    startCommand: node dist/worker.js
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase: { name: postgres, property: connectionString }
+      - key: REDIS_URL
+        fromDatabase: { name: cache, property: connectionString }
+
+  - name: nightly-report
+    type: cron
+    runtime: node
+    rootDir: packages/scripts
+    startCommand: node dist/report.js
+    schedule: "0 2 * * *"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase: { name: postgres, property: connectionString }
+```
+
+## Plan and apply
+
+There is no `stackblaze up` CLI in this control plane. Use the dashboard or the IaC API with a `kbr_pat_` token. The project must have IaC enabled.
+
+```bash title="terminal"
+# Validate (no live reads)
+curl -sS -X POST https://api.stackblaze.cloud/api/iac/blueprint/validate \
+  -H "Authorization: Bearer $STACKBLAZE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"yaml\": $(jq -Rs . < stackblaze.yaml)}"
+
+# Diff against live state
+curl -sS -X POST https://api.stackblaze.cloud/api/iac/blueprint/plan \
+  -H "Authorization: Bearer $STACKBLAZE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"yaml\": $(jq -Rs . < stackblaze.yaml)}"
+
+# Apply — upserts pipeline + apps + databases. Never deletes.
+curl -sS -X POST https://api.stackblaze.cloud/api/iac/blueprint/apply \
+  -H "Authorization: Bearer $STACKBLAZE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"yaml\": $(jq -Rs . < stackblaze.yaml)}"
+```
+
+You can also compile a file onto the phase canvas (`POST /api/iac/blueprint/compile`) and commit the staged apps from the dashboard. That compile path is not gated on IaC.
+
+## Environment variable sync
+
+`sync: false` declares a key without storing its value. Apply returns `missingAnswers` until you pass them in the request `answers` object or set them in the dashboard. `generateValue: true` mints a stable random secret at compile time.
+
+:::caution
+Never commit real secrets to `stackblaze.yaml`. Use `sync: false` or `fromDatabase`.
+:::
+
+## Schema reference
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `pipeline` | string | Yes | Project name |
+| `domain` | string | No | Default project domain |
+| `services` | array | Yes | App definitions |
+| `databases` | array | No | Add-on definitions |
+| `services[].name` | string | Yes | App name in the phase |
+| `services[].type` | string | No | web (default) \| worker \| cron |
+| `services[].runtime` | string | No | nixpacks language, docker, or image |
+| `services[].plan` | string | No | Pod size name |
+| `services[].schedule` | string | Cron only | Standard cron expression |
+| `services[].port` | number | No | Container port (default 8080) |
+
+Full HTTP paths are in the [API Reference](/reference/api/). Interactive OpenAPI lives at [`/api/docs`](https://api.stackblaze.cloud/api/docs).

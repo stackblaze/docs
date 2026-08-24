@@ -1,0 +1,80 @@
+---
+title: Milvus
+description: "Managed Milvus on StackBlaze: an open-source vector database for embeddings and similarity search, with standalone or clustered high-availability deployments."
+---
+
+Managed Milvus, an open-source vector database for embeddings and similarity search, with standalone or clustered high-availability deployments.
+
+## Creating a Milvus instance
+
+From the dashboard, click **New service**, then **Database**, then **Milvus**. Milvus is a vector database: it stores high-dimensional embeddings and finds the most similar vectors to a query, which makes it a common building block for AI features such as semantic search, recommendations, and retrieval-augmented generation (RAG).
+
+Attach Milvus to your service from the **Environment** tab. When you connect it, StackBlaze injects `MILVUS_URI` into your service automatically, so your application can read the connection target from the environment.
+
+## Connecting
+
+Milvus speaks gRPC and listens on port `19530`. Connect over the private network using the internal hostname of your service. The injected `MILVUS_URI` points at this address.
+
+```text title="MILVUS_URI (internal)"
+[service-name]:19530
+```
+
+## Standard vs high availability
+
+**Standard** runs Milvus in standalone mode: a single process that holds the query, data, and index roles together. It is simple and well suited to development and smaller workloads.
+
+**High availability** runs Milvus in cluster mode. The query, data, and index components run as separate, independently scalable services, each with replicas. This lets the database scale out across nodes and tolerate the loss of a single node without going down. You choose Standard or HA when creating the instance.
+
+| Aspect | Standalone (Standard) | Cluster (HA) |
+| --- | --- | --- |
+| Mode | Standalone | Cluster |
+| Components | Single combined process | Query, data, and index run as separate services |
+| Replicas | Single instance | Multiple replicas per component |
+| Scaling | Vertical (resize the instance) | Horizontal (scale components out) |
+| Node loss | Causes downtime | Tolerates loss of a node |
+| Best for | Development and smaller workloads | Production and larger workloads |
+
+## Connecting from Python
+
+Install `pymilvus` and read the connection target from `MILVUS_URI`. The snippet below connects, creates a collection with a vector field, inserts nothing yet, and runs a similarity search.
+
+```python title="milvus_example.py"
+import os
+from pymilvus import MilvusClient, DataType
+
+client = MilvusClient(uri="http://" + os.environ["MILVUS_URI"])
+
+# Create a collection with a 768-dimensional vector field
+schema = client.create_schema(auto_id=True)
+schema.add_field("id", DataType.INT64, is_primary=True)
+schema.add_field("embedding", DataType.FLOAT_VECTOR, dim=768)
+
+client.create_collection("documents", schema=schema)
+client.create_index(
+    "documents",
+    index_params=client.prepare_index_params(
+        field_name="embedding",
+        index_type="IVF_FLAT",
+        metric_type="L2",
+    ),
+)
+client.load_collection("documents")
+
+# Search for the 5 nearest vectors to a query embedding
+query = [[0.1] * 768]
+results = client.search(
+    "documents",
+    data=query,
+    anns_field="embedding",
+    limit=5,
+)
+print(results)
+```
+
+## Backups
+
+Milvus instances are backed up automatically. Backups are encrypted and follow the standard StackBlaze backup policy, including schedule and retention. For details on how backups run, how they are encrypted, and how to restore, see [Backups & recovery](/databases/backups/).
+
+:::note[Under the hood]
+Milvus is an open-source vector database. StackBlaze runs it through a Kubernetes operator with persistent volumes for durable storage. In cluster mode (HA), the operator spreads Milvus components and their replicas across nodes so the database can scale out and survive the loss of a single node.
+:::

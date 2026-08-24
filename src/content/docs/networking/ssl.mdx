@@ -1,0 +1,105 @@
+---
+title: SSL / TLS
+description: Automatic HTTPS on all StackBlaze services. TLS 1.2 minimum, TLS 1.3 preferred, HSTS enabled, custom certificates on Enterprise.
+---
+
+Every StackBlaze service gets automatic HTTPS. Custom domain certificates are provisioned and renewed without any configuration.
+
+## Automatic HTTPS
+
+All services deployed on StackBlaze are served over HTTPS on their default `*.stackblaze.cloud` subdomain. The wildcard certificate covering `*.stackblaze.cloud` is managed by StackBlaze and renewed automatically, you never need to think about it.
+
+HTTP is automatically redirected to HTTPS. There is no way to disable this redirect. Plain HTTP is never served to end users.
+
+## Custom domain SSL
+
+When you add a custom domain, StackBlaze provisions a dedicated TLS certificate for it automatically after DNS verification. The certificate is a Domain Validated (DV) cert issued by Let's Encrypt, which is trusted by all major browsers and operating systems.
+
+Certificate provisioning typically takes 30–120 seconds after DNS verification. Renewal happens automatically 30 days before expiry, you never need to manually renew a certificate.
+
+## TLS configuration
+
+| Setting | Value |
+| --- | --- |
+| Minimum TLS version | TLS 1.2 |
+| Preferred TLS version | TLS 1.3 |
+| TLS 1.0 / 1.1 | Disabled |
+| HSTS | Enabled (max-age=31536000) |
+| HSTS preload | Available on Enterprise |
+| Certificate authority | Let's Encrypt (DV) |
+| Key algorithm | ECDSA P-256 (with RSA fallback) |
+
+:::tip[TLS 1.3 benefits]
+TLS 1.3 reduces connection setup latency by completing the handshake in one round trip (versus two for TLS 1.2). It also removes support for weak cipher suites. All modern browsers support TLS 1.3, if your users are on very old browsers or systems, TLS 1.2 is available as a fallback.
+:::
+
+## Cipher suites
+
+StackBlaze uses a modern cipher suite list aligned with Mozilla's "Modern" TLS configuration:
+
+```text title="TLS 1.3 cipher suites"
+TLS_AES_256_GCM_SHA384
+TLS_CHACHA20_POLY1305_SHA256
+TLS_AES_128_GCM_SHA256
+```
+
+```text title="TLS 1.2 cipher suites (fallback)"
+ECDHE-ECDSA-AES256-GCM-SHA384
+ECDHE-RSA-AES256-GCM-SHA384
+ECDHE-ECDSA-CHACHA20-POLY1305
+ECDHE-RSA-CHACHA20-POLY1305
+ECDHE-ECDSA-AES128-GCM-SHA256
+ECDHE-RSA-AES128-GCM-SHA256
+```
+
+## HSTS (HTTP Strict Transport Security)
+
+HSTS is enabled by default on all StackBlaze services with a `max-age` of one year (31,536,000 seconds). This instructs browsers to always use HTTPS for your domain, even if a user types `http://`.
+
+```http title="HSTS header"
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+```
+
+Enterprise plans can enable HSTS preloading, which submits your domain to browser preload lists. This means browsers enforce HTTPS before ever making a connection to your server, maximum protection, but requires careful planning as it can't be easily undone.
+
+## Custom certificates (Enterprise)
+
+Enterprise customers can upload their own TLS certificates, useful for Extended Validation (EV) certificates, organization-validated (OV) certificates, or certificates issued by an internal CA for compliance requirements.
+
+To upload a custom certificate, go to **Settings → Domains → Custom Certificate**. Upload your certificate chain (PEM format) and private key. StackBlaze validates the certificate, stores the key securely, and serves it from the Ingress controller.
+
+```text title="Certificate format (PEM)"
+-----BEGIN CERTIFICATE-----
+[Your certificate]
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+[Intermediate CA certificate]
+-----END CERTIFICATE-----
+```
+
+## Certificate Authority options
+
+| CA | Cert type | Plans |
+| --- | --- | --- |
+| Let's Encrypt | DV (Domain Validated) | All plans |
+| DigiCert | DV / OV / EV (your choice) | Enterprise |
+| Custom / internal CA | Any (you upload the cert) | Enterprise |
+
+## Verifying your SSL configuration
+
+Use `curl` or SSL Labs to verify your configuration after adding a custom domain:
+
+```bash title="Terminal"
+# Check TLS version and certificate
+curl -vI https://app.example.com 2>&1 | grep -E "SSL|TLS|certificate|issuer"
+
+# Check HSTS header
+curl -sI https://app.example.com | grep -i strict
+
+# Full SSL analysis
+open https://www.ssllabs.com/ssltest/analyze.html?d=app.example.com
+```
+
+:::note[Under the hood]
+SSL termination happens at the Kubernetes **Ingress controller** (nginx-based). cert-manager handles certificate provisioning via the **ACME HTTP-01 challenge**: it temporarily creates an Ingress route for `/.well-known/acme-challenge/TOKEN` to prove domain ownership to Let's Encrypt. Certificates are stored as Kubernetes **Secrets** of type `kubernetes.io/tls` and referenced by the Ingress resource. Rotation is triggered automatically by cert-manager 30 days before expiry.
+:::

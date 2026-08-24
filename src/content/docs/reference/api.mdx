@@ -1,0 +1,137 @@
+---
+title: API Reference
+description: "REST API for StackBlaze: /api/pipelines, /api/apps, deployments, logs, add-ons, and stackblaze.yaml. Authenticate with kbr_pat_ tokens."
+---
+
+The StackBlaze REST API is the same NestJS control plane the dashboard uses. Paths are namespaced under `/api`. Resources are addressed by project, phase, and app name — not opaque service IDs. The interactive OpenAPI explorer is at [api.stackblaze.cloud/api/docs](https://api.stackblaze.cloud/api/docs).
+
+| | |
+| --- | --- |
+| Base URL | `https://api.stackblaze.cloud` |
+| Auth | `Bearer kbr_pat_…` |
+| OpenAPI | `/api/docs` |
+
+## Vocabulary
+
+Marketing copy says project and environment. The API and dashboard use the Kubero names:
+
+| Docs | API path | Meaning |
+| --- | --- | --- |
+| Organization | `activeTenantId` on the token | Prisma tenant the token is scoped to |
+| Project | `pipeline` | Top-level app group with phases and a region |
+| Environment | `phase` | production, review, or a custom phase |
+| App | `app` | A workload (web, worker, or cron) |
+| Add-on | `addon` kind | Managed Postgres, Valkey, MariaDB, Kafka, … |
+| Function | `function` | Knative function, not an app |
+
+## Authentication
+
+Create a personal access token in the dashboard under **Settings → API tokens**. The raw value is shown once and starts with `kbr_pat_`. The token inherits the creator's organization (`activeTenantId`) and RBAC. Send it as a Bearer token on every request.
+
+```bash title="Authentication header"
+# Include Authorization header on all requests
+Authorization: Bearer kbr_pat_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# List projects
+curl https://api.stackblaze.cloud/api/pipelines \
+    -H "Authorization: Bearer $STACKBLAZE_TOKEN" \
+    -H "Content-Type: application/json"
+```
+
+## Core endpoints
+
+This is the public automation surface. Addon browsers, WAF, Coroot handoff, billing, and platform-admin routes are documented in OpenAPI.
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| GET | `/api/pipelines` | List projects in the active organization |
+| POST | `/api/pipelines/new` | Create a project (pipeline name is in the body) |
+| GET | `/api/pipelines/{pipeline}` | Get a project and its phases |
+| PUT | `/api/pipelines/{pipeline}` | Update a project |
+| DELETE | `/api/pipelines/{pipeline}` | Delete a project |
+| GET | `/api/pipelines/{pipeline}/apps` | List apps in every phase of a project |
+| POST | `/api/pipelines/{pipeline}/apply` | Declarative project upsert (IaC, when enabled) |
+| GET | `/api/apps/{pipeline}/{phase}/{app}` | Get an app spec and status |
+| POST | `/api/apps/{pipeline}/{phase}/{app}` | Create an app in a phase |
+| POST | `/api/apps/{pipeline}/{phase}/{app}/apply` | Declarative app upsert (IaC, when enabled) |
+| DELETE | `/api/apps/{pipeline}/{phase}/{app}` | Delete an app |
+| GET | `/api/apps/{pipeline}/{phase}/{app}/restart` | Restart / redeploy a running app |
+| GET | `/api/apps/{pipeline}/{phase}/{app}/status` | Cached runtime status (pods, add-ons) |
+| POST | `/api/deployments/build/{pipeline}/{phase}/{app}` | Trigger a new build |
+| GET | `/api/deployments/{pipeline}/{phase}/{app}` | List builds for an app |
+| POST | `/api/deployments/rollback/{pipeline}/{phase}/{app}/{revisionId}` | Roll back to a previous revision |
+| GET | `/api/logs/{pipeline}/{phase}/{app}/` | Stream live logs |
+| GET | `/api/logs/{pipeline}/{phase}/{app}/{container}/history` | Recent log history for a container |
+| GET | `/api/addons` | List add-on kinds available to the organization |
+| GET | `/api/templates/catalog` | Public template catalog (no auth) |
+| GET | `/api/iac/blueprint/schema` | Public JSON Schema for stackblaze.yaml |
+| POST | `/api/iac/blueprint/plan` | Diff a stackblaze.yaml against live state |
+| POST | `/api/iac/blueprint/apply` | Apply a stackblaze.yaml (never deletes) |
+| GET | `/api/tokens/my` | List API tokens for the current user |
+| POST | `/api/tokens/my` | Create an API token (returns `kbr_pat_…` once) |
+
+## Example: list projects
+
+### Request
+
+```bash title="GET /api/pipelines"
+curl https://api.stackblaze.cloud/api/pipelines \
+    -H "Authorization: Bearer $STACKBLAZE_TOKEN"
+```
+
+### Response
+
+```json title="200 OK"
+{
+  "items": [
+    {
+      "name": "acme-app",
+      "domain": "acme-app.stackblaze.app",
+      "regionSlug": "us-east-1",
+      "reviewapps": true,
+      "iacEnabled": false,
+      "phases": [/* production, review, … */]
+    }
+  ]
+}
+```
+
+## Example: restart an app
+
+### Request
+
+```bash title="GET /api/apps/{pipeline}/{phase}/{app}/restart"
+curl https://api.stackblaze.cloud/api/apps/acme-app/production/api/restart \
+    -H "Authorization: Bearer $STACKBLAZE_TOKEN"
+```
+
+To queue a new image build instead, `POST /api/deployments/build/acme-app/production/api`. Declarative updates that create or change an app use `/apply` and require Infrastructure as Code to be enabled on the project.
+
+## Error responses
+
+Failed requests return the NestJS HTTP exception body:
+
+```json title="4xx / 5xx error"
+{
+  "statusCode": 404,
+  "message": "Pipeline not found",
+  "error": "Not Found"
+}
+```
+
+| Status | Meaning |
+| --- | --- |
+| 400 | Bad Request — invalid body or reserved name (e.g. pipeline named new) |
+| 401 | Unauthorized — missing or invalid token |
+| 403 | Forbidden — token lacks permission, or resource is outside the organization |
+| 404 | Not Found |
+| 409 | Conflict — resource version or state mismatch |
+| 413 | Payload too large — app specs with several add-ons can be large |
+| 500 | Internal Server Error |
+| 503 | Transient downstream failure — safe to retry |
+
+## Next steps
+
+- [stackblaze.yaml blueprints](/blueprint/)
+- [Automation (API, MCP, YAML)](/reference/cli/)
+- [Core concepts](/concepts/)

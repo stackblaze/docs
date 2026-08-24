@@ -1,0 +1,112 @@
+---
+title: Custom Domains
+description: Attach your own domain to any StackBlaze service. SSL certificates are provisioned automatically via Let's Encrypt after DNS verification.
+---
+
+Attach your own domain to any StackBlaze web service. SSL certificates are provisioned automatically after DNS verification.
+
+![Diagram of CNAME from custom domain to StackBlaze edge with automatic TLS](/illustrations/custom-domain-dns.svg)
+
+*Point your DNS at StackBlaze, cert-manager provisions and renews TLS certificates automatically.*
+
+## Adding a domain
+
+From your service's dashboard, go to **Settings → Domains → Add domain**. Enter your domain (e.g. `app.example.com` or `example.com`). StackBlaze will show you the DNS records to configure.
+
+## DNS configuration
+
+### Subdomains (CNAME)
+
+For subdomains like `app.example.com` or `www.example.com`, create a CNAME record pointing to your service's StackBlaze hostname.
+
+```text title="DNS record (subdomain)"
+Type:  CNAME
+Name:  app
+Value: my-service.stackblaze.cloud
+TTL:   300
+```
+
+### Apex domains (root domain)
+
+Many DNS providers don't allow CNAME records on the apex (root) domain because it conflicts with SOA and NS records. Use one of these alternatives instead:
+
+- **ALIAS or ANAME record**: supported by Cloudflare (as "CNAME flattening"), Route 53, Namecheap, and DNSimple. Behaves like a CNAME but is valid at the apex.
+- **A records**: point to our anycast IP addresses. Use this if your DNS provider doesn't support ALIAS/ANAME.
+
+```text title="DNS record (apex, A records)"
+Type:  A
+Name:  @
+Value: 1.2.3.4
+TTL:   300
+
+Type:  A
+Name:  @
+Value: 5.6.7.8
+TTL:   300
+```
+
+:::tip[Cloudflare users]
+If you use Cloudflare, enable "Proxied" mode (orange cloud) for automatic ALIAS-style resolution at the apex. Ensure you're pointing to `my-service.stackblaze.cloud` as a CNAME with proxy enabled, this is compatible with both subdomains and apex domains.
+:::
+
+## Verification
+
+After you configure the DNS record, StackBlaze automatically polls for it every 30 seconds. Verification typically completes within 60 seconds for new DNS records. If your TTL was previously set high, you may need to wait for the old record to expire.
+
+You can also verify manually with:
+
+```bash title="Terminal"
+# Check CNAME resolution
+dig app.example.com CNAME
+
+# Check A record (apex)
+dig example.com A
+```
+
+## SSL certificates
+
+Once DNS verification succeeds, StackBlaze automatically provisions a Let's Encrypt TLS certificate via cert-manager. This usually takes 30–120 seconds. During provisioning, your domain will briefly show an SSL error, this resolves automatically.
+
+Certificates are renewed automatically before expiry. You don't need to do anything to maintain SSL.
+
+## Multiple domains
+
+| Plan | Custom domains per service |
+| --- | --- |
+| Free | 1 |
+| Starter | 5 |
+| Pro | Unlimited |
+| Enterprise | Unlimited |
+
+## Domain redirects
+
+You can configure redirects between domains from **Settings → Domains**. Common configurations:
+
+- **www → apex**: `www.example.com` redirects to `example.com` (301)
+- **apex → www**: `example.com` redirects to `www.example.com` (301)
+- **Old domain → new domain**: permanently redirect a legacy domain to your current one
+
+## Troubleshooting
+
+### Verification is stuck
+
+If domain verification is taking more than 5 minutes, check:
+
+1. The DNS record is set to the correct value (copy-paste from the dashboard, don't retype)
+2. The TTL on any previous records has expired (lower TTL before making changes)
+3. No DNSSEC issues, use `dnssec-analyzer.verisignlabs.com` to check
+4. The domain isn't blocked by a CAA record that excludes Let's Encrypt
+
+### CAA records
+
+If you have CAA records on your domain, ensure Let's Encrypt is permitted:
+
+```text title="Required CAA record"
+Type:  CAA
+Name:  @
+Value: 0 issue "letsencrypt.org"
+```
+
+:::note[Under the hood]
+Each custom domain creates a Kubernetes **Ingress** resource with a `cert-manager.io/cluster-issuer` annotation pointing to the Let's Encrypt ClusterIssuer. cert-manager handles the ACME HTTP-01 challenge via a temporary `/.well-known/acme-challenge/` route on the Ingress. Once issued, the certificate is stored as a Kubernetes Secret and mounted into the Ingress controller.
+:::

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" fill="none">
+  <rect width="1200" height="400" fill="#07070d"/>
+  <text x="80" y="55" fill="#ffffff" fill-opacity="0.5" font-family="ui-sans-serif, system-ui, sans-serif" font-size="22" font-weight="600">Autoscaling with spend cap</text>
+  <path d="M120 300 L280 280 L420 200 L560 120 L700 140 L860 160 L1000 280" stroke="#8b5cf6" stroke-width="3" fill="none"/>
+  <line x1="120" y1="320" x2="1080" y2="320" stroke="#ffffff" stroke-opacity="0.1"/>
+  <line x1="120" y1="180" x2="1080" y2="180" stroke="#f472b6" stroke-opacity="0.4" stroke-dasharray="8 4"/>
+  <text x="900" y="170" fill="#fda4af" font-family="ui-monospace, monospace" font-size="13">spend cap $4/hr</text>
+  <rect x="560" y="100" width="80" height="44" rx="8" fill="#312e81"/>
+  <rect x="660" y="115" width="80" height="44" rx="8" fill="#312e81"/>
+  <rect x="760" y="130" width="80" height="44" rx="8" fill="#312e81" stroke="#f472b6" stroke-opacity="0.5"/>
+  <text x="80" y="350" fill="#ffffff" fill-opacity="0.35" font-family="ui-monospace, monospace" font-size="13">CPU threshold | scale up | cap prevents runaway instances</text>
+</svg>

@@ -1,0 +1,84 @@
+---
+title: Autoscaling
+description: Automatically scale your service based on CPU utilization, memory pressure, or request rate. Powered by Kubernetes HPA with conservative scale-down behavior.
+---
+
+Automatically scale your service up and down based on CPU utilization, memory pressure, or request rate, without manual intervention.
+
+![Chart showing traffic spike, replica count scaling up, and hourly spend cap line](/illustrations/autoscaling.svg)
+
+*Replicas scale with load; optional spend caps prevent runaway bills during traffic spikes.*
+
+## Enabling autoscaling
+
+Navigate to your service, click **Scaling** in the left menu, then toggle **Autoscaling** to **ON**. Configure the minimum replicas, maximum replicas, and the metric thresholds that trigger scaling.
+
+## Scaling metrics
+
+| Metric | Default threshold | Plans |
+| --- | --- | --- |
+| CPU utilization | 70% of limit | Starter+ |
+| Memory utilization | 80% of limit | Starter+ |
+| Request rate (RPS) | Custom | Enterprise |
+
+### CPU-based autoscaling
+
+The most common scaling metric. When average CPU utilization across all replicas exceeds the threshold (default: 70% of the CPU limit), StackBlaze adds a new replica. CPU is a good proxy for request load on compute-bound services.
+
+### Memory-based autoscaling
+
+Useful for services where memory usage correlates with load, for example, services that cache data per-request or maintain large in-memory state. The threshold is expressed as a percentage of the configured memory limit.
+
+:::caution[Memory autoscaling caveat]
+Memory is not released as quickly as CPU, some runtimes (especially JVM-based apps and Node.js) don't aggressively garbage collect. A memory autoscaling trigger may cause scale-ups that aren't necessary. Monitor your service's memory pattern before relying on memory-based autoscaling alone.
+:::
+
+### Request rate (Enterprise)
+
+Scale based on requests per second (RPS) per replica. This is the most direct measure of load for web services. Set a target RPS per replica and StackBlaze will maintain that ratio by adjusting replica count.
+
+## Scaling behavior
+
+### Scale-up
+
+When a metric threshold is breached, StackBlaze evaluates the violation for up to 30 seconds before triggering a scale-up. This prevents brief spikes from causing unnecessary scaling events. Once triggered, a new pod is started and added to the load balancer as soon as its readiness probe passes.
+
+### Scale-down (conservative)
+
+Scale-down is deliberately conservative. StackBlaze waits for all metrics to remain below their thresholds for 5 minutes before reducing replica count. This stabilization window prevents thrashing, the rapid alternation between scaling up and down that can occur if scale-down happens too quickly after a spike.
+
+## Min and max replicas
+
+Always configure both a minimum and maximum:
+
+- **Minimum replicas**: the floor. Your service will never scale below this count, even at zero traffic. Set to at least 1 to avoid cold starts. Set to 2+ for high-availability production services.
+- **Maximum replicas**: the ceiling. Protects against runaway scaling caused by a traffic spike, a bug, or a DDoS. Set this to a value your database can handle (connection pool limits) and your budget can support.
+
+## Autoscaling and databases
+
+When your service scales up, each new replica opens connections to your database. Ensure your database connection pool is configured correctly to handle the maximum replica count:
+
+```ts title="Database connection pool configuration"
+// Each replica opens up to 10 connections
+// With max 5 replicas, the database receives up to 50 connections
+import { Pool } from 'pg'
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 10,            // connections per replica
+  idleTimeoutMillis: 30_000,
+  connectionTimeoutMillis: 5_000,
+})
+```
+
+:::tip[Tip, use a connection pooler]
+For PostgreSQL, consider enabling PgBouncer (available as an add-on on Pro+) to pool connections between your service replicas and the database. With connection pooling, 50 service replicas can share a small number of actual database connections, avoiding connection exhaustion.
+:::
+
+## Monitoring autoscaling events
+
+Autoscaling events are logged in your service's **Events** tab. Each scale-up or scale-down event shows the metric that triggered it, the previous replica count, and the new count. Use the **Metrics** tab to correlate scaling events with CPU and memory graphs.
+
+:::note[Under the hood]
+Autoscaling is powered by the Kubernetes **HorizontalPodAutoscaler (HPA)**. The HPA controller runs on a 15-second reconciliation loop, comparing current metric values (from **metrics-server**) against the configured targets. The HPA uses a proportional algorithm: `desiredReplicas = ceil(currentReplicas * (currentMetric / targetMetric))`. The stabilization windows prevent oscillation.
+:::

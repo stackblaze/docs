@@ -1,0 +1,39 @@
+---
+title: Observability
+description: Coroot metrics, logs, and traces for StackBlaze apps, plus dashboard notifications.
+---
+
+Built-in metrics and logs, plus how to forward telemetry to your existing stack.
+
+## Coroot
+
+Observability is **Coroot** (eBPF metrics, logs, and traces). Open it from an app in the dashboard — StackBlaze mints a one-time handoff and opens Coroot in a new tab. Billing and in-dashboard charts query PromQL `query_range` with an API key; there is no instant `/query` endpoint.
+
+| Signal | Use it for |
+| --- | --- |
+| CPU and RSS memory | Right-sizing pod sizes and catching OOMs |
+| TCP egress (eBPF) | Unexpected outbound traffic |
+| Golden signals / incidents | Error rate and latency regressions after a deploy |
+| Service map | Who talks to whom inside the phase |
+
+## Logs
+
+Runtime stdout/stderr is in the app **Logs** tab and via `GET /api/logs/{pipeline}/{phase}/{app}/`. Search uses the durable log index (`search_logs` in MCP / chat). An empty live tail is not the same as "no logs" — search history when the pod has rotated.
+
+:::note
+Chat and MCP should prefer log search over a raw tail. Retention follows the observability backend for the region, not a per-plan hobby/pro table.
+:::
+
+## Notifications
+
+Configure Slack, Discord, or generic webhooks under **Settings → Notifications**. Pick pipelines and event names (deploys, failures). This is not a full PagerDuty product — use Coroot incidents for SLO-style alerts.
+
+## Your own exporters
+
+You can still emit OpenTelemetry from the app to Datadog, Honeycomb, or Grafana Cloud. That is in-process and independent of Coroot.
+
+## After a bad deploy
+
+Open Coroot from the app, then roll back from [Rollbacks](/cicd/rollbacks/) or `POST /api/deployments/rollback/{pipeline}/{phase}/{app}/{revisionId}`.
+
+Deep dive: [Observability beyond metrics](https://stackblaze.com/blog/observability-beyond-metrics)

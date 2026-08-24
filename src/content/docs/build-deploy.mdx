@@ -1,0 +1,41 @@
+---
+title: Build & deploy
+description: Apps, processes, GitHub deploys, Docker, CI/CD, and scaling — from first deploy to production.
+---
+
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+Apps, processes, GitHub deploys, Docker, CI/CD, and scaling — from first deploy to production.
+
+## In this section
+
+<CardGrid>
+  <LinkCard title="Apps and processes" href="/build-deploy/apps/" description="How one app bundles web, worker, and cron processes, and when to use a managed add-on." />
+  <LinkCard title="Web services" href="/deploy/web-services/" description="Long-running HTTP apps with a public URL and TLS." />
+  <LinkCard title="Background workers" href="/deploy/background-workers/" description="Always-on processes with no inbound traffic." />
+  <LinkCard title="Cron jobs" href="/deploy/cron-jobs/" description="Scheduled runs on standard cron syntax." />
+  <LinkCard title="Static sites" href="/deploy/static-sites/" description="Built assets served from the edge, no runtime." />
+  <LinkCard title="Deploy from GitHub" href="/deploy/github/" description="Connect a repo and auto-deploy on every push." />
+  <LinkCard title="Docker" href="/deploy/docker/" description="Build from a Dockerfile or run a registry image." />
+  <LinkCard title="Docker Compose" href="/deploy/docker-compose/" description="Map Compose services to StackBlaze apps and managed add-ons." />
+</CardGrid>
+
+## CI/CD
+
+<CardGrid>
+  <LinkCard title="Auto deploy on push" href="/cicd/auto-deploy/" description="Every push to the deploy branch triggers a build." />
+  <LinkCard title="PR previews" href="/cicd/pr-previews/" description="A live URL for every pull request, torn down on close." />
+  <LinkCard title="Deploy hooks" href="/cicd/deploy-hooks/" description="Trigger a redeploy from CI or an external system." />
+  <LinkCard title="Rollbacks" href="/cicd/rollbacks/" description="Revert to any previous successful deployment." />
+  <LinkCard title="Monorepo" href="/cicd/monorepo/" description="Root directories and build filters for multi-app repos." />
+</CardGrid>
+
+## Scaling
+
+<CardGrid>
+  <LinkCard title="Horizontal scaling" href="/scaling/horizontal/" description="Replica counts and spreading load across instances." />
+  <LinkCard title="Autoscaling" href="/scaling/autoscaling/" description="Scale replicas from CPU or memory thresholds." />
+  <LinkCard title="Memory & CPU limits" href="/scaling/limits/" description="Pod sizes, requests, and what happens at the cap." />
+  <LinkCard title="Zero-downtime deploys" href="/scaling/zero-downtime/" description="Rolling updates that wait for health checks." />
+  <LinkCard title="Health checks" href="/storage/health-checks/" description="Readiness probes so traffic only hits healthy instances." />
+</CardGrid>

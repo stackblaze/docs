@@ -1,0 +1,61 @@
+---
+title: Automation
+description: Automate StackBlaze with the REST API, stackblaze.yaml, and MCP. Tokens use the kbr_pat_ prefix. There is no @stackblaze/cli on this control plane.
+---
+
+StackBlaze does not ship a standalone `@stackblaze/cli` npm package on this control plane. Automate with the REST API, `stackblaze.yaml`, or MCP. The dashboard is a Vue client of the same API.
+
+```bash title="terminal"
+# Token from Settings → API tokens
+export STACKBLAZE_TOKEN=kbr_pat_…
+
+# List projects
+$ curl -sS https://api.stackblaze.cloud/api/pipelines -H "Authorization: Bearer $STACKBLAZE_TOKEN"
+
+# Restart production/api
+$ curl -sS https://api.stackblaze.cloud/api/apps/acme-app/production/api/restart -H "Authorization: Bearer $STACKBLAZE_TOKEN"
+```
+
+## Authentication
+
+| | |
+| --- | --- |
+| Settings → API tokens → Generate token | Mint a `kbr_pat_` token scoped to the current organization. The secret is shown once. |
+| `Authorization: Bearer $STACKBLAZE_TOKEN` | Send the token on every `/api` request. Session cookies work for the dashboard only. |
+
+## Projects and apps
+
+| | |
+| --- | --- |
+| `GET /api/pipelines` | List projects in the active organization |
+| `GET /api/pipelines/{pipeline}/apps` | List apps across phases |
+| `GET /api/apps/{pipeline}/{phase}/{app}` | Read an app spec |
+| `GET /api/apps/{pipeline}/{phase}/{app}/restart` | Restart a running app |
+| `POST /api/deployments/build/{pipeline}/{phase}/{app}` | Queue a new image build |
+
+## stackblaze.yaml
+
+| | |
+| --- | --- |
+| `GET /api/iac/blueprint/schema` | Public JSON Schema (no auth) |
+| `POST /api/iac/blueprint/validate` | Parse and compile without touching live state |
+| `POST /api/iac/blueprint/plan` | Diff YAML against the live project (IaC on) |
+| `POST /api/iac/blueprint/apply` | Upsert pipeline, apps, and databases. Never deletes. |
+| `GET /api/iac/blueprint/export` | Download a live phase as stackblaze.yaml (read-only) |
+
+## MCP
+
+| | |
+| --- | --- |
+| `https://mcp.stackblaze.cloud` | Connect Cursor, Claude, or any MCP client. Per-session Authorization is required. |
+| `get_app`, `deploy_app`, `search_logs`, … | Tool names are unprefixed in code. Docs sometimes write `stackblaze_*` — use the unprefixed name. |
+
+:::note[CI/CD]
+Store `STACKBLAZE_TOKEN` as a CI secret. Prefer `POST /api/deployments/build/…` after your own tests, or apply a `stackblaze.yaml` when IaC is enabled. GitHub auto-deploy on push is configured on the project — you do not need a deploy hook URL.
+:::
+
+## Next steps
+
+- [REST API reference](/reference/api/)
+- [stackblaze.yaml](/blueprint/)
+- [Core concepts](/concepts/)

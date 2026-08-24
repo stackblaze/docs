@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" fill="none" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif">
+  <rect width="1200" height="400" fill="#07070d"/>
+
+  <!-- ambient accents -->
+  <circle cx="260" cy="200" r="200" fill="#8b5cf6" opacity="0.07"/>
+  <circle cx="940" cy="200" r="220" fill="#3b82f6" opacity="0.07"/>
+
+  <!-- divider -->
+  <line x1="600" y1="60" x2="600" y2="340" stroke="#ffffff" stroke-opacity="0.08" stroke-dasharray="4 6"/>
+
+  <!-- ============ STANDARD (left) ============ -->
+  <text x="60" y="50" fill="#ffffff" fill-opacity="0.55" font-size="20" font-weight="600">Standard</text>
+  <text x="60" y="74" fill="#ffffff" fill-opacity="0.3" font-size="13">Single instance</text>
+
+  <!-- app -->
+  <rect x="90" y="150" width="130" height="60" rx="14" fill="#1e1b3a" stroke="#a78bfa" stroke-opacity="0.35"/>
+  <text x="155" y="186" fill="#ffffff" fill-opacity="0.8" font-size="15" text-anchor="middle">Your app</text>
+
+  <!-- arrow app -> db -->
+  <line x1="220" y1="180" x2="320" y2="180" stroke="#a78bfa" stroke-opacity="0.5" stroke-width="2"/>
+  <path d="M320 180 l-10 -5 v10 z" fill="#a78bfa" fill-opacity="0.7"/>
+
+  <!-- primary db -->
+  <rect x="322" y="146" width="170" height="68" rx="14" fill="#312e81" stroke="#a78bfa" stroke-opacity="0.45"/>
+  <text x="407" y="178" fill="#ffffff" fill-opacity="0.9" font-size="15" text-anchor="middle" font-weight="600">Database</text>
+  <text x="407" y="198" fill="#c4b5fd" fill-opacity="0.8" font-size="12" text-anchor="middle">primary</text>
+
+  <!-- pvc -->
+  <line x1="407" y1="214" x2="407" y2="250" stroke="#a78bfa" stroke-opacity="0.4" stroke-width="2" stroke-dasharray="3 4"/>
+  <ellipse cx="407" cy="262" rx="46" ry="10" fill="#1e1b3a" stroke="#a78bfa" stroke-opacity="0.35"/>
+  <path d="M361 262 v30 a46 10 0 0 0 92 0 v-30" fill="#1e1b3a" stroke="#a78bfa" stroke-opacity="0.35"/>
+  <text x="407" y="312" fill="#ffffff" fill-opacity="0.45" font-size="12" text-anchor="middle">1 volume (PVC)</text>
+
+  <text x="290" y="356" fill="#ffffff" fill-opacity="0.35" font-size="13" text-anchor="middle">One pod, one volume. Simplest, lowest cost.</text>
+
+  <!-- ============ HIGH AVAILABILITY (right) ============ -->
+  <text x="650" y="50" fill="#ffffff" fill-opacity="0.55" font-size="20" font-weight="600">High availability</text>
+  <text x="650" y="74" fill="#ffffff" fill-opacity="0.3" font-size="13">Primary + replicas, automatic failover</text>
+
+  <!-- app -->
+  <rect x="650" y="150" width="120" height="60" rx="14" fill="#15213a" stroke="#60a5fa" stroke-opacity="0.35"/>
+  <text x="710" y="186" fill="#ffffff" fill-opacity="0.8" font-size="15" text-anchor="middle">Your app</text>
+
+  <!-- service -->
+  <line x1="770" y1="180" x2="828" y2="180" stroke="#60a5fa" stroke-opacity="0.5" stroke-width="2"/>
+  <path d="M828 180 l-10 -5 v10 z" fill="#60a5fa" fill-opacity="0.7"/>
+  <rect x="830" y="150" width="110" height="60" rx="14" fill="#15213a" stroke="#60a5fa" stroke-opacity="0.4"/>
+  <text x="885" y="176" fill="#ffffff" fill-opacity="0.85" font-size="13" text-anchor="middle" font-weight="600">Service</text>
+  <text x="885" y="194" fill="#93c5fd" fill-opacity="0.8" font-size="11" text-anchor="middle">routes traffic</text>
+
+  <!-- primary -->
+  <rect x="1000" y="96" width="150" height="56" rx="13" fill="#1e3a5f" stroke="#60a5fa" stroke-opacity="0.5"/>
+  <text x="1075" y="120" fill="#ffffff" fill-opacity="0.9" font-size="14" text-anchor="middle" font-weight="600">Primary</text>
+  <text x="1075" y="138" fill="#93c5fd" fill-opacity="0.8" font-size="11" text-anchor="middle">node 1 · reads + writes</text>
+
+  <!-- replica 1 -->
+  <rect x="1000" y="172" width="150" height="56" rx="13" fill="#15213a" stroke="#60a5fa" stroke-opacity="0.35"/>
+  <text x="1075" y="196" fill="#ffffff" fill-opacity="0.85" font-size="14" text-anchor="middle">Replica</text>
+  <text x="1075" y="214" fill="#93c5fd" fill-opacity="0.7" font-size="11" text-anchor="middle">node 2 · reads</text>
+
+  <!-- replica 2 -->
+  <rect x="1000" y="248" width="150" height="56" rx="13" fill="#15213a" stroke="#60a5fa" stroke-opacity="0.35"/>
+  <text x="1075" y="272" fill="#ffffff" fill-opacity="0.85" font-size="14" text-anchor="middle">Replica</text>
+  <text x="1075" y="290" fill="#93c5fd" fill-opacity="0.7" font-size="11" text-anchor="middle">node 3 · reads</text>
+
+  <!-- service -> primary -->
+  <line x1="940" y1="172" x2="1000" y2="124" stroke="#60a5fa" stroke-opacity="0.45" stroke-width="2"/>
+  <line x1="940" y1="186" x2="1000" y2="200" stroke="#60a5fa" stroke-opacity="0.3" stroke-width="2"/>
+  <line x1="940" y1="196" x2="1000" y2="276" stroke="#60a5fa" stroke-opacity="0.3" stroke-width="2"/>
+
+  <!-- replication (primary -> replicas) -->
+  <line x1="1075" y1="152" x2="1075" y2="172" stroke="#34d399" stroke-opacity="0.55" stroke-width="2" stroke-dasharray="3 3"/>
+  <line x1="1075" y1="228" x2="1075" y2="248" stroke="#34d399" stroke-opacity="0.55" stroke-width="2" stroke-dasharray="3 3"/>
+  <text x="1163" y="204" fill="#34d399" fill-opacity="0.7" font-size="11" text-anchor="middle" transform="rotate(90 1163 204)">streaming replication</text>
+
+  <text x="895" y="356" fill="#ffffff" fill-opacity="0.35" font-size="13" text-anchor="middle">Replicas across nodes, survives a node or pod failure.</text>
+</svg>

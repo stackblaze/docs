@@ -1,0 +1,123 @@
+---
+title: Pricing & Plans
+description: "StackBlaze pricing plans: Free, Starter ($7/service/month), Pro ($25/service/month), and Enterprise. Includes database pricing, bandwidth costs, and answers to common billing questions."
+---
+
+## Plans
+
+### Free — $0 forever
+
+For side projects and experimentation. [Get started free](https://stackblaze.com/signup).
+
+- 1 web service
+- 1 database
+- 1 background worker
+- 500 build minutes/month
+- 100 GB bandwidth/month
+- 1 custom domain
+- 1 replica per service
+- Services spin down after 15 min inactivity
+- 7-day log retention
+- Community support
+
+### Starter — $7 per service/month
+
+For teams building production apps. [Start with Starter](https://stackblaze.com/signup).
+
+- Up to 3 services
+- Up to 3 databases
+- 2,000 build minutes/month
+- 500 GB bandwidth/month
+- 5 custom domains
+- Up to 3 replicas per service
+- Always-on (no spin-down)
+- 14-day log retention
+- 3-day backup retention
+- Email support
+
+### Pro — $25 per service/month
+
+Most popular. For serious production workloads. [Start with Pro](https://stackblaze.com/signup).
+
+- Unlimited services
+- Unlimited databases
+- Unlimited build minutes
+- Unlimited bandwidth
+- Unlimited custom domains
+- Up to 10 replicas per service
+- Autoscaling (CPU & memory triggers)
+- Point-in-time recovery (PITR)
+- 30-day log retention
+- 7-day backup retention
+- Priority support (4h response SLA)
+
+### Enterprise — Custom (contact sales)
+
+For large teams with compliance requirements. [Contact sales](https://stackblaze.com/contact).
+
+- Everything in Pro
+- Unlimited replicas per service
+- Dedicated infrastructure (single-tenant)
+- SAML 2.0 SSO (Okta, Azure AD, Google)
+- SCIM provisioning
+- IP allowlisting
+- Enforce 2FA for all members
+- Audit log (90-day retention)
+- 90-day backup retention
+- Dedicated SLA & support contact
+- Custom contract & invoicing
+
+## Database pricing
+
+Databases are billed separately from your service plan, based on instance size. Disk storage is billed at $0.20/GB-month. Backup storage for Point-in-Time Recovery (Pro+) is billed at $0.05/GB-month.
+
+| Size | RAM | vCPU | Price |
+| --- | --- | --- | --- |
+| Micro | 512 MB | 0.5 | $7/month |
+| Basic | 1 GB | 1 | $15/month |
+| Standard | 4 GB | 2 | $45/month |
+| Performance | 16 GB | 4 | $140/month |
+| Professional | 64 GB | 8 | $490/month |
+
+## Bandwidth pricing
+
+| | |
+| --- | --- |
+| 100 GB | Free on all plans per month |
+| $0.10 | Per GB over the included amount |
+| Free | All inbound & internal traffic |
+
+## Frequently asked questions
+
+### What counts as a service?
+
+A service is any web service, background worker, or cron job. Databases are billed separately. Each deployed unit, even if it runs 0 replicas, counts as one service against your plan quota.
+
+### How is bandwidth measured?
+
+Bandwidth is outbound data transfer from your services to the public internet. Inbound traffic (requests to your service) and internal traffic (service-to-service within your project) are always free.
+
+### What happens to Free plan services when they spin down?
+
+Free plan web services spin down after 15 minutes of no incoming traffic. The next request wakes the service up in 5–10 seconds. This does not affect background workers or cron jobs, those don't receive HTTP traffic.
+
+### How does the Starter plan billing work?
+
+Starter is billed per service per month. A project with 2 web services costs $14/month. Databases are billed separately by instance size. You're only billed for active services, deleted services stop accruing charges immediately.
+
+### Can I mix plans across services?
+
+No, the plan applies to the entire project. All services in a project share the same plan tier. If you need different capabilities for different teams, create separate projects.
+
+## Ready to get started?
+
+No credit card required. Free plan available forever.
+
+- [Start for free](https://stackblaze.com/signup)
+- [Contact sales](https://stackblaze.com/contact)
+
+## Next steps
+
+- [Limits & quotas by plan](/reference/limits/)
+- [API reference](/reference/api/)
+- [Team & permissions](/security/team-permissions/)

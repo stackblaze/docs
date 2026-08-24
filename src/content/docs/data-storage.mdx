@@ -1,0 +1,42 @@
+---
+title: Data & storage
+description: Managed databases, volumes, backups, and messaging add-ons on the private network.
+---
+
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+Managed databases, volumes, backups, and messaging add-ons on the private network.
+
+## Databases
+
+Every managed database runs as Standard or high-availability. Pick a topology when you create it.
+
+<CardGrid>
+  <LinkCard title="PostgreSQL" href="/databases/postgresql/" description="Managed Postgres with Standard and HA topologies." />
+  <LinkCard title="MySQL" href="/databases/mysql/" description="Managed MySQL for apps that expect the MySQL protocol." />
+  <LinkCard title="Redis" href="/databases/redis/" description="Valkey-compatible cache and queue." />
+  <LinkCard title="MongoDB" href="/databases/mongodb/" description="Document store with a MongoDB-compatible API." />
+  <LinkCard title="CockroachDB" href="/databases/cockroachdb/" description="Distributed SQL with Postgres compatibility." />
+  <LinkCard title="ClickHouse" href="/databases/clickhouse/" description="Columnar analytics database." />
+  <LinkCard title="OpenSearch" href="/databases/opensearch/" description="Full-text search and log analytics." />
+  <LinkCard title="Milvus" href="/databases/milvus/" description="Vector database for embeddings and similarity search." />
+  <LinkCard title="Cassandra" href="/databases/cassandra/" description="Wide-column store for high-write workloads." />
+  <LinkCard title="ScyllaDB" href="/databases/scylladb/" description="Cassandra-compatible low-latency store." />
+  <LinkCard title="CouchDB" href="/databases/couchdb/" description="HTTP document database with replication." />
+  <LinkCard title="Memcached" href="/databases/memcached/" description="In-memory cache for simple key-value workloads." />
+  <LinkCard title="Backups & recovery" href="/databases/backups/" description="Scheduled backups and restore workflows." />
+  <LinkCard title="Point-in-time recovery" href="/databases/pitr/" description="Restore Postgres to any moment inside the retention window." />
+</CardGrid>
+
+## Volumes
+
+<CardGrid>
+  <LinkCard title="Persistent disks" href="/storage/persistent-disks/" description="Block storage that survives restarts and redeploys." />
+</CardGrid>
+
+## Messaging
+
+<CardGrid>
+  <LinkCard title="Kafka" href="/messaging/kafka/" description="Managed Kafka for event streams." />
+  <LinkCard title="RabbitMQ" href="/messaging/rabbitmq/" description="Managed RabbitMQ for work queues." />
+</CardGrid>

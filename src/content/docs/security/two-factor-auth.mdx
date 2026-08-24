@@ -1,0 +1,86 @@
+---
+title: Two-Factor Authentication
+description: Enable TOTP two-factor authentication on your StackBlaze account. Learn how to set up Google Authenticator, Authy, or 1Password, save recovery codes, and authenticate the CLI with SSH keys.
+---
+
+Two-factor authentication (2FA) adds a second layer of protection to your account. Even if your password is compromised, an attacker cannot sign in without access to your authenticator app. StackBlaze uses TOTP (Time-based One-Time Password), the same standard used by GitHub, Google, and AWS.
+
+We strongly recommend enabling 2FA on all accounts. Enterprise workspace owners can **enforce 2FA** for all members, anyone without 2FA enabled will be locked out of the dashboard until they enable it.
+
+## Supported authenticator apps
+
+| App | Notes |
+| --- | --- |
+| Google Authenticator | Free, iOS & Android. Simple and widely used. Recommended. |
+| Authy | Free, iOS, Android & desktop. Supports encrypted backup across devices. |
+| 1Password | Paid, all platforms. TOTP built into your existing password manager. |
+| Any TOTP app | Any RFC 6238-compliant authenticator works, Bitwarden, Dashlane, Raivo, etc. |
+
+## 2FA login flow
+
+1. **Enter email + password** — standard credential verification.
+2. **Enter 6-digit code** — from your authenticator app. The code refreshes every 30 seconds.
+
+## Recovery codes
+
+When you enable 2FA, StackBlaze generates 10 single-use recovery codes. Each code can be used once in place of a 2FA code. After use, the code is invalidated. Store them securely, they are the only way to regain access if you lose your authenticator device.
+
+```text title="Recovery codes, store safely, shown once"
+a3f9-c12b
+b2e8-d01a
+c1d7-e90f
+d0c6-f89e
+e9b5-g78d
+f8a4-h67c
+g7z3-i56b
+h6y2-j45a
+i5x1-k34z
+j4w0-l23y
+```
+
+:::caution
+Save these codes now, they will not be shown again. If you lose your device and don't have recovery codes, contact support@stackblaze.com for account recovery verification.
+:::
+
+## SSH keys for git
+
+SSH keys on the account are for git fetch over `ssh.stackblaze.app:2222`, not for API login. API automation uses a `kbr_pat_` token from Settings → API tokens.
+
+```bash title="terminal"
+# Generate an SSH key pair if you don't have one
+$ ssh-keygen -t ed25519 -C "me@example.com"
+
+# Add the public key in the dashboard
+# Settings → SSH Keys → Add Key → paste ~/.ssh/id_ed25519.pub
+
+# API access is a Bearer token, not SSH
+export STACKBLAZE_TOKEN=kbr_pat_…
+```
+
+## Step by step
+
+1. **Open Account Security settings**
+
+   Click your avatar in the top-right corner of the dashboard → Account Settings → Security. You'll see a "Two-Factor Authentication" section showing the current status (Disabled). Click "Enable 2FA".
+
+2. **Scan the QR code**
+
+   Open your authenticator app (Google Authenticator, Authy, 1Password, or any TOTP-compatible app). Tap "Add account" or the "+" button and scan the QR code displayed on screen. Alternatively, copy the secret key and enter it manually.
+
+3. **Verify with a 6-digit code**
+
+   Enter the 6-digit TOTP code shown in your authenticator app. This confirms that the app is correctly configured. The code refreshes every 30 seconds, if it expires while you're typing, wait for the next code.
+
+4. **Save your recovery codes**
+
+   StackBlaze generates 10 single-use recovery codes. Download or copy them and store them somewhere secure (password manager, printed, offline storage). These codes are shown exactly once. If you lose access to your authenticator app, recovery codes are the only way back in.
+
+5. **Sign in with 2FA**
+
+   Next time you sign in, you'll be prompted for your 6-digit code after entering your password. Enter the current code from your authenticator app. If you've lost your device, click "Use recovery code" and enter one of your saved recovery codes instead.
+
+## Next steps
+
+- [Enforce 2FA for all team members (Enterprise)](/security/team-permissions/)
+- [IP allowlisting](/security/ip-allowlist/)
+- [CLI authentication with SSH keys](/reference/cli/)

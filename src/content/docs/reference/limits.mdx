@@ -1,0 +1,70 @@
+---
+title: Limits & Quotas
+description: Complete limits and quotas reference for StackBlaze. Per-plan service counts, replica limits, bandwidth, build minutes, rate limits for API and deploy hooks, and absolute platform limits.
+---
+
+StackBlaze enforces quotas to ensure fair resource distribution across all users. Per-plan quotas limit the number of services, replicas, and bandwidth. Rate limits protect the API and deployment pipeline from abuse. Absolute limits are hard caps that apply regardless of plan.
+
+## Per-plan quotas
+
+| Feature | Free | Starter | Pro | Enterprise |
+| --- | --- | --- | --- | --- |
+| Web services | 1 | 3 | Unlimited | Unlimited |
+| Background workers | 1 | 3 | Unlimited | Unlimited |
+| Cron jobs | 1 | 5 | Unlimited | Unlimited |
+| Databases | 1 | 3 | Unlimited | Unlimited |
+| Replicas per service | 1 | 3 | 10 | Unlimited |
+| Build minutes / month | 500 | 2,000 | Unlimited | Unlimited |
+| Bandwidth / month | 100 GB | 500 GB | Unlimited | Unlimited |
+| Custom domains | 1 | 5 | Unlimited | Unlimited |
+| Backup retention | 1 day | 3 days | 7 days | 30 days |
+| Log retention | 7 days | 14 days | 30 days | 90 days |
+| Team members | 1 | 5 | 25 | Unlimited |
+| Environments | 1 | 3 | Unlimited | Unlimited |
+| Support | Community | Email | Priority | Dedicated SLA |
+
+## Rate limits
+
+Rate limits apply across all plans. Exceeding a rate limit returns HTTP 429 with a `Retry-After` header indicating when you can retry.
+
+| Resource | Limit |
+| --- | --- |
+| GitHub webhooks | Processed as they arrive; retries follow GitHub’s delivery policy |
+| Builds | One active build per app unless you queue another after it finishes |
+| Log streams | Live tail is per app/container; use search for history |
+
+## Absolute limits
+
+These limits apply regardless of plan and cannot be increased. Contact support if you have a specific requirement that falls outside these limits.
+
+| Limit | Value |
+| --- | --- |
+| Max build time | 30 minutes |
+| Max Docker image size | 8 GB uncompressed |
+| Max file upload (secret files) | 1 MB per file |
+| Max environment variables per service | 200 |
+| Max environment variable value length | 65,535 bytes |
+| Max disk size (persistent disk) | 1 TB |
+| Max replicas per service (Pro) | 10 |
+| Max services per project | Unlimited (Pro/Enterprise) |
+| Startup probe grace period | 300 seconds max |
+
+## Bandwidth billing
+
+Bandwidth is measured as outbound data transfer from your services to the internet. Inbound traffic and internal traffic (service-to-service within a project) is always free.
+
+| | |
+| --- | --- |
+| First 100 GB/month | Free on all plans |
+| Over included amount | $0.10 per GB |
+| Internal & inbound traffic | Always free |
+
+:::note[What happens when you hit a limit]
+Soft limits (services, replicas, bandwidth) show a warning in the dashboard when you're at 80% and block new resource creation when reached, existing services continue running. Rate limits (API, deploy hooks) return 429 with `Retry-After`. To increase limits, upgrade your plan from Settings → Billing.
+:::
+
+## Next steps
+
+- [Pricing & plans](/reference/pricing/)
+- [API reference](/reference/api/)
+- [Storage options](/storage/persistent-disks/)

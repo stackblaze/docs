@@ -1,0 +1,61 @@
+---
+title: CouchDB
+description: "Managed Apache CouchDB on StackBlaze: a document database with an HTTP/JSON API and multi-master replication, in single-node or clustered high-availability deployments."
+---
+
+Managed Apache CouchDB: a document database with an HTTP/JSON API and multi-master replication, in single-node or clustered high-availability deployments.
+
+## Creating a CouchDB instance
+
+From the StackBlaze dashboard, click **New service**, then **Database**, then **CouchDB**. Pick a plan and storage size, and StackBlaze provisions the instance for you.
+
+Connecting a CouchDB instance to a service injects the `COUCHDB_URL` environment variable into that service. Your application reads the URL from this variable, so there is nothing to hardcode.
+
+CouchDB is a document database with an HTTP/JSON API and multi-master replication. That sync model makes it a good fit for offline-first apps, where a client database (for example PouchDB) replicates with the server and resolves changes when connectivity returns.
+
+## Connecting
+
+CouchDB exposes an HTTP/JSON REST API on port `5984`. Services in the same project reach the database over the cluster's private network using its internal endpoint. The internal address takes the form below:
+
+```text title="Endpoint (internal)"
+http://user:password@[service-name]:5984
+```
+
+Any HTTP client works: `curl`, a language HTTP library, or a CouchDB driver. The value of `COUCHDB_URL` already includes the credentials, so you can use it directly.
+
+## Standard vs high availability
+
+You choose between Standard and high availability when creating the instance. Standard runs a single node, which is a great fit for development and lower-stakes workloads. High availability runs a clustered deployment of multiple nodes with quorum reads and writes, so documents are replicated across nodes and the database stays available during a node loss.
+
+| | Standard | High availability |
+| --- | --- | --- |
+| Topology | Single node | Clustered, multiple nodes |
+| Replication | None (one copy) | Documents replicated across nodes |
+| Reads and writes | Single node | Quorum reads and writes |
+| Survives a node loss | No | Yes, the database stays available |
+| Best for | Development and testing | Production and resilient workloads |
+
+## Working with documents
+
+CouchDB is driven entirely over HTTP. Create a database with `PUT`, add a document with `POST`, and read it back with `GET`, all against `COUCHDB_URL`:
+
+```bash title="documents.sh"
+# Create a database named "app"
+curl -X PUT "$COUCHDB_URL/app"
+
+# Create a document in that database
+curl -X POST "$COUCHDB_URL/app" \
+  -H "Content-Type: application/json" \
+  -d '{"_id": "user:1", "name": "Ada"}'
+
+# Read the document back
+curl "$COUCHDB_URL/app/user:1"
+```
+
+## Backups
+
+StackBlaze takes automated, encrypted backups that follow the platform backup policy applied to all managed databases. For details on schedules, restores, and how the policy works, see [Backups & recovery](/databases/backups/).
+
+:::note[Under the hood]
+Apache CouchDB is a document database with an HTTP API and multi-master replication. StackBlaze runs it via a Kubernetes operator with persistent volumes, and in high availability mode it clusters multiple nodes with quorum so the database tolerates the loss of a node.
+:::

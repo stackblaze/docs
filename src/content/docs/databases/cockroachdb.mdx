@@ -1,0 +1,60 @@
+---
+title: CockroachDB
+description: "Managed CockroachDB on StackBlaze: distributed SQL with PostgreSQL wire compatibility, single-node or multi-node high availability, and automated backups."
+---
+
+Managed CockroachDB: a distributed SQL database that speaks the PostgreSQL wire protocol, with single-node or multi-node high availability.
+
+## Creating a CockroachDB instance
+
+From the StackBlaze dashboard, click **New service**, then **Database**, then **CockroachDB**. Pick a plan and storage size, and StackBlaze provisions the instance for you.
+
+Connecting a CockroachDB instance to a service injects the `DATABASE_URL` environment variable into that service. Your application reads the connection details from this variable, so there is nothing to hardcode.
+
+## Connecting
+
+CockroachDB speaks the PostgreSQL wire protocol, so any PostgreSQL driver, ORM, or client library works without modification. Point your existing Postgres tooling at the connection string and it just works.
+
+Services in the same project reach the database over the cluster's private network using its internal hostname. The internal connection string takes the form below (note the CockroachDB default port `26257`):
+
+```text title="Connection string (internal)"
+postgresql://user:password@[service-name]:26257/dbname?sslmode=verify-full
+```
+
+## Standard vs high availability
+
+You choose between Standard and high availability when creating the instance. Standard runs a single node, which is a great fit for development and lower-stakes workloads. High availability runs a multi-node cluster (three or more nodes) where every node serves both reads and writes. If a node is lost, the cluster keeps serving traffic with no manual failover.
+
+| | Standard | High availability |
+| --- | --- | --- |
+| Topology | Single node | Multi-node cluster (3 or more nodes) |
+| Reads and writes | Served by the one node | Served by every node |
+| Survives a node loss | No | Yes, with no manual failover |
+| Best for | Development and testing | Production and resilient workloads |
+
+## Connecting from Node.js
+
+Because CockroachDB is wire-compatible with PostgreSQL, the standard `node-postgres` (`pg`) client connects directly using the injected `DATABASE_URL`:
+
+```js title="db.js"
+const { Pool } = require('pg')
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+})
+
+async function main() {
+  const { rows } = await pool.query('SELECT now()')
+  console.log(rows[0])
+}
+
+main()
+```
+
+## Backups
+
+StackBlaze takes automated, encrypted backups daily. These follow the platform backup policy that applies to all managed databases. For details on schedules, restores, and how the policy works, see [Backups & recovery](/databases/backups/).
+
+:::note[Under the hood]
+CockroachDB is a distributed SQL database. StackBlaze runs it via a Kubernetes operator as a **StatefulSet** with a persistent volume per node. In high availability mode, nodes are spread across the cluster so the database tolerates the loss of any single node.
+:::

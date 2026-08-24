@@ -1,0 +1,60 @@
+---
+title: ScyllaDB
+description: "Managed ScyllaDB on StackBlaze: a Cassandra-compatible wide-column database with single-node or multi-node high-availability clusters and automated backups."
+---
+
+Managed ScyllaDB: a Cassandra-compatible wide-column database with single-node or multi-node high-availability clusters and automated backups.
+
+## Creating a ScyllaDB instance
+
+From the StackBlaze dashboard, click **New service**, then **Database**, then **ScyllaDB**. Pick a plan and storage size, and StackBlaze provisions the instance for you.
+
+Connecting a ScyllaDB instance to a service injects the `SCYLLA_CONTACT_POINTS` environment variable into that service. Your application reads the contact points from this variable, so there is nothing to hardcode.
+
+ScyllaDB is Cassandra-compatible: it is a C++ rewrite of Apache Cassandra. Because of this, existing Cassandra drivers and your existing CQL (Cassandra Query Language) work against it without changes.
+
+## Connecting
+
+ScyllaDB uses the CQL binary protocol on port `9042`, the same wire protocol as Cassandra. Any Cassandra-compatible driver can talk to it directly. Services in the same project reach the database over the cluster's private network using its internal contact point, which takes the form below:
+
+```text title="Contact point (internal)"
+[service-name]:9042
+```
+
+## Standard vs high availability
+
+You choose between Standard and high availability when creating the instance. Standard runs a single node, which is a good fit for development and lower-stakes workloads. High availability runs a multi-node cluster that replicates data across nodes and racks, the same way a Cassandra cluster does, so the database keeps serving traffic if a node is lost.
+
+| | Standard | High availability |
+| --- | --- | --- |
+| Topology | Single node | Multi-node cluster |
+| Replication | None (single copy) | Across nodes and racks |
+| Survives a node loss | No | Yes |
+| Best for | Development and testing | Production and resilient workloads |
+
+## Connecting from Python
+
+The standard `cassandra-driver` package works with ScyllaDB. Read the contact points from `SCYLLA_CONTACT_POINTS`, connect, and run a CQL query:
+
+```python title="app.py"
+import os
+from cassandra.cluster import Cluster
+
+contact_points = os.environ["SCYLLA_CONTACT_POINTS"].split(",")
+cluster = Cluster(contact_points, port=9042)
+session = cluster.connect()
+
+rows = session.execute("SELECT release_version FROM system.local")
+for row in rows:
+    print(row.release_version)
+
+cluster.shutdown()
+```
+
+## Backups
+
+StackBlaze takes automated, encrypted backups that follow the platform backup policy applied to all managed databases. For details on schedules, restores, and how the policy works, see [Backups & recovery](/databases/backups/).
+
+:::note[Under the hood]
+ScyllaDB is a Cassandra-compatible wide-column database written in C++. StackBlaze runs it via a Kubernetes operator with a **persistent volume per node**. In high availability mode, nodes are spread across the cluster so the database tolerates the loss of a single node.
+:::

@@ -1,0 +1,118 @@
+---
+title: Guides
+description: How-tos across deploy, data, networking, observability, and access. Same tree as the sidebar.
+---
+
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## Start here
+
+[Start here overview](/)
+
+<CardGrid>
+  <LinkCard title="Quick start" href="/quickstart/" description="Deploy your first app from GitHub, a template, or an image." />
+  <LinkCard title="Core concepts" href="/concepts/" description="Projects, phases, apps, and how they fit together." />
+  <LinkCard title="Agents" href="/agents/" description="Connect Cursor, Claude, or any MCP client to your stack." />
+  <LinkCard title="Blueprint" href="/blueprint/" description="Capture a project as versionable stackblaze.yaml." />
+</CardGrid>
+
+## Platform
+
+[Platform overview](/platform/)
+
+<CardGrid>
+  <LinkCard title="Migrate from Heroku" href="/platform/migrate-from-heroku/" description="Move your app, config vars, and add-ons to StackBlaze with minimal downtime." />
+</CardGrid>
+
+## Build & deploy
+
+[Build & deploy overview](/build-deploy/)
+
+<CardGrid>
+  <LinkCard title="Apps and processes" href="/build-deploy/apps/" description="How one app bundles web, worker, and cron processes, and when to use a managed add-on." />
+  <LinkCard title="Web services" href="/deploy/web-services/" description="Long-running HTTP apps with a public URL and TLS." />
+  <LinkCard title="Background workers" href="/deploy/background-workers/" description="Always-on processes with no inbound traffic." />
+  <LinkCard title="Cron jobs" href="/deploy/cron-jobs/" description="Scheduled runs on standard cron syntax." />
+  <LinkCard title="Static sites" href="/deploy/static-sites/" description="Built assets served from the edge, no runtime." />
+  <LinkCard title="Deploy from GitHub" href="/deploy/github/" description="Connect a repo and auto-deploy on every push." />
+  <LinkCard title="Docker" href="/deploy/docker/" description="Build from a Dockerfile or run a registry image." />
+  <LinkCard title="Docker Compose" href="/deploy/docker-compose/" description="Map Compose services to StackBlaze apps and managed add-ons." />
+  <LinkCard title="Auto deploy on push" href="/cicd/auto-deploy/" description="Every push to the deploy branch triggers a build." />
+  <LinkCard title="PR previews" href="/cicd/pr-previews/" description="A live URL for every pull request, torn down on close." />
+  <LinkCard title="Deploy hooks" href="/cicd/deploy-hooks/" description="Trigger a redeploy from CI or an external system." />
+  <LinkCard title="Rollbacks" href="/cicd/rollbacks/" description="Revert to any previous successful deployment." />
+  <LinkCard title="Monorepo" href="/cicd/monorepo/" description="Root directories and build filters for multi-app repos." />
+  <LinkCard title="Horizontal scaling" href="/scaling/horizontal/" description="Replica counts and spreading load across instances." />
+  <LinkCard title="Autoscaling" href="/scaling/autoscaling/" description="Scale replicas from CPU or memory thresholds." />
+  <LinkCard title="Memory & CPU limits" href="/scaling/limits/" description="Pod sizes, requests, and what happens at the cap." />
+  <LinkCard title="Zero-downtime deploys" href="/scaling/zero-downtime/" description="Rolling updates that wait for health checks." />
+  <LinkCard title="Health checks" href="/storage/health-checks/" description="Readiness probes so traffic only hits healthy instances." />
+</CardGrid>
+
+## Data & storage
+
+[Data & storage overview](/data-storage/)
+
+<CardGrid>
+  <LinkCard title="PostgreSQL" href="/databases/postgresql/" description="Managed Postgres with Standard and HA topologies." />
+  <LinkCard title="MySQL" href="/databases/mysql/" description="Managed MySQL for apps that expect the MySQL protocol." />
+  <LinkCard title="Redis" href="/databases/redis/" description="Valkey-compatible cache and queue." />
+  <LinkCard title="MongoDB" href="/databases/mongodb/" description="Document store with a MongoDB-compatible API." />
+  <LinkCard title="CockroachDB" href="/databases/cockroachdb/" description="Distributed SQL with Postgres compatibility." />
+  <LinkCard title="ClickHouse" href="/databases/clickhouse/" description="Columnar analytics database." />
+  <LinkCard title="OpenSearch" href="/databases/opensearch/" description="Full-text search and log analytics." />
+  <LinkCard title="Milvus" href="/databases/milvus/" description="Vector database for embeddings and similarity search." />
+  <LinkCard title="Cassandra" href="/databases/cassandra/" description="Wide-column store for high-write workloads." />
+  <LinkCard title="ScyllaDB" href="/databases/scylladb/" description="Cassandra-compatible low-latency store." />
+  <LinkCard title="CouchDB" href="/databases/couchdb/" description="HTTP document database with replication." />
+  <LinkCard title="Memcached" href="/databases/memcached/" description="In-memory cache for simple key-value workloads." />
+  <LinkCard title="Backups & recovery" href="/databases/backups/" description="Scheduled backups and restore workflows." />
+  <LinkCard title="Point-in-time recovery" href="/databases/pitr/" description="Restore Postgres to any moment inside the retention window." />
+  <LinkCard title="Persistent disks" href="/storage/persistent-disks/" description="Block storage that survives restarts and redeploys." />
+  <LinkCard title="Kafka" href="/messaging/kafka/" description="Managed Kafka for event streams." />
+  <LinkCard title="RabbitMQ" href="/messaging/rabbitmq/" description="Managed RabbitMQ for work queues." />
+</CardGrid>
+
+## Networking
+
+[Networking overview](/networking/)
+
+<CardGrid>
+  <LinkCard title="Custom domains" href="/networking/custom-domains/" description="Point your domain and get automatic TLS." />
+  <LinkCard title="SSL / TLS" href="/networking/ssl/" description="Certificates, HTTPS redirects, and cipher defaults." />
+  <LinkCard title="Private networking" href="/networking/private-networking/" description="Cluster DNS between apps in the same phase." />
+  <LinkCard title="WebSockets" href="/networking/websockets/" description="Long-lived connections without extra platform config." />
+  <LinkCard title="Redirects" href="/networking/redirects/" description="HTTP redirects at the edge." />
+</CardGrid>
+
+## Observability
+
+[Observability overview](/observability/)
+
+<CardGrid>
+  <LinkCard title="Metrics, logs, and traces" href="/operations/observability/" description="Open Coroot from an app; search logs from the dashboard or MCP." />
+  <LinkCard title="Troubleshooting" href="/operations/troubleshooting/" description="Build failures, crash loops, and health-check misses." />
+</CardGrid>
+
+## Access
+
+[Access overview](/access/)
+
+<CardGrid>
+  <LinkCard title="Environment variables" href="/security/env-vars/" description="Per-phase config, secrets, and shared values." />
+  <LinkCard title="Secret files" href="/security/secret-files/" description="Mount files that should not live in git." />
+  <LinkCard title="Team & permissions" href="/security/team-permissions/" description="Owner, Admin, Developer, and Viewer roles." />
+  <LinkCard title="Two-factor auth" href="/security/two-factor-auth/" description="TOTP 2FA and recovery codes." />
+  <LinkCard title="IP allowlisting" href="/security/ip-allowlist/" description="Restrict dashboard and app access by source IP." />
+</CardGrid>
+
+## Reference
+
+[Reference overview](/reference/)
+
+<CardGrid>
+  <LinkCard title="API reference" href="/reference/api/" description="REST API for projects, apps, stackblaze.yaml, and tokens." />
+  <LinkCard title="Automation" href="/reference/cli/" description="REST, stackblaze.yaml, and MCP. There is no standalone npm CLI on this control plane." />
+  <LinkCard title="Limits & quotas" href="/reference/limits/" description="Plan caps for apps, add-ons, builds, and bandwidth." />
+  <LinkCard title="Pricing & plans" href="/reference/pricing/" description="How usage maps to Hobby, Pro, and Enterprise plans." />
+</CardGrid>

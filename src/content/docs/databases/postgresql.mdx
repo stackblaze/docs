@@ -1,0 +1,149 @@
+---
+title: PostgreSQL
+description: Managed PostgreSQL 15 and 16 with automated backups, point-in-time recovery, extensions like pgvector and PostGIS, and zero-config internal connectivity.
+---
+
+Managed PostgreSQL 15, 16, and 17 with automated backups, point-in-time recovery, and zero-config internal connectivity.
+
+## Creating a PostgreSQL instance
+
+From the StackBlaze dashboard, add a **PostgreSQL** add-on to your app. Choose your Postgres version (15, 16, or 17), an initial storage size (1 GB to 500 GB), and a compute plan. StackBlaze provisions a dedicated managed instance with persistent storage within seconds.
+
+Once created, navigate to your web service or worker, go to the **Environment** tab, and click **Attach database**. StackBlaze automatically injects `DATABASE_URL` as a secret environment variable.
+
+## Connection strings
+
+StackBlaze exposes two connection strings per database: an internal one for services in the same project, and an external one for local tooling like Postico or TablePlus.
+
+### Internal (recommended)
+
+Services in the same project communicate over the cluster's private network using the service's internal hostname. No TLS configuration is required, traffic never leaves the cluster.
+
+```text title="Connection string (internal)"
+postgresql://user:password@[service-name]:5432/dbname
+```
+
+### External (for local tools)
+
+The external connection string is available in the dashboard under **Settings → Connection**. It uses SSL and routes traffic through our secure proxy. Use this for GUI clients like TablePlus, Postico, or DBeaver, not for production app connections.
+
+```text title="Connection string (external, SSL required)"
+postgresql://user:password@db.stackblaze.cloud:5432/dbname?sslmode=require
+```
+
+## Running migrations
+
+The safest pattern is to run migrations as a pre-deploy command so they complete before new traffic reaches your updated service. Configure this under **Settings → Deploy → Pre-deploy command**.
+
+### Prisma
+
+```bash title="Pre-deploy command"
+npx prisma migrate deploy
+```
+
+### Node.js / npm script
+
+```bash title="Pre-deploy command"
+npm run migrate
+```
+
+### Django
+
+```bash title="Pre-deploy command"
+python manage.py migrate
+```
+
+### One-off from CI
+
+Queue a build after your own migrate job, or set a **pre-deploy command** on the app so StackBlaze runs it with the same env as the workload (including `DATABASE_URL`). There is no `stackblaze run` CLI.
+
+:::tip
+Always run migrations before the new version of your code starts serving traffic. StackBlaze's pre-deploy command runs inside an ephemeral container with the same environment variables as your service, including `DATABASE_URL`.
+:::
+
+## Point-in-time recovery (PITR)
+
+On Pro and Enterprise plans, StackBlaze continuously archives WAL (Write-Ahead Log) segments to object storage alongside periodic base backups. This lets you restore your database to any moment within your plan's retention window, not just the last daily snapshot.
+
+To initiate a PITR restore, navigate to your database in the dashboard, click **Backups → Restore to point in time**, select a timestamp, and choose whether to restore in-place or to a new instance.
+
+| Plan | PITR | Retention window |
+| --- | --- | --- |
+| Free | No | — |
+| Starter | No | 3 days (snapshots) |
+| Pro | Yes | 7 days |
+| Enterprise | Yes | 30 days |
+
+## Automated backups
+
+All plans include automated daily snapshots taken during off-peak hours (typically 02:00–04:00 UTC). Backups are encrypted at rest and stored separately from your primary data.
+
+To restore from a snapshot, go to **Backups** in the database dashboard, select the snapshot, and click **Restore**. You can restore to a new instance without affecting the running database.
+
+## Supported extensions
+
+The following popular extensions are available on all plans and can be enabled without any configuration:
+
+| Extension | Use case |
+| --- | --- |
+| `postgis` | Geospatial data and queries |
+| `pgvector` | Vector similarity search for AI/ML workloads |
+| `pg_trgm` | Fuzzy text search using trigrams |
+| `uuid-ossp` | UUID generation functions |
+| `pg_stat_statements` | Query performance tracking |
+| `btree_gin` | GIN indexes for B-tree operators |
+| `hstore` | Key-value store within a column |
+| `citext` | Case-insensitive text type |
+
+```sql title="Enable an extension"
+CREATE EXTENSION IF NOT EXISTS pgvector;
+CREATE EXTENSION IF NOT EXISTS postgis;
+```
+
+## Scaling
+
+### Vertical scaling
+
+To increase CPU or memory, upgrade the database plan from the dashboard under **Settings → Plan**. StackBlaze performs a rolling StatefulSet update with a brief connection interruption (typically under 30 seconds). Schedule vertical scaling during off-peak hours.
+
+### Read replicas
+
+Read replicas are available on Enterprise plans. They use PostgreSQL streaming replication and are typically under 1 second behind the primary. Connect read-heavy workloads (analytics queries, reporting) to the replica connection string to reduce load on the primary.
+
+:::note[Under the hood]
+PostgreSQL runs as a Kubernetes **StatefulSet** with a dedicated **PersistentVolumeClaim** backed by SSD storage. A **ClusterIP Service** provides a stable internal DNS name (`[service-name]`) that survives pod restarts and rescheduling. Connection pooling via PgBouncer is available as an add-on on Pro and Enterprise plans.
+:::
+
+## Connecting with common ORMs
+
+### Prisma
+
+```prisma title="prisma/schema.prisma"
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+```
+
+### Drizzle ORM
+
+```ts title="db.ts"
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
+
+const client = postgres(process.env.DATABASE_URL!)
+export const db = drizzle(client)
+```
+
+### SQLAlchemy (Python)
+
+```python title="database.py"
+from sqlalchemy import create_engine
+
+engine = create_engine(
+    os.environ["DATABASE_URL"],
+    pool_size=5,
+    max_overflow=10,
+    pool_pre_ping=True,
+)
+```

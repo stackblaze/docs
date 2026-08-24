@@ -1,0 +1,87 @@
+---
+title: Monorepo Deployments
+description: Deploy multiple services from a single GitHub repository on StackBlaze. Configure root directories, build filters, and per-service commands for Turborepo, Nx, pnpm workspaces, and other monorepo setups.
+---
+
+StackBlaze supports monorepos out of the box. Multiple services can point to the same GitHub repository, each with its own root directory, build command, build filters, and deploy history. Turborepo, Nx, pnpm workspaces, and plain npm/yarn monorepos all work.
+
+Build filters ensure that only the relevant services rebuild when you push a change. A commit that only touches `apps/web` won't trigger a build for `apps/api`, saving build time and preventing unnecessary churn.
+
+## Example monorepo structure
+
+```text title="acmecorp/monorepo"
+# Repository root
+acmecorp/
+├── apps/
+│   ├── web/          # Next.js frontend, StackBlaze: web-frontend
+│   ├── api/          # Express API, StackBlaze: web-api
+│   └── worker/       # Background job, StackBlaze: bg-worker
+├── packages/
+│   ├── ui/           # Shared component library
+│   └── utils/        # Shared utilities
+├── turbo.json
+├── package.json
+└── pnpm-workspace.yaml
+```
+
+## Service configuration per app
+
+| Service | Root Dir | Build Command | Build Filter |
+| --- | --- | --- | --- |
+| `web-frontend` | `apps/web` | `turbo run build --filter=web` | `apps/web/**`, `packages/**` |
+| `web-api` | `apps/api` | `turbo run build --filter=api` | `apps/api/**`, `packages/**` |
+| `bg-worker` | `apps/worker` | `turbo run build --filter=worker` | `apps/worker/**`, `packages/**` |
+
+## Turborepo `turbo.json`
+
+```json title="turbo.json"
+{
+  "$schema": "https://turbo.build/schema.json",
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**"]
+    }
+  }
+}
+```
+
+```text
+# Build command per service:
+# turbo run build --filter=web   (builds web + its deps)
+# turbo run build --filter=api   (builds api + its deps)
+```
+
+:::note[Under the hood]
+- **Independent build Jobs**: each service gets its own Kubernetes build Job even when they share a repository. Build jobs for different services can run in parallel, so a commit touching multiple packages can deploy all affected services simultaneously.
+- **Root directory isolation**: the build Job sets the working directory to your configured root directory after clone. Your build command runs in that directory context. Output artifacts are packaged from there into the Docker image.
+- **Build filter evaluation**: StackBlaze compares the set of changed files in the push payload against each service's build filter patterns. A service only gets a build Job queued if at least one changed file matches its filter patterns. Evaluation is O(n) per service per push.
+:::
+
+## Step by step
+
+1. **Create a separate service for each app**
+
+   Each application in your monorepo becomes its own StackBlaze service. Create them individually from the dashboard, they can all point to the same GitHub repository. Each service will have its own build configuration, environment variables, and deploy history.
+
+2. **Set the root directory per service**
+
+   For each service, navigate to Settings → Build → Root Directory. Enter the path to the app within the monorepo, for example `apps/web` for a Next.js frontend or `packages/api` for an API server. StackBlaze runs the build command from this directory.
+
+3. **Configure build filters**
+
+   Set build filters to prevent unnecessary builds. For example, on the "web" service, set the trigger path to `apps/web/**` and `packages/shared/**`. Changes outside these paths will not trigger a build for this service, saving build minutes and avoiding redundant deploys.
+
+4. **Set the correct build command**
+
+   Configure the build command appropriate for your monorepo tool. For Turborepo: `turbo run build --filter=web`. For Nx: `nx build web`. For pnpm workspaces: `pnpm --filter web run build`. StackBlaze runs this from the repository root unless you've set a root directory.
+
+5. **Set the start command**
+
+   Set the start command to run your specific app. For a Node.js API: `node apps/api/dist/index.js`. For a Next.js app with a custom root dir set: `node server.js`. The start command runs from your configured root directory.
+
+## Next steps
+
+- [Auto deploy configuration](/cicd/auto-deploy/)
+- [Deploy hooks for per-service triggers](/cicd/deploy-hooks/)
+- [API reference](/reference/api/)

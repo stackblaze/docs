@@ -1,0 +1,91 @@
+---
+title: Deploy Hooks
+description: Trigger StackBlaze deployments from any external system using deploy hooks. Generate a unique HTTPS webhook URL and POST to it from CircleCI, Jenkins, GitHub Actions, or any custom script.
+---
+
+Deploy hooks let you trigger a deployment from any external system, CircleCI, Jenkins, a shell script, or anything that can make an HTTP POST request. Each hook is a unique HTTPS URL that acts as both the endpoint and the authentication token.
+
+You can create multiple hooks per service, one per CI provider, one per branch, or one per environment. Each hook can be scoped to deploy a specific branch, giving you fine-grained control over what gets deployed and when.
+
+## Triggering a deploy
+
+```bash title="terminal"
+# Queue a build for project/phase/app
+curl -X POST "https://api.stackblaze.cloud/api/deployments/build/acme-app/production/api" \
+    -H "Authorization: Bearer $STACKBLAZE_TOKEN"
+
+# Response
+{
+  "status": "queued",
+  "deployment_id": "dep_9f3k2m...",
+  "message": "Deploy queued successfully"
+}
+
+# HTTP Status: 202 Accepted
+```
+
+## GitHub Actions example
+
+```yaml title=".github/workflows/deploy.yml"
+name: Deploy to StackBlaze
+on:
+  push:
+    branches: [main]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run tests
+        run: npm test
+      - name: Deploy to StackBlaze
+        run: |
+          curl -X POST "https://api.stackblaze.cloud/api/deployments/build/acme-app/production/api" \
+            -H "Authorization: Bearer $STACKBLAZE_TOKEN"
+        env:
+          STACKBLAZE_TOKEN: ${{ secrets.STACKBLAZE_TOKEN }}
+```
+
+## Common use cases
+
+| System | How to trigger |
+| --- | --- |
+| CircleCI | Trigger a StackBlaze deploy at the end of a successful CircleCI pipeline using a curl step. |
+| Jenkins | Add a post-build action in your Jenkinsfile to POST to the hook URL after tests pass. |
+| Custom scripts | Call the hook from any shell script, Makefile target, or deployment automation. |
+| Zapier / n8n | Wire up a Zapier webhook action or n8n HTTP Request node to deploy on any trigger. |
+| GitHub Actions | Use a curl step in a GitHub Actions workflow for fine-grained deploy control beyond auto-deploy. |
+| Scheduled deploys | Combine with a cron job (e.g. cron.org) to deploy your service on a schedule, refreshing data or config. |
+
+:::caution[Rate limit]
+Prefer the project's git webhook for push-to-deploy. Use the deployments build API when CI must run first. A second build for the same app waits until the current one finishes.
+:::
+
+:::note[Under the hood]
+- **Personal access token**: `kbr_pat_` tokens inherit the creator's organization and RBAC. Revoke them from Settings → API tokens.
+- **Build queue**: `POST /api/deployments/build/{pipeline}/{phase}/{app}` starts or queues a build for that app.
+- **Phases**: production and review (or a custom phase) are separate namespaces. Address them in the path, not with a hook query string.
+:::
+
+## Step by step
+
+1. **Create an API token**
+
+   Create a personal access token in Settings → API tokens (prefix `kbr_pat_`). Store it as a CI secret. The token is scoped to your organization and RBAC — there is no separate unsigned deploy-hook URL.
+
+2. **Store the token as a secret**
+
+   Treat the token like a password. Store it as an encrypted secret in your CI system (CircleCI environment variable, GitHub Actions secret, etc.) and never commit it to version control.
+
+3. **POST a build**
+
+   `POST https://api.stackblaze.cloud/api/deployments/build/{pipeline}/{phase}/{app}` with `Authorization: Bearer $STACKBLAZE_TOKEN`. That queues a build for the named app. If the project already auto-deploys on git push, you can skip this and rely on the GitHub webhook.
+
+4. **Monitor the deploy**
+
+   Watch the Deployments tab in the dashboard, or poll `GET /api/deployments/{pipeline}/{phase}/{app}` and `GET /api/apps/{pipeline}/{phase}/{app}/status`.
+
+## Next steps
+
+- [Auto deploy on push](/cicd/auto-deploy/)
+- [API reference, trigger deploy](/reference/api/)
+- [Rolling back a deployment](/cicd/rollbacks/)

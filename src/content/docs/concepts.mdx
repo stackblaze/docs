@@ -1,0 +1,100 @@
+---
+title: Core Concepts
+description: A mental model for how StackBlaze organises and runs your applications.
+---
+
+## Names you will see
+
+The dashboard and REST API still use Kubero names. This site usually says the product names. They map one-to-one:
+
+| In these docs | In the API / dashboard | What it is |
+| --- | --- | --- |
+| Organization | Tenant | Billing and RBAC boundary. Tokens carry an active organization. |
+| Project | Pipeline | A named group of phases, apps, and add-ons in one region. |
+| Environment | Phase | A namespace such as production or review. |
+| App | App | A workload: web, worker, or cron. |
+| Add-on | Addon kind | Managed data or mesh: Cluster (Postgres), Valkey, MariaDB, Kafka, … |
+| Function | Function | A Knative function. It is not an app. |
+| Template | Catalog slug | A one-click stack (n8n, WordPress, …), not a CLI tool. |
+
+## Organizations
+
+An **organization** is the tenant you sign in to. API tokens created under `Settings → API tokens` are scoped to that organization. Projects you cannot see from the dashboard are not reachable with that token.
+
+## Projects
+
+A **project** (pipeline) is the top-level unit. It has a name, an optional base domain, a region (default `us-east-1`), git settings, and a list of phases. Most teams create one project per product.
+
+Apps and add-ons in the same phase share a private Kubernetes namespace named `{pipeline}-{phase}`. They can reach each other on the cluster network by service name. Traffic to a different project does not use that private DNS.
+
+## Apps
+
+An **app** is a single deployable workload in one phase. You create it from a Git repo, a container image, or a catalog template. Apps are addressed as `/api/apps/{pipeline}/{phase}/{app}`.
+
+![Diagram of web, worker, cron, Postgres, and Redis workloads in one project](/illustrations/service-types.svg)
+
+*Web, worker, and cron apps share a phase. Databases are add-ons attached to an app or shared on the phase.*
+
+### Web apps
+
+Web apps expose HTTP(S) through an Ingress and a TLS certificate. Set the container port on the app (often 8080). The process should listen on that port.
+
+### Background workers
+
+Workers run continuously and do not receive public ingress. Use them for queue consumers and other async work. They share the same build path and environment variables as web apps.
+
+### Cron jobs
+
+Cron apps run on a schedule you set with standard cron syntax. Each run starts a container, runs the command, and exits.
+
+### Add-ons
+
+Managed data and mesh services are add-ons, not first-class "database services" in the API. Common kinds include CloudNativePG `Cluster` (PostgreSQL), `Valkey` (Redis-compatible), `MariaDB`, `DocumentDB`, Kafka, RabbitMQ, ClickHouse, OpenSearch, and others. Attach an add-on to an app, or share it on the phase so several apps can use one instance.
+
+### Functions
+
+Functions are Knative workloads. They are not created through the app create form and do not appear in `app.addons`.
+
+## Phases
+
+Each project has one or more **phases**. Production is the usual live environment. A `review` phase holds pull-request previews when review apps are enabled on the project.
+
+| Phase | When created | Lifespan |
+| --- | --- | --- |
+| production | When you create the project | Permanent |
+| review | When a pull request opens (if review apps are on) | Removed when the PR closes |
+| custom | When you add a phase in project settings | Until you delete it |
+
+Preview apps clone from a source app you configure on the project. Each PR gets its own add-on instances in the review namespace so they do not share production data.
+
+## Deployments
+
+A deploy is a build of your app image plus a rollout in that phase. Builds are triggered by a git push (when auto-deploy is on), a dashboard action, or `POST /api/deployments/build/{pipeline}/{phase}/{app}`. You can restart a running app without rebuilding, and roll back to a previous revision.
+
+- A push to the configured branch (webhook auto-deploy)
+- A manual build or restart from the dashboard
+- The deployments API, or a `stackblaze.yaml` apply when IaC is enabled
+
+## Private networking
+
+Workloads in the same phase share a namespace. Talk to another app or add-on with its Kubernetes service name, for example a Valkey instance named `cache` at `cache:6379`. That name stays on the cluster network.
+
+:::tip
+Prefer the connection values the platform injects when you attach an add-on (or `fromDatabase` in `stackblaze.yaml`) instead of hardcoding hosts.
+:::
+
+## Environment variables and files
+
+### Environment variables
+
+Key-value pairs on the app spec. Use them for URLs, feature flags, and secrets. Values marked `sync: false` in a blueprint are prompted at apply time and are not stored in the YAML file.
+
+### App files
+
+The dashboard and API can mount files into a running app (certificates, JSON keys). Manage them from the app's Files tab or `/api/apps/{pipeline}/{phase}/{app}/files/…`.
+
+## Regions
+
+A project is pinned to a region slug such as `us-east-1`. Apps and add-ons in that project run in that region. Dedicated clusters use the same control plane; their workloads stay on the tenant cluster.
+
+See the [Introduction](/) and the [API reference](/reference/api/) for how these objects are addressed over HTTP.

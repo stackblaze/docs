@@ -1,0 +1,181 @@
+---
+title: Cron Jobs
+description: Schedule recurring tasks with standard cron syntax. Each run is a fresh, isolated container.
+---
+
+Run tasks on a schedule using standard cron syntax. Every run is an isolated container that starts, executes your command, and exits.
+
+## How cron jobs work
+
+At the scheduled time, StackBlaze creates an isolated run that executes your container, runs the start command, and then terminates. Each run is completely isolated — no shared state between runs except what you persist to a database or object storage.
+
+Cron jobs share the same build pipeline as web services and workers. You use the same repository, build command, and environment variables. The difference is that instead of running forever, your process is expected to complete with exit code 0.
+
+## Schedule syntax
+
+StackBlaze uses standard five-field cron expression syntax:
+
+```text
+┌─────────── minute       (0–59)
+│ ┌───────── hour         (0–23)
+│ │ ┌─────── day of month (1–31)
+│ │ │ ┌───── month        (1–12)
+│ │ │ │ ┌─── day of week  (0–6, Sunday = 0)
+│ │ │ │ │
+* * * * *
+```
+
+### Common schedule examples
+
+| Schedule | Expression | Description |
+| --- | --- | --- |
+| Every minute | `* * * * *` | Runs every 60 seconds |
+| Every hour | `0 * * * *` | Runs at minute 0 of every hour |
+| Daily at midnight | `0 0 * * *` | Runs once per day at 00:00 |
+| Daily at 2am | `0 2 * * *` | Runs once per day at 02:00 |
+| Weekdays at 9am | `0 9 * * 1-5` | Mon–Fri at 09:00 |
+| Weekly on Sunday | `0 0 * * 0` | Every Sunday at 00:00 |
+| Monthly (1st) | `0 0 1 * *` | First day of each month at 00:00 |
+| Every 15 minutes | `*/15 * * * *` | Runs 4 times per hour |
+
+## Timezone
+
+By default, schedules run in **UTC**. You can specify any IANA timezone name in Service Settings → Schedule → Timezone.
+
+| Timezone | IANA name |
+| --- | --- |
+| UTC (default) | `UTC` |
+| US Eastern | `America/New_York` |
+| US Pacific | `America/Los_Angeles` |
+| London | `Europe/London` |
+| Berlin | `Europe/Berlin` |
+| Tokyo | `Asia/Tokyo` |
+| Sydney | `Australia/Sydney` |
+
+:::caution
+Daylight saving time transitions can cause schedule drift when using non-UTC timezones. If your job must run at a precise interval, use UTC.
+:::
+
+## Concurrency policy
+
+If a previous run is still executing when the next scheduled time arrives, StackBlaze applies the concurrency policy:
+
+| Policy | Behaviour |
+| --- | --- |
+| `Forbid` | Skip the new run if the previous run is still active. Default. |
+| `Replace` | Cancel the previous run and start a new one. |
+| `Allow` | Let both runs execute simultaneously. |
+
+`Forbid` is the safest default — it prevents duplicate processing if a job takes longer than expected. Use `Replace` if your job is idempotent and a fresh start is preferable to an old one still running. Use `Allow` only if your job is designed for parallel execution.
+
+## Timeout
+
+Set a maximum runtime per execution in Service Settings → Schedule → Timeout. If a run exceeds this duration, StackBlaze terminates the run and marks it as failed. Default is 1 hour, maximum is 24 hours.
+
+## One-off runs
+
+Trigger an immediate run from the dashboard (Service → Runs → Run Now). One-off runs are useful for testing a new cron job before its first scheduled execution, or for manually triggering a report on demand.
+
+Watch logs from the dashboard or via `GET /api/logs/{pipeline}/{phase}/{app}/`.
+
+## Examples
+
+### Daily report (Node.js)
+
+```javascript title="report.js"
+import pg from 'pg'
+import { Resend } from 'resend'
+
+const db = new pg.Client({ connectionString: process.env.DATABASE_URL })
+const resend = new Resend(process.env.RESEND_API_KEY)
+
+async function main() {
+  await db.connect()
+
+  const { rows } = await db.query(`
+    SELECT COUNT(*) AS signups
+    FROM users
+    WHERE created_at >= NOW() - INTERVAL '24 hours'
+  `)
+
+  const signups = rows[0].signups
+
+  await resend.emails.send({
+    from: 'reports@acme.com',
+    to: 'team@acme.com',
+    subject: `Daily report: ${signups} new signups`,
+    text: `You had ${signups} new users sign up in the last 24 hours.`,
+  })
+
+  console.log('Report sent successfully.')
+  await db.end()
+}
+
+main().catch((err) => {
+  console.error('Report failed:', err)
+  process.exit(1)   // Non-zero exit marks run as failed
+})
+```
+
+Schedule: `0 8 * * *`, runs daily at 08:00 UTC.
+
+### Queue sweep (Python)
+
+```python title="sweep.py"
+"""
+Cleans up stale jobs that have been stuck in 'processing' state for > 1 hour.
+Schedule: */30 * * * *  (every 30 minutes)
+"""
+import os
+import redis
+import time
+
+r = redis.from_url(os.environ['REDIS_URL'])
+
+now = time.time()
+stale_cutoff = now - 3600  # 1 hour
+
+stuck = r.zrangebyscore('jobs:processing', '-inf', stale_cutoff)
+if stuck:
+    print(f"Requeueing {len(stuck)} stale jobs")
+    pipe = r.pipeline()
+    for job_id in stuck:
+        pipe.zrem('jobs:processing', job_id)
+        pipe.rpush('jobs:pending', job_id)
+    pipe.execute()
+else:
+    print("No stale jobs found")
+
+print("Sweep complete.")
+```
+
+### Cache warmup
+
+```javascript title="warmup.js"
+/**
+ * Pre-populates Redis with frequently-accessed data before business hours.
+ * Schedule: 0 7 * * 1-5  (Weekdays at 07:00 UTC)
+ */
+import { createClient } from 'redis'
+import db from './db.js'
+
+const redis = createClient({ url: process.env.REDIS_URL })
+await redis.connect()
+
+const products = await db.query('SELECT * FROM products WHERE active = true')
+await redis.set('cache:active-products', JSON.stringify(products.rows), { EX: 86400 })
+
+const categories = await db.query('SELECT * FROM categories')
+await redis.set('cache:categories', JSON.stringify(categories.rows), { EX: 86400 })
+
+console.log(`Cache warmed: ${products.rows.length} products, ${categories.rows.length} categories`)
+await redis.quit()
+```
+
+## Viewing run history
+
+Every cron run is logged in the dashboard under Service → Runs. You can see the start time, duration, exit code, and full log output for each run. StackBlaze retains run history for 30 days.
+
+## Related
+
+For tasks that need to react to events rather than run on a schedule, use a [Background Worker](/deploy/background-workers/) instead. For triggering deploys from external systems, see [Deploy Hooks](/cicd/deploy-hooks/).

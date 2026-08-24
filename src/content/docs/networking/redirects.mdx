@@ -1,0 +1,134 @@
+---
+title: Redirects & Rewrites
+description: Configure URL redirects and rewrites for static sites using a _redirects file, or handle them in application code for web services.
+---
+
+Configure URL redirects and rewrites for static sites using a `_redirects` file, or handle them in application code for web services.
+
+## HTTPS redirects (automatic)
+
+HTTP is always redirected to HTTPS automatically on every StackBlaze service. You do not need to configure this, it cannot be disabled. The redirect uses a 301 (permanent) status code.
+
+## Static sites, the `_redirects` file
+
+For static sites, place a `_redirects` file in the root of your build output directory (e.g. `dist/`, `out/`, or `public/`). StackBlaze processes this file and configures the Ingress rules accordingly.
+
+### File format
+
+```text title="_redirects"
+# Format: SOURCE DESTINATION STATUS
+/old-path       /new-path       301
+/blog           /posts          302
+/contact        https://form.example.com  301
+```
+
+| Status code | Meaning | Use case |
+| --- | --- | --- |
+| 301 | Moved Permanently | URL has changed forever. Browsers and search engines cache this. |
+| 302 | Found (Temporary) | URL has temporarily moved. Cache not retained. |
+| 200 | Rewrite (proxy) | Serve different content at the same URL. URL in browser stays the same. |
+
+### Splat rules (wildcards)
+
+Use `*` as a splat in the source path to match any segment. Use `:splat` in the destination to insert the matched value.
+
+```text title="_redirects"
+# Redirect old blog paths to new structure
+/blog/*         /posts/:splat   301
+
+# Redirect all legacy API routes
+/api/v1/*       /api/v2/:splat  301
+
+# Catch-all: serve index.html for SPA routing (rewrite, not redirect)
+/*              /index.html     200
+```
+
+### SPA (Single-Page Application) routing
+
+React, Vue, and other SPAs use client-side routing. When a user navigates directly to a deep link like `/dashboard/settings`, the server needs to return `index.html` so the client-side router can take over.
+
+```text title="_redirects"
+/*              /index.html     200
+```
+
+:::tip
+The catch-all rule `/* /index.html 200` must be the *last* rule in your `_redirects` file. Rules are evaluated top-to-bottom and the first match wins. Placing the catch-all first would intercept all requests before specific redirect rules could match.
+:::
+
+## Web services, application-level redirects
+
+For web services (Node.js, Python, Go, etc.), implement redirects in your application code. The StackBlaze infrastructure doesn't process a `_redirects` file for web services, they receive all requests and can respond however they like.
+
+### Express (Node.js)
+
+```ts title="server.ts"
+// Permanent redirect
+app.get('/old-path', (req, res) => {
+  res.redirect(301, '/new-path')
+})
+
+// Conditional redirect based on query param
+app.get('/login', (req, res) => {
+  if (req.query.next) {
+    res.redirect(`/auth?return=${encodeURIComponent(req.query.next as string)}`)
+  } else {
+    res.redirect('/auth')
+  }
+})
+
+// Redirect old subdirectory to new location
+app.use('/legacy', (req, res) => {
+  const newPath = req.path.replace('/legacy', '/app')
+  res.redirect(301, newPath)
+})
+```
+
+### Next.js (next.config.js)
+
+```js title="next.config.js"
+/** @type {import('next').NextConfig} */
+module.exports = {
+  async redirects() {
+    return [
+      {
+        source: '/blog/:slug',
+        destination: '/posts/:slug',
+        permanent: true, // 308 (permanent, preserves HTTP method)
+      },
+      {
+        source: '/about',
+        destination: '/company/about',
+        permanent: false, // 307 (temporary)
+      },
+    ]
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://api:3000/:path*', // Proxy to internal service
+      },
+    ]
+  },
+}
+```
+
+### Django
+
+```python title="urls.py"
+from django.views.generic import RedirectView
+from django.urls import path, re_path
+
+urlpatterns = [
+    # Simple redirect
+    path('old-path/', RedirectView.as_view(url='/new-path/', permanent=True)),
+
+    # Regex redirect preserving path segments
+    re_path(r'^blog/(?P<slug>[\w-]+)/$',
+            RedirectView.as_view(url='/posts/%(slug)s/', permanent=True)),
+]
+```
+
+## www redirect configuration
+
+If you've added both `example.com` and `www.example.com` as custom domains, configure a redirect between them from **Settings → Domains**. Select the domain you want to redirect *from* and choose the primary domain as the destination. This is configured at the Ingress level and happens before your application sees the request.

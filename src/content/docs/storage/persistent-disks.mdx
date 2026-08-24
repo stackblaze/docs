@@ -1,0 +1,84 @@
+---
+title: Persistent Disks
+description: Attach durable block storage to any StackBlaze service. Data survives restarts, redeployments, and pod rescheduling. Learn how to configure mount paths, resize disks, and use SQLite on persistent storage.
+---
+
+By default, files written inside a container are ephemeral, they disappear when the container restarts. Persistent disks give your service a durable block storage volume that survives restarts, redeployments, and pod rescheduling. Mount it at any path and use it like a normal filesystem.
+
+Persistent disks are ideal for SQLite databases, uploaded files, ML model caches, and any other data that must survive deploys. For data that needs to be shared across multiple service replicas, use object storage (S3-compatible) instead, block storage is attached to a single pod.
+
+## Performance specifications
+
+| Metric | Value |
+| --- | --- |
+| Sequential throughput | ~100 MB/s |
+| Baseline IOPS | 1,000 IOPS |
+| Burst IOPS | 3,000 IOPS |
+| Minimum size | 1 GB |
+| Maximum size | 1 TB |
+| Type | Network block storage (NVMe-backed) |
+| Billing | Per GB-month (provisioned size) |
+
+:::caution[One disk per service instance, not shared across replicas]
+A persistent disk is mounted on a single pod. If your service runs with 3 replicas, each replica gets its own disk instance, they do not share data. For shared file storage across replicas (e.g. user uploads accessible from any pod), use an S3-compatible object storage service instead.
+:::
+
+## Disk configuration
+
+When you add a disk, you set:
+
+| Field | Example | Notes |
+| --- | --- | --- |
+| Disk name | `uploads` | Identifier for the volume |
+| Mount path | `/data/uploads` | Absolute path where the disk appears inside the container |
+| Size | `20` GB | Minimum 1 GB — can be increased later |
+
+The disk is added on the next deploy.
+
+## Example: SQLite on a persistent disk
+
+```js title="app.js (Node.js)"
+const Database = require('better-sqlite3');
+
+// Mount path matches the disk configured in StackBlaze
+const db = new Database('/data/app.db');
+
+// Data persists across restarts and deploys
+db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id    INTEGER PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL
+  )
+`);
+```
+
+:::note[Under the hood]
+- **PersistentVolumeClaim**: StackBlaze creates a Kubernetes PVC bound to a PersistentVolume provisioned by the cluster's default StorageClass (network block storage). The PVC is owned by the service and is not deleted on redeploy.
+- **VolumeMount in the pod spec**: the PVC is referenced in the pod spec as a `volumeMount` at the configured mount path. The volume is mounted with `ReadWriteOnce` access mode, one writer pod at a time.
+- **Online resize**: increasing disk size triggers a `PVC spec.resources.requests.storage` update. The CSI driver handles filesystem expansion online, no pod restart or unmount is required for most filesystems (ext4, xfs).
+- **Rolling update constraint**: because the PVC uses ReadWriteOnce, StackBlaze uses `Recreate` deployment strategy for single-replica services with a disk (old pod terminates before new pod starts). Multi-replica services with disks each get their own PVC via a StatefulSet.
+:::
+
+## Step by step
+
+1. **Add a disk to your service**
+
+   Navigate to Service → Settings → Disk → Add Disk. Enter a name for the disk (e.g. "uploads"), the mount path where it will appear inside the container (e.g. `/data` or `/var/lib/uploads`), and the size in GB. Click Save. A rolling deploy triggers automatically.
+
+2. **Write files to the mount path**
+
+   Inside your container, the disk is accessible at the configured mount path as a standard filesystem. You can read, write, and delete files normally. All writes are persisted to the underlying block storage volume immediately, no special API required.
+
+3. **Verify persistence**
+
+   Deploy a new version of your service. The disk remains mounted at the same path with the same contents, files written before the deploy are still there. Even if the underlying pod is rescheduled to a different node, the volume follows the pod.
+
+4. **Resize the disk**
+
+   Go to Service → Settings → Disk → Edit. You can increase the size at any time, the filesystem is automatically expanded without downtime. Shrinking a disk is not supported (the underlying block device cannot be safely reduced in size while mounted).
+
+## Next steps
+
+- [Health checks](/storage/health-checks/)
+- [Environment variables](/security/env-vars/)
+- [Storage limits & quotas](/reference/limits/)

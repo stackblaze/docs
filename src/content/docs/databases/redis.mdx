@@ -1,0 +1,167 @@
+---
+title: Redis
+description: Managed Redis 7.x for caching, sessions, pub/sub, and job queues. Optional persistence with RDB snapshots and AOF on paid plans.
+---
+
+Managed Redis for caching, session storage, pub/sub messaging, and job queues, with optional persistence and cluster mode.
+
+:::note[Powered by Valkey]
+Redis on StackBlaze is served by **Valkey**, the open-source, Redis-compatible fork backed by the Linux Foundation. Your Redis clients, commands, and connection strings work unchanged. We use Valkey to keep a Redis-compatible cache available under a permissive license, with replica, sentinel, and cluster modes.
+:::
+
+## Creating a Redis instance
+
+From the dashboard, click **New service → Database → Redis**. Choose a plan and whether you need persistence. StackBlaze provisions a Kubernetes StatefulSet with a ClusterIP Service providing a stable internal hostname.
+
+Attach Redis to your service from the **Environment** tab. StackBlaze injects `REDIS_URL` automatically.
+
+## Connection strings
+
+### Without authentication (Free plan)
+
+```text title="Connection string"
+redis://[service-name]:6379
+```
+
+### With authentication (Starter, Pro, Enterprise)
+
+All paid plans require authentication. The password is generated at provision time and available in the dashboard under **Settings → Connection**.
+
+```text title="Connection string (with auth)"
+redis://:password@[service-name]:6379
+```
+
+### TLS (external connections)
+
+```text title="Connection string (external, TLS)"
+rediss://:password@redis.stackblaze.cloud:6380
+```
+
+:::tip
+Use the `rediss://` scheme (double-s) to enable TLS. This is required for external connections but not needed for internal cluster traffic.
+:::
+
+## Common use cases
+
+### Caching (Node.js / ioredis)
+
+```ts title="cache.ts"
+import Redis from 'ioredis'
+
+const redis = new Redis(process.env.REDIS_URL)
+
+async function getUser(id: string) {
+  const cached = await redis.get(`user:${id}`)
+  if (cached) return JSON.parse(cached)
+
+  const user = await db.users.findById(id)
+  await redis.setex(`user:${id}`, 3600, JSON.stringify(user)) // TTL: 1 hour
+  return user
+}
+```
+
+### Session storage (Express + connect-redis)
+
+```ts title="server.ts"
+import session from 'express-session'
+import { createClient } from 'redis'
+import { RedisStore } from 'connect-redis'
+
+const client = createClient({ url: process.env.REDIS_URL })
+await client.connect()
+
+app.use(session({
+  store: new RedisStore({ client }),
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: true, maxAge: 86400000 }, // 24 hours
+}))
+```
+
+### Job queues with BullMQ
+
+```ts title="queue.ts"
+import { Queue, Worker } from 'bullmq'
+
+const connection = { url: process.env.REDIS_URL }
+
+// Producer: add jobs from your API
+const emailQueue = new Queue('emails', { connection })
+
+export async function sendWelcomeEmail(userId: string) {
+  await emailQueue.add('welcome', { userId }, {
+    attempts: 3,
+    backoff: { type: 'exponential', delay: 2000 },
+  })
+}
+
+// Consumer: process jobs in a worker service
+const worker = new Worker('emails', async (job) => {
+  const { userId } = job.data
+  await mailer.sendWelcome(userId)
+}, { connection })
+```
+
+### Pub/Sub (broadcasting across pods)
+
+When you scale your web service horizontally, use Redis pub/sub to broadcast events across all running instances. This is especially useful for WebSocket servers that need to push to all connected clients.
+
+```ts title="pubsub.ts"
+import { createClient } from 'redis'
+
+const publisher = createClient({ url: process.env.REDIS_URL })
+const subscriber = publisher.duplicate()
+
+await publisher.connect()
+await subscriber.connect()
+
+// Publish from any pod
+await publisher.publish('notifications', JSON.stringify({ userId, message }))
+
+// Subscribe on all pods
+await subscriber.subscribe('notifications', (message) => {
+  const { userId, message: msg } = JSON.parse(message)
+  io.to(userId).emit('notification', msg) // Socket.IO broadcast
+})
+```
+
+## Persistence modes
+
+By default, Redis is an in-memory store. StackBlaze offers two persistence modes to survive restarts:
+
+| Mode | Description | Plans |
+| --- | --- | --- |
+| None | In-memory only. Data lost on restart. | Free |
+| RDB snapshots | Point-in-time snapshots every 15 minutes. | Starter+ |
+| RDB + AOF | Snapshots plus Append Only File for near-zero data loss. | Pro+ |
+
+:::caution[Free plan warning]
+Free-plan Redis instances have no persistence. A pod restart (e.g. after a node drain or OOM event) will clear all data. Do not use a free Redis instance as your only session store in production.
+:::
+
+## Eviction policy
+
+When Redis reaches its memory limit, it uses an eviction policy to decide which keys to remove. The default policy is `allkeys-lru` (evict least recently used keys first), which is appropriate for cache workloads.
+
+For session storage or job queues where data loss is unacceptable, change the eviction policy to `noeviction` from **Settings → Configuration**. With `noeviction`, Redis returns errors when memory is full rather than silently dropping keys.
+
+## Cluster mode
+
+Redis Cluster shards data across multiple nodes and supports horizontal scaling beyond a single instance's memory capacity. Cluster mode is available on Enterprise plans and requires a minimum of 3 primary nodes.
+
+```ts title="ioredis cluster connection"
+import Redis from 'ioredis'
+
+const cluster = new Redis.Cluster([
+  { host: '[service-name]-0', port: 6379 },
+  { host: '[service-name]-1', port: 6379 },
+  { host: '[service-name]-2', port: 6379 },
+], {
+  redisOptions: { password: process.env.REDIS_PASSWORD },
+})
+```
+
+:::note[Under the hood]
+Redis runs as a Kubernetes **StatefulSet** (single pod for standalone, 3+ pods for cluster). Each pod has its own **PersistentVolumeClaim** for AOF and RDB files. A **ClusterIP Service** provides the stable DNS name. Resource limits are enforced via container `resources.limits.memory`; when Redis approaches this limit, it begins evicting keys per the configured policy.
+:::

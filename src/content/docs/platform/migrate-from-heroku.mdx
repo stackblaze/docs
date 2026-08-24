@@ -1,0 +1,86 @@
+---
+title: Migrate from Heroku
+description: Move your Heroku app to StackBlaze in under an hour. StackBlaze supports Procfiles, Cloud Native Buildpacks, and has direct equivalents for every Heroku add-on.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Most Heroku apps migrate to StackBlaze in under an hour. StackBlaze understands Procfiles, can build your app with Cloud Native Buildpacks (the same standard Heroku uses), and has direct equivalents for every common Heroku add-on — Postgres, Redis, and scheduled jobs included.
+
+Unlike Heroku, StackBlaze runs on dedicated compute. There are no dyno hour limits, no sleeping on inactivity, and no shared compute. Your app gets a fixed slice of CPU and memory that belongs to it alone.
+
+- **No dyno sleeping** — always-on dedicated instances
+- **No dyno hour caps** — unlimited runtime per month
+- **Dedicated resources** — CPU + RAM never shared with others
+
+## Step by step
+
+<Steps>
+
+1. **Export your Heroku config vars**
+
+   Run the Heroku CLI to export all environment variables as JSON, then paste them into the StackBlaze environment variables panel. StackBlaze imports them in bulk, no re-typing needed.
+
+   ```bash
+   # Export config vars from Heroku
+   heroku config -a my-app --json > env.json
+
+   # Review the output
+   cat env.json
+   ```
+
+2. **Connect your GitHub repository**
+
+   StackBlaze deploys from the same GitHub repo Heroku does. Click "Add Service", choose GitHub, authorise StackBlaze, and select the repo. No changes to your repository are required.
+
+3. **Auto-detect your Procfile**
+
+   StackBlaze reads your Procfile automatically. A `web:` process type becomes a Web Service (public HTTPS). A `worker:` process type becomes a Background Worker (no public ingress). Additional process types like `release:` run to completion before the new instances start.
+
+   ```text title="Procfile"
+   web: node dist/server.js
+   worker: node dist/worker.js
+   release: node dist/migrate.js
+   ```
+
+4. **Provision add-on equivalents**
+
+   Create managed services directly from the StackBlaze dashboard: Heroku Postgres becomes StackBlaze PostgreSQL, Heroku Redis becomes StackBlaze Redis, and Heroku Scheduler becomes a StackBlaze Cron Job. Each service runs on your private network.
+
+5. **Wire up DATABASE_URL and REDIS_URL**
+
+   Attaching a managed add-on to your app injects its connection string automatically, so `DATABASE_URL` and `REDIS_URL` point at the new StackBlaze services with no manual editing. If you kept placeholder values from Heroku, remove them so the injected ones take over.
+
+6. **Test with a staging deploy, then go live**
+
+   StackBlaze supports multiple environments. Deploy to a staging environment first, run your smoke tests, then promote to production. Attach your custom domain under Settings → Domains — StackBlaze provisions a TLS certificate automatically.
+
+</Steps>
+
+## Heroku → StackBlaze equivalents
+
+| Heroku | StackBlaze |
+| --- | --- |
+| `web` dyno | Web Service |
+| `worker` dyno | Background Worker |
+| one-off dyno | One-off job |
+| Heroku Postgres | StackBlaze PostgreSQL |
+| Heroku Redis | StackBlaze Redis |
+| Heroku Scheduler | Cron Job |
+| `heroku config:set` | Dashboard → Environment Variables |
+| `heroku ps:scale web=2` | Dashboard → Scale → 2 replicas |
+| `heroku releases` | Dashboard → Deployments |
+
+## Under the hood
+
+StackBlaze can build your app with Cloud Native Buildpacks (CNB), the same standard Heroku uses, so no Dockerfile is required — or from your own Dockerfile if you prefer. Either way, Procfile process types map directly:
+
+- **web:** becomes a long-running web process with a public URL and automatic TLS. Traffic is load-balanced across all replicas.
+- **worker:** becomes a background process without a public URL. It runs on the private network and processes jobs from a queue.
+- **release:** becomes a one-off job that runs to completion before new instances are created — the same guarantee Heroku release phase provides.
+
+## Next steps
+
+- [Connect a GitHub repository](/deploy/github/)
+- [Set up environment variables](/security/env-vars/)
+- [Attach a custom domain](/networking/custom-domains/)

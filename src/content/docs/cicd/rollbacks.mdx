@@ -1,0 +1,64 @@
+---
+title: Rollbacks
+description: Revert to any previous successful deployment from the dashboard or the deployments API.
+---
+
+Every successful deployment is stored as an immutable snapshot. If a new deploy causes issues, you can roll back to any of the last 20 deployments with a single click, no rebuild required. StackBlaze simply re-deploys the previously built Docker image via a rolling update.
+
+Rollbacks complete in **15–30 seconds** because the image is already in the internal registry. There is no npm CLI — roll back from the dashboard or the deployments API.
+
+:::caution[Database migrations are not rolled back]
+Rolling back your application code does not undo database schema changes. If your new deployment ran migrations, you'll need to handle that separately. Design migrations to be backward-compatible (additive-only) so that the previous code version can run against the new schema safely.
+:::
+
+## Deployment history
+
+Recent deployments (last 20 shown):
+
+| Commit | Message | When | Status |
+| --- | --- | --- | --- |
+| `a3f9c12` | feat: add rate limiting | 2 hours ago | LIVE |
+| `b2e8b11` | fix: resolve auth bug | 5 hours ago | ROLLBACK |
+| `c1d7a10` | feat: user dashboard v2 | 1 day ago | |
+| `d0c6z09` | chore: update deps | 2 days ago | |
+
+## Rollback from the API
+
+```bash title="terminal"
+export STACKBLAZE_TOKEN=kbr_pat_…
+
+# revisionId is the previous successful deployment
+curl -sS -X POST \
+  https://api.stackblaze.cloud/api/deployments/rollback/acme-app/production/api/REVISION_ID \
+  -H "Authorization: Bearer $STACKBLAZE_TOKEN"
+```
+
+:::note[Under the hood]
+- **Immutable image tags**: each deployment produces a Docker image tagged with the deployment ID. Tags are never overwritten. The internal OCI registry retains the last 20 images per service, so any of them can be re-deployed instantly.
+- **Deployment image update**: a rollback updates the Deployment `image` field to the previous tag. Kubernetes then executes the same rolling update strategy (`maxSurge: 1, maxUnavailable: 0`) as a normal deploy.
+- **Retention policy**: the last 20 successful deployments per service are retained in the registry. Older images are garbage-collected automatically. Rollback is only available for deployments still within the retention window.
+:::
+
+## Step by step
+
+1. **Open the Deployments tab**
+
+   Navigate to Service → Deployments. You will see a list of the last 20 successful deployments, ordered newest first. Each entry shows the commit hash, commit message, deployer, timestamp, and duration.
+
+2. **Select a previous deployment**
+
+   Click on the deployment you want to roll back to. A detail panel slides open showing build logs, environment at time of deploy, and the exact Docker image tag. Verify this is the version you want before proceeding.
+
+3. **Click Rollback**
+
+   Click the "Rollback to this version" button. StackBlaze immediately begins a rolling update using the stored Docker image, no rebuild is required. The rollback typically completes in 15–30 seconds.
+
+4. **Verify the rollback**
+
+   Watch the Deployments tab as the rolling update completes. Once health checks pass on all replicas, the rolled-back version receives 100% of traffic. The deployment that caused the issue is retained in history for post-mortem analysis.
+
+## Next steps
+
+- [Auto deploy on push](/cicd/auto-deploy/)
+- [Automation (API, MCP, YAML)](/reference/cli/)
+- [Health checks for faster failure detection](/storage/health-checks/)

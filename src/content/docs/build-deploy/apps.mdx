@@ -1,0 +1,93 @@
+---
+title: Apps and processes
+description: Web services, background workers, cron jobs, and databases — when to use each.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+![Service topology: web, worker, cron, and a managed database on the private network](/illustrations/service-types.svg)
+
+A StackBlaze **app** is a single deployable unit built from your repo or a container image. One app can run three kinds of process: a **web** process with a public HTTPS URL, background **workers**, and scheduled **cron jobs**, each scaled independently.
+
+Anything stateful — a database, cache, or queue — is a **managed add-on** you attach to the app rather than a process it runs. The diagram shows how an app and its add-ons connect over the project's private network.
+
+## Comparison
+
+### Web Service
+
+Public HTTPS endpoint. Use when you need to serve HTTP traffic.
+
+| | |
+| --- | --- |
+| Public URL | Yes, HTTPS endpoint |
+| Replicas | Configurable (default 1) |
+| Autoscaling | Available |
+| Use when | You need to serve HTTP traffic |
+
+See [Web services](/deploy/web-services/).
+
+### Worker
+
+No public URL. Use when processing queues or background jobs.
+
+| | |
+| --- | --- |
+| Public URL | No |
+| Replicas | Configurable |
+| Autoscaling | Available |
+| Use when | Processing queues or background jobs |
+
+See [Background workers](/deploy/background-workers/).
+
+### Cron Job
+
+No public URL. Use for scheduled periodic tasks.
+
+| | |
+| --- | --- |
+| Public URL | No |
+| Schedule | Standard cron expression |
+| Concurrency | Forbid / Allow / Replace |
+| Use when | Scheduled periodic tasks |
+
+See [Cron jobs](/deploy/cron-jobs/).
+
+### Managed add-on
+
+Private network only. Use when you need a database, cache, or queue.
+
+| | |
+| --- | --- |
+| Public URL | No, private network only |
+| Provisioned as | Dedicated managed instance |
+| Storage | Persistent volume |
+| Backups | Scheduled & on-demand snapshots |
+| Use when | You need a database, cache, or queue |
+
+## Working with service types
+
+<Steps>
+
+1. **One app bundles web, workers, and cron**
+
+   A single app is built once from your repo or image, then runs whatever processes you enable: a web process that serves HTTP, background workers, and scheduled cron jobs. You set replica counts per process, so scaling the web tier and the worker tier are independent.
+
+2. **Attach managed add-ons for anything stateful**
+
+   Databases, caches, and queues are not app processes — they are managed add-ons you attach to your app. Each one runs as its own dedicated instance with persistent storage, and its connection string is injected into your app as an environment variable.
+
+3. **Connect over the private network**
+
+   Everything in a project shares a private network. Your app reaches another app or an add-on by its internal service name — no public URL, no load balancer, no egress. Attached add-ons expose their host and credentials to your app automatically.
+
+4. **Promote across pipeline phases**
+
+   Apps live in a pipeline made up of phases such as staging and production. Deploy to staging, verify, then promote the same build to production, so what you tested is exactly what ships.
+
+</Steps>
+
+## Next steps
+
+- [Connect a GitHub repository](/deploy/github/)
+- [Provision a PostgreSQL database](/databases/postgresql/)
+- [Set up Redis caching](/databases/redis/)

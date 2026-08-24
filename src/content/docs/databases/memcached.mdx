@@ -1,0 +1,66 @@
+---
+title: Memcached
+description: "Managed Memcached on StackBlaze: a fast, ephemeral in-memory cache for keys you can regenerate from your source of truth."
+---
+
+A fast, ephemeral in-memory cache for keys you can regenerate from your source of truth.
+
+## Creating a Memcached instance
+
+From the dashboard, click **New service**, then **Database**, then **Memcached**. StackBlaze provisions the instance and gives it a stable internal hostname.
+
+Attach Memcached to your service from the **Environment** tab. StackBlaze injects `MEMCACHED_SERVERS` automatically, so your app reads the server address from the environment rather than hardcoding it.
+
+Memcached is a simple, very fast in-memory key-value cache for ephemeral data. It has no persistence: keys live only in memory and are meant to be regenerated on demand. Use it to take load off a slower backing store (a database or an external API) by caching the results of expensive lookups.
+
+## Connecting
+
+Memcached speaks its own lightweight text and binary protocol on port `11211`. Most clients accept a list of server addresses, which is exactly what `MEMCACHED_SERVERS` provides. The internal server address takes the form below.
+
+```text title="Internal server address"
+[service-name]:11211
+```
+
+Connect from within the cluster using this address. There is no connection URL scheme and, by design, no query language: you set, get, and delete keys.
+
+## Deployment model
+
+Memcached runs as a **Standard** single instance. It is an ephemeral cache that holds no durable data and does not replicate, so there is no high-availability mode. If the node is lost, the keys it held are simply re-fetched from your source of truth (your database) on the next request and written back into the cache.
+
+For more cache capacity, you can add nodes and shard keys across them client-side. Most Memcached clients support a server list and hash each key to a server, so adding a node spreads keys without any coordination between the nodes themselves.
+
+| Property | Memcached |
+| --- | --- |
+| Topology | Standard, single instance |
+| Persistence | None (in-memory only) |
+| Replication | None |
+| Scaling out | Add nodes and shard keys client-side |
+
+:::tip[Cache only]
+Treat Memcached as a cache, never as a system of record. Never store data you cannot regenerate. Any key can disappear at any time (on restart, on eviction under memory pressure, or if the node is lost), and that is expected behavior for a cache.
+:::
+
+## Connecting from Python
+
+The `pymemcache` client reads the server address straight from `MEMCACHED_SERVERS`, then sets and gets keys.
+
+```python title="cache.py"
+import os
+from pymemcache.client.base import Client
+
+# e.g. "[service-name]:11211"
+host, port = os.environ["MEMCACHED_SERVERS"].split(":")
+client = Client((host, int(port)))
+
+client.set("user:42", "Ada Lovelace", expire=3600)  # TTL: 1 hour
+value = client.get("user:42")
+print(value)  # b"Ada Lovelace" (or None if the key was evicted)
+```
+
+## When to use Memcached vs Redis
+
+Use Memcached when you want the simplest possible pure in-memory cache: keys, values, and TTLs, nothing more. Reach for Redis (Valkey) when you need persistence, richer data structures (lists, sets, sorted sets, hashes), pub/sub messaging, or replication. See [Redis](/databases/redis/) for the Redis offering.
+
+:::note[Under the hood]
+Memcached is an in-memory key-value cache. StackBlaze runs it via a Kubernetes operator. It is intentionally stateless, with no persistent volume and no replication.
+:::

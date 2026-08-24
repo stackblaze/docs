@@ -1,0 +1,142 @@
+---
+title: Static Sites
+description: Deploy static sites to a global CDN with zero configuration. Supports Next.js, Vite, CRA, Hugo, Gatsby, and more.
+---
+
+Build once, serve globally. StackBlaze builds your static site and distributes it to a CDN edge network, no server process needed.
+
+## What is a Static Site?
+
+A static site is a collection of pre-built HTML, CSS, JavaScript, and asset files served directly from a CDN. There is no server runtime — requests hit the nearest edge node and are served without any compute. This makes static sites extremely fast, cheap to run, and virtually infinitely scalable.
+
+Static sites cannot run server-side code. If you need server-side rendering, API routes, or database access at request time, deploy a [Web Service](/deploy/web-services/) instead.
+
+## Framework auto-detection
+
+StackBlaze automatically detects the framework and pre-configures the build command and output directory. You can always override these in Service Settings.
+
+| Framework | Detected by | Build command | Output directory |
+| --- | --- | --- | --- |
+| Next.js (static export) | `next.config.*` | `next build` | `out` |
+| Vite | `vite.config.*` | `vite build` | `dist` |
+| Create React App | `react-scripts` | `npm run build` | `build` |
+| Gatsby | `gatsby-config.*` | `gatsby build` | `public` |
+| Hugo | `hugo.toml` / `hugo.yaml` | `hugo` | `public` |
+| Astro | `astro.config.*` | `astro build` | `dist` |
+| Eleventy | `.eleventy.js` | `eleventy` | `_site` |
+| SvelteKit (static) | `svelte.config.*` | `vite build` | `build` |
+
+:::note
+Next.js requires `output: 'export'` in your `next.config.js` to produce a static build. Without it, Next.js needs a Node.js server — use a Web Service for that.
+:::
+
+## Build output directory
+
+The build output directory is the folder StackBlaze uploads to the CDN after the build completes. If auto-detection picks the wrong directory, override it in Service Settings → Build → Publish Directory.
+
+### Next.js static export example
+
+```javascript title="next.config.js"
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  output: 'export',        // enables static export
+  trailingSlash: true,     // recommended for CDN compatibility
+  images: {
+    unoptimized: true,     // next/image requires a server; disable for static export
+  },
+}
+
+module.exports = nextConfig
+```
+
+## Custom 404 page
+
+Create a `404.html` file in your output directory. StackBlaze serves it automatically when a CDN edge node receives a request for a path that does not exist.
+
+Most frameworks generate `404.html` automatically:
+
+- **Next.js:** Create `app/not-found.tsx` or `pages/404.tsx`
+- **Gatsby:** Create `src/pages/404.jsx`
+- **Hugo:** Create `layouts/404.html`
+- **Vite / CRA:** Copy `index.html` to `404.html` in your build script
+
+## Redirects and rewrites
+
+Create a `_redirects` file in your publish directory (not your project root) to define URL redirects and rewrites. This is the same format used by Netlify.
+
+```text title="public/_redirects"
+# Single page app (SPA), send all routes to index.html
+/*    /index.html   200
+
+# 301 redirect
+/old-page   /new-page   301
+
+# Redirect with query strings
+/blog/:slug   /posts/:slug   301
+
+# Proxy to an API (rewrite, keeps original URL)
+/api/*   https://api.acme.com/:splat   200
+```
+
+:::tip
+The SPA rule (`/* /index.html 200`) is essential for client-side routing frameworks (React Router, Vue Router, etc.) that manage routes in the browser. Without it, refreshing on any non-root URL returns a 404.
+:::
+
+### `_redirects` rule syntax
+
+| Format | Status | Behaviour |
+| --- | --- | --- |
+| `/from /to 301` | 301 | Permanent redirect |
+| `/from /to 302` | 302 | Temporary redirect |
+| `/from /to 200` | 200 | Rewrite (URL stays the same, content from `/to` is served) |
+| `/from/* /to/:splat 301` | 301 | Wildcard redirect with splat capture |
+
+## Environment variables in static builds
+
+Environment variables are available to your build command but not at runtime (there is no server). Any variables you need in the client-side bundle must be embedded at build time.
+
+### Vite
+
+Prefix variables with `VITE_`. Access them with `import.meta.env.VITE_API_URL`.
+
+### Create React App
+
+Prefix variables with `REACT_APP_`. Access them with `process.env.REACT_APP_API_URL`.
+
+### Next.js
+
+Prefix variables with `NEXT_PUBLIC_`. Access them with `process.env.NEXT_PUBLIC_API_URL`.
+
+:::caution
+Never embed private API keys or secrets into static site environment variables — they become part of the public JavaScript bundle and are visible to anyone.
+:::
+
+## Custom domains
+
+Attach a custom domain to your static site the same way as any other service. StackBlaze provisions a TLS certificate via Let's Encrypt automatically. See [Custom Domains](/networking/custom-domains/) for step-by-step instructions.
+
+## CDN caching
+
+StackBlaze CDN nodes cache your assets at the edge. Cache headers are set based on file type:
+
+| File type | Cache-Control header |
+| --- | --- |
+| HTML files | `no-cache, must-revalidate` |
+| JS / CSS with content hash | `max-age=31536000, immutable` |
+| Images and fonts | `max-age=86400` |
+| `_redirects` file | (not cached, always fresh) |
+
+Content-hashed assets (e.g., `main.a3f2bc.js`) are cached indefinitely at the edge. HTML is always revalidated so users immediately see new deploys.
+
+## Build constraints
+
+Static site builds run with these resource limits:
+
+| Resource | Limit |
+| --- | --- |
+| Build timeout | 20 minutes |
+| Build memory | 4 GB |
+| Output directory size | 500 MB |
+| Individual file size | 25 MB |
+
+If your build exceeds these limits, contact support to discuss a custom build plan.

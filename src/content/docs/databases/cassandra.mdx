@@ -1,0 +1,70 @@
+---
+title: Cassandra
+description: "Managed Apache Cassandra on StackBlaze: a wide-column distributed database with single-node or multi-node high-availability rings and automated backups."
+---
+
+Managed Apache Cassandra: a wide-column distributed database with single-node or multi-node high-availability rings.
+
+## Creating a Cassandra instance
+
+From the StackBlaze dashboard, click **New service**, then **Database**, then **Cassandra**. Pick a plan and storage size, and StackBlaze provisions the instance for you.
+
+Connecting a Cassandra instance to a service injects the `CASSANDRA_CONTACT_POINTS` environment variable into that service. Your application reads the contact points from this variable, and the driver connects to them on the CQL port. There is nothing to hardcode.
+
+## Connecting
+
+Cassandra uses the CQL binary protocol on port `9042`. Services in the same project reach the database over the cluster's private network using its internal contact point. The internal address takes the form below:
+
+```text title="Contact point (internal)"
+[service-name]:9042
+```
+
+Connect using a CQL driver for your language, or the `cqlsh` command line shell pointed at the same contact point and port.
+
+## Standard vs high availability
+
+You choose between Standard and high availability when creating the instance. Standard runs a single node, which is a great fit for development and lower-stakes workloads. High availability runs a multi-node ring with a tunable replication factor and consistency level, so data is replicated across nodes and the cluster stays available during a node loss.
+
+| | Standard | High availability |
+| --- | --- | --- |
+| Topology | Single node | Multi-node ring |
+| Replication | None (one copy) | Tunable replication factor across nodes |
+| Consistency | Single node | Tunable consistency level |
+| Survives a node loss | No | Yes, the ring stays available |
+| Best for | Development and testing | Production and resilient workloads |
+
+## Connecting from Python
+
+Install the `cassandra-driver` package, read the contact points from `CASSANDRA_CONTACT_POINTS`, and connect on the CQL port:
+
+```python title="app.py"
+import os
+from cassandra.cluster import Cluster
+
+contact_points = os.environ["CASSANDRA_CONTACT_POINTS"].split(",")
+cluster = Cluster(contact_points, port=9042)
+session = cluster.connect()
+
+session.execute(
+    "CREATE KEYSPACE IF NOT EXISTS app "
+    "WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}"
+)
+session.set_keyspace("app")
+
+session.execute(
+    "CREATE TABLE IF NOT EXISTS users (id uuid PRIMARY KEY, name text)"
+)
+
+rows = session.execute("SELECT release_version FROM system.local")
+print(rows.one().release_version)
+
+cluster.shutdown()
+```
+
+## Backups
+
+StackBlaze takes automated, encrypted backups that follow the platform backup policy applied to all managed databases. For details on schedules, restores, and how the policy works, see [Backups & recovery](/databases/backups/).
+
+:::note[Under the hood]
+Apache Cassandra is a wide-column distributed database. StackBlaze runs it via a Kubernetes operator with a persistent volume per node, and in high availability mode it spreads nodes (and optionally racks) across the cluster so the ring tolerates the loss of a node.
+:::

@@ -1,0 +1,98 @@
+---
+title: Databases
+description: "Every managed database on StackBlaze runs as a Standard single instance or a high-availability replicated deployment. Browse the full catalog: PostgreSQL, MySQL, Redis, MongoDB, CockroachDB, ClickHouse, OpenSearch, Milvus, Cassandra, ScyllaDB, CouchDB, Memcached."
+---
+
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+Every managed database on StackBlaze can run as a single Standard instance or as a replicated, high-availability deployment. Pick the topology per database when you create it.
+
+## Standard vs high availability
+
+Each database add-on supports two deployment topologies. You choose between them when you create the instance (and you can scale up later by raising the replica count).
+
+![Standard deployment is a single database pod with one volume. High-availability deployment is a primary plus replicas spread across nodes, fronted by a service, with streaming replication and automatic failover.](/illustrations/standard-vs-ha.svg)
+
+*Standard runs one instance and one volume. HA runs a primary plus replicas across nodes, with automatic failover.*
+
+### Standard
+
+A single instance with its own persistent volume. It is the simplest and lowest-cost option, and it is a good fit for development, internal tools, and workloads that can tolerate a short restart during maintenance or a node move. There is no automatic failover: if the pod or its node is rescheduled, the database is briefly unavailable until it comes back.
+
+### High availability (HA)
+
+A clustered deployment with a primary plus one or more replicas spread across different nodes. Writes go to the primary and stream to the replicas; if the primary fails, the cluster promotes a replica automatically so the database stays available. HA also lets you serve reads from replicas to take load off the primary. It uses more resources, so it is the right choice for production and anything with an uptime requirement.
+
+| | Standard | High availability |
+| --- | --- | --- |
+| Instances | Single | Primary + 1 or more replicas |
+| Node spread | One node | Replicas on separate nodes |
+| Failover | None (restart) | Automatic primary promotion |
+| Read scaling | Primary only | Reads can fan out to replicas |
+| Best for | Dev, internal, non-critical | Production, uptime SLAs |
+
+:::tip[Choosing a topology]
+Start Standard for development and switch to HA before you carry production traffic. For most engines you raise the replica or node count and StackBlaze performs a rolling change with no data loss.
+:::
+
+## Available databases
+
+StackBlaze provisions each database through a Kubernetes operator, so the same engine you run locally runs in your cluster with backups, private networking, and zero-config connection strings. The table below lists every managed database and the topologies it supports.
+
+### Relational (SQL)
+
+| Database | Engine | Topologies |
+| --- | --- | --- |
+| [PostgreSQL](/databases/postgresql/) | CloudNativePG | Standard + HA |
+| [MySQL](/databases/mysql/) | MariaDB (MySQL-compatible) | Standard + HA |
+| [CockroachDB](/databases/cockroachdb/) | Distributed SQL | Standard + HA |
+
+### Key-value & cache
+
+| Database | Engine | Topologies |
+| --- | --- | --- |
+| [Redis](/databases/redis/) | Valkey (Redis-compatible) | Standard + HA |
+| [Memcached](/databases/memcached/) | Memcached | Standard only |
+
+### Document
+
+| Database | Engine | Topologies |
+| --- | --- | --- |
+| [MongoDB](/databases/mongodb/) | DocumentDB (MongoDB-compatible) | Standard + HA |
+| [CouchDB](/databases/couchdb/) | Apache CouchDB | Standard + HA |
+
+### Search & vector
+
+| Database | Engine | Topologies |
+| --- | --- | --- |
+| [OpenSearch](/databases/opensearch/) | OpenSearch | Standard + HA |
+| [Milvus](/databases/milvus/) | Milvus (vector DB) | Standard + HA |
+
+### Analytics
+
+| Database | Engine | Topologies |
+| --- | --- | --- |
+| [ClickHouse](/databases/clickhouse/) | ClickHouse | Standard + HA |
+
+### Wide-column
+
+| Database | Engine | Topologies |
+| --- | --- | --- |
+| [Cassandra](/databases/cassandra/) | Apache Cassandra | Standard + HA |
+| [ScyllaDB](/databases/scylladb/) | ScyllaDB (Cassandra-compatible) | Standard + HA |
+
+:::note[One engine, the names you know]
+Some databases are served by a compatible engine so we can ship them under a permissive license without changing your client code. MongoDB is provided by `DocumentDB` (MongoDB wire protocol), Redis by `Valkey`, and MySQL by `MariaDB`. Your existing drivers, connection strings, and tools work unchanged.
+:::
+
+See [Backups & recovery](/databases/backups/) for snapshot behavior across every database, plus point-in-time recovery for PostgreSQL.
+
+Looking for messaging? [Kafka](/messaging/kafka/) and [RabbitMQ](/messaging/rabbitmq/) are documented under Messaging.
+
+<CardGrid>
+	<LinkCard title="PostgreSQL" href="/databases/postgresql/" description="Managed Postgres with backups, PITR, and private networking." />
+	<LinkCard title="MySQL" href="/databases/mysql/" description="MariaDB-compatible MySQL with automated backups." />
+	<LinkCard title="Redis" href="/databases/redis/" description="Valkey-compatible Redis for cache, sessions, and queues." />
+	<LinkCard title="MongoDB" href="/databases/mongodb/" description="DocumentDB-compatible MongoDB with replica sets." />
+	<LinkCard title="Backups" href="/databases/backups/" description="Daily snapshots and PostgreSQL point-in-time recovery." />
+</CardGrid>

@@ -1,0 +1,163 @@
+---
+title: Web Services
+description: Deploy HTTP services with automatic TLS, health checks, and zero-downtime rolling updates.
+---
+
+Deploy HTTP servers that receive public traffic. StackBlaze handles TLS, load balancing, health checks, and zero-downtime rolling updates.
+
+## What is a Web Service?
+
+A web service is any process that listens on a TCP port and serves HTTP(S) traffic. StackBlaze provisions a public URL in the form `https://your-service.stackblaze.app`. You can also attach a [custom domain](/networking/custom-domains/).
+
+Web services support HTTP/1.1, HTTP/2, and WebSockets. There is no need to terminate TLS yourself — the platform handles it and forwards plain HTTP to your container.
+
+## Port detection
+
+StackBlaze reads the `PORT` environment variable to know which port your container listens on. The default is `8080`. Always bind to `0.0.0.0` (not `127.0.0.1`) so the process can receive traffic.
+
+```javascript title="server.js"
+// Node.js example
+const port = process.env.PORT || 8080
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Listening on port ${port}`)
+})
+```
+
+```python title="main.py"
+# Python / Gunicorn example
+# StackBlaze sets PORT automatically
+# gunicorn reads $PORT via --bind flag
+# Procfile: web: gunicorn app:app --bind 0.0.0.0:$PORT
+```
+
+:::caution
+Do not hardcode a port number. Always read from `process.env.PORT` (Node.js) or `os.environ["PORT"]` (Python). StackBlaze may change the port assignment between plan upgrades.
+:::
+
+## Health checks
+
+StackBlaze uses readiness probes to determine when a new instance is ready to receive traffic. Traffic is only sent to an instance after it passes the readiness check. If an instance fails health checks repeatedly, it is restarted automatically (liveness probe).
+
+### Default health check
+
+By default, StackBlaze sends HTTP GET requests to `/` on your service port. A 2xx or 3xx response is considered healthy.
+
+### Custom health check path
+
+Specify a custom health check path in Service Settings → Health Check. A dedicated endpoint like `/health` or `/ping` is recommended — it should return quickly without triggering expensive database queries.
+
+```javascript title="server.js"
+// Recommended: lightweight health endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime() })
+})
+```
+
+### Health check settings
+
+| Setting | Default | Description |
+| --- | --- | --- |
+| Path | `/` | HTTP path to probe |
+| Initial delay | 5s | Wait before first probe (gives app time to start) |
+| Period | 10s | Time between probes |
+| Timeout | 5s | Max wait for a response |
+| Success threshold | 1 | Consecutive successes to mark ready |
+| Failure threshold | 3 | Consecutive failures before restart |
+
+## Start command
+
+The start command is the entrypoint of your container — it is what StackBlaze runs to start your application. It should start your HTTP server and block (not exit). If it exits, the platform considers the instance failed and restarts it.
+
+| Runtime | Typical start command |
+| --- | --- |
+| Node.js | `node dist/server.js` |
+| Node.js (npm) | `npm start` |
+| Python | `gunicorn app:app --bind 0.0.0.0:$PORT` |
+| Python (FastAPI) | `uvicorn main:app --host 0.0.0.0 --port $PORT` |
+| Ruby | `bundle exec puma -C config/puma.rb` |
+| Go | `./bin/server` |
+| Java | `java -jar target/app.jar` |
+
+## Scaling
+
+You can scale web services horizontally (more replicas) or vertically (more CPU and memory per replica). StackBlaze supports both manual and automatic scaling.
+
+### Manual scaling
+
+From the dashboard, go to Service → Settings → Scaling. Set the number of replicas. The change takes effect immediately, no redeploy needed.
+
+### Autoscaling
+
+Set a minimum and maximum replica count and StackBlaze's autoscaler will adjust replicas based on CPU utilization (target: 70%). Scale-out happens within seconds; scale-in is delayed 5 minutes to avoid oscillation.
+
+See [Horizontal scaling](/scaling/horizontal/) and [Autoscaling](/scaling/autoscaling/).
+
+## Zero-downtime rolling updates
+
+Every deploy uses a rolling update strategy. New instances are started and must pass health checks before old instances are terminated.
+
+| Parameter | Value | Meaning |
+| --- | --- | --- |
+| maxSurge | 1 | One extra instance above desired count during update |
+| maxUnavailable | 0 | No instances taken down until replacements are ready |
+
+This means a deploy with 2 replicas will temporarily run 3 instances: the 2 old ones serving traffic and 1 new one warming up. Once the new instance is healthy, one old instance is terminated, and so on until all replicas are updated.
+
+:::tip
+If your application requires a database schema migration before the new code can run, use a pre-deploy hook or run the migration in your container's startup sequence before binding the port.
+:::
+
+## Node.js example
+
+```javascript title="server.js"
+import express from 'express'
+
+const app = express()
+const port = parseInt(process.env.PORT || '8080', 10)
+
+app.use(express.json())
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' })
+})
+
+app.get('/', (req, res) => {
+  res.json({ message: 'Hello from StackBlaze!' })
+})
+
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server listening on port ${port}`)
+})
+```
+
+## Python example
+
+```python title="main.py"
+from fastapi import FastAPI
+import os
+
+app = FastAPI()
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+@app.get("/")
+def root():
+    return {"message": "Hello from StackBlaze!"}
+
+# Start with: uvicorn main:app --host 0.0.0.0 --port $PORT
+```
+
+## Environment variables
+
+StackBlaze injects the following variables automatically into every web service:
+
+| Variable | Description |
+| --- | --- |
+| `PORT` | The port your service should listen on |
+| `STACKBLAZE_ENV` | production or preview |
+| `STACKBLAZE_SERVICE_NAME` | The name of this service |
+| `STACKBLAZE_DEPLOYMENT_ID` | The current deployment ID (commit SHA) |
+
+Read more about environment variables in [Security → Environment Variables](/security/env-vars/).

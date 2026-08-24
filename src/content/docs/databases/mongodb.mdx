@@ -1,0 +1,139 @@
+---
+title: MongoDB
+description: Managed MongoDB 7.x with replica sets, automated backups, point-in-time recovery, and private cluster networking.
+---
+
+Managed MongoDB with replica sets, automated backups, and private cluster networking.
+
+:::note[Powered by DocumentDB]
+MongoDB on StackBlaze is served by **DocumentDB**, a MongoDB wire-protocol–compatible engine built on PostgreSQL. You connect with the standard MongoDB drivers, connection strings, and tools (mongosh, Compass, Mongoose, Prisma, Motor), and everything in this guide applies as written. We use DocumentDB so we can ship a MongoDB-compatible database under a permissive license.
+:::
+
+## Creating a MongoDB instance
+
+From the dashboard, click **New service → Database → MongoDB**. Choose MongoDB 7.x, a storage size (1 GB to 500 GB), and a plan. StackBlaze provisions a StatefulSet and initializes the replica set automatically.
+
+Attach MongoDB to your service from the **Environment** tab. StackBlaze injects `MONGODB_URL` automatically.
+
+## Connection strings
+
+### Internal (recommended)
+
+```text title="Connection string (internal, single-node)"
+mongodb://user:password@[service-name]:27017/dbname
+```
+
+### Replica set connection (Pro+)
+
+On Pro and Enterprise plans, MongoDB runs as a 3-node replica set. Use the replica set connection string to enable automatic failover and read preference configuration.
+
+```text title="Connection string (replica set)"
+mongodb://user:password@[service-name]-0:27017,[service-name]-1:27017,[service-name]-2:27017/dbname?replicaSet=rs0&authSource=admin
+```
+
+### External (for Compass / mongosh)
+
+Use the external connection string for MongoDB Compass or `mongosh` from your local machine. Find it in **Settings → Connection**.
+
+```bash title="mongosh (external)"
+mongosh "mongodb+srv://user:password@cluster.stackblaze.cloud/dbname"
+```
+
+:::tip
+The `mongodb+srv` URI format uses DNS SRV records and automatically discovers all replica set members. Prefer it over manually listing hostnames when connecting external tools.
+:::
+
+## Replica sets
+
+| Plan | Topology | Failover |
+| --- | --- | --- |
+| Free | Single node (no replica set) | None |
+| Starter | Single node (no replica set) | None |
+| Pro | 3-node replica set | Automatic (under 30s) |
+| Enterprise | 3-node replica set + hidden secondary | Automatic (under 30s) |
+
+With a 3-node replica set, MongoDB automatically elects a new primary if the current primary becomes unavailable. Your application should use the replica set connection string and enable retryable writes for seamless failover.
+
+```ts title="Mongoose connection (with retryable writes)"
+import mongoose from 'mongoose'
+
+await mongoose.connect(process.env.MONGODB_URL, {
+  retryWrites: true,
+  w: 'majority',
+  readPreference: 'primaryPreferred',
+})
+```
+
+## Automated backups
+
+All plans include daily automated snapshots, and you can take an on-demand snapshot at any time before a risky change. Backups are encrypted at rest and stored separately from your primary data. Restore to a new instance without interrupting your live database from **Backups → Restore**.
+
+| Plan | Snapshot retention |
+| --- | --- |
+| Free | 1 day |
+| Starter | 3 days |
+| Pro | 7 days |
+| Enterprise | 30 days |
+
+## Indexes
+
+Create indexes in your application startup code or migration scripts. For production deployments, always create indexes with `{ background: true }` (MongoDB before 4.2) or as a rolling build to avoid blocking reads and writes on large collections.
+
+```ts title="Create indexes (Mongoose)"
+// In your model definition
+const userSchema = new mongoose.Schema({
+  email: { type: String, unique: true, index: true },
+  createdAt: { type: Date, index: true },
+  'profile.city': { type: String },
+})
+
+// Compound index
+userSchema.index({ 'profile.city': 1, createdAt: -1 })
+
+// Text search index
+userSchema.index({ name: 'text', bio: 'text' })
+```
+
+## Connecting with common ODMs
+
+### Mongoose
+
+```ts title="db.ts"
+import mongoose from 'mongoose'
+
+if (mongoose.connection.readyState === 0) {
+  await mongoose.connect(process.env.MONGODB_URL!, {
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+  })
+}
+```
+
+### Prisma (MongoDB provider)
+
+```prisma title="prisma/schema.prisma"
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGODB_URL")
+}
+
+model User {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  email String @unique
+  name  String
+}
+```
+
+### Motor (Python async)
+
+```python title="database.py"
+from motor.motor_asyncio import AsyncIOMotorClient
+import os
+
+client = AsyncIOMotorClient(os.environ["MONGODB_URL"])
+db = client.get_default_database()
+```
+
+:::note[Under the hood]
+MongoDB runs as a Kubernetes **StatefulSet**. Each node gets its own **PersistentVolumeClaim** for data and journal files. On Pro+, a 3-node replica set is initialized automatically at provision time using `rs.initiate()`. Stable per-pod DNS names (`[service-name]-0`, `[service-name]-1`, etc.) are provided by a Kubernetes **Headless Service**, which is required for replica set member addressing.
+:::

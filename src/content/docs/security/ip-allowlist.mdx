@@ -1,0 +1,83 @@
+---
+title: IP Allowlisting
+description: Restrict StackBlaze dashboard and API access to specific IP ranges. Learn how to configure CIDR allowlists, use IP allowlisting with a corporate VPN, and what to do if you get locked out.
+---
+
+IP allowlisting restricts access to the StackBlaze dashboard and API to specific IP address ranges. Requests originating from IPs not on the allowlist receive a 403 Forbidden response, preventing unauthorized access even if credentials are compromised.
+
+This feature applies to the **StackBlaze dashboard and API only**: it does not affect traffic to your deployed services, which have their own routing and firewall configuration.
+
+:::caution[Enterprise feature]
+IP allowlisting is available on Enterprise plans only. To enable it, upgrade your plan or [contact sales](https://stackblaze.com/contact). If you're locked out due to an allowlist misconfiguration, contact [support@stackblaze.com](mailto:support@stackblaze.com) with account verification.
+:::
+
+## IP allowlist configuration
+
+Example allowlist (Enabled):
+
+| CIDR | Label | Type |
+| --- | --- | --- |
+| `203.0.113.0/24` | Office, New York | IPv4 |
+| `198.51.100.0/24` | VPN egress, Cloudflare WARP | IPv4 |
+| `203.0.113.42/32` | Alex home office | IPv4 |
+| `2001:db8::/32` | London office (IPv6) | IPv6 |
+
+Your current IP is shown in the dashboard (for example `203.0.113.42`) so you can confirm it is included before enabling the list.
+
+## What is affected
+
+**Restricted by allowlist**
+
+- Dashboard access (app.stackblaze.cloud)
+- REST API (api.stackblaze.cloud/v1)
+- CLI authentication
+- Deploy hook endpoints
+
+**Not affected by allowlist**
+
+- Your deployed services' public URLs
+- Internal service-to-service traffic
+- Incoming webhooks to your services
+- Database connections from your services
+
+:::caution[Lockout prevention]
+Always add your current IP (or the VPN you'll use to access the dashboard) before enabling the allowlist. If you get locked out, contact **support@stackblaze.com**: we'll verify your identity via email and temporarily disable the allowlist so you can update it.
+:::
+
+## Using with a corporate VPN
+
+If your team uses a VPN, add the VPN's egress IP range to the allowlist. All team members connect through the VPN, and only the VPN's exit IPs need to be allowlisted, individual home IPs don't need to be listed separately.
+
+```text title="Example allowlist with VPN"
+# Add your VPN provider's egress IPs
+# Find them in your VPN provider's documentation
+104.16.0.0/13  # Cloudflare WARP egress range
+172.64.0.0/13  # Cloudflare WARP egress range
+
+# Now all employees using Cloudflare WARP
+# can access the dashboard through the VPN
+```
+
+## Step by step
+
+1. **Navigate to IP Allowlist settings**
+
+   Go to Project → Settings → Security → IP Allowlist. This section is only available on Enterprise plans. If you are on a lower plan, upgrade to Enterprise or contact sales to discuss your requirements.
+
+2. **Add your IP ranges**
+
+   Click "Add Range". Enter an IPv4 or IPv6 CIDR range (e.g. `203.0.113.0/24` for an entire /24 subnet, or `203.0.113.42/32` for a single IP). Add a descriptive label (e.g. "Office NYC", "VPN egress"). You can add multiple ranges.
+
+3. **Add your current IP before saving**
+
+   StackBlaze detects your current IP and displays it with a "Add my IP" button. Add it before saving the allowlist, otherwise you will immediately lose dashboard access from your current location. You can always remove it later.
+
+4. **Enable the allowlist**
+
+   Toggle "Enable IP Allowlist" to ON and click Save. The restriction takes effect within 30 seconds. Any requests from IPs not in the allowlist receive an HTTP 403 response. Your deployed services are not affected, only dashboard and API access is restricted.
+
+## Next steps
+
+- [Team & permissions](/security/team-permissions/)
+- [Two-factor authentication](/security/two-factor-auth/)
+- [API reference](/reference/api/)

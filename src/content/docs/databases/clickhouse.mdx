@@ -1,0 +1,74 @@
+---
+title: ClickHouse
+description: "Managed ClickHouse on StackBlaze: a fast columnar OLAP database with single-node or replicated high-availability deployments and automated backups."
+---
+
+Managed ClickHouse on StackBlaze: a fast columnar OLAP database with single-node or replicated high-availability deployments and automated backups.
+
+## Creating a ClickHouse instance
+
+From the StackBlaze dashboard, click **New service → Database → ClickHouse**. Choose a deployment type (Standard or High availability), an initial storage size, and a compute plan. StackBlaze provisions the instance on Kubernetes with persistent storage attached.
+
+Once created, open a web service or worker, go to the **Environment** tab, and connect the database. StackBlaze injects `CLICKHOUSE_URL` as a secret environment variable so your app can reach the instance without any manual wiring.
+
+## Connecting
+
+ClickHouse exposes an HTTP interface on port `8123` and a native TCP protocol on port `9000`. The HTTP interface is the simplest way to run queries from application code or tools like `curl`. Services in the same project reach the instance over the private network using its internal hostname.
+
+```text title="HTTP endpoint (internal)"
+http://user:password@[service-name]:8123/?database=dbname
+```
+
+Use the native port `9000` with clients that speak the native protocol, such as `clickhouse-client`, for lower overhead and streaming inserts.
+
+## Standard vs high availability
+
+A **Standard** instance is a single ClickHouse server. It is a good fit for development and for analytics that fit comfortably on one node.
+
+A **High availability** deployment uses sharding and replication. Replicated tables (using the `ReplicatedMergeTree` family of engines) are coordinated by ClickHouse Keeper, so each write is copied across replicas. Data survives the loss of a node, and shards spread data across servers so the cluster can scale beyond a single machine. You choose the deployment type when creating the instance.
+
+| | Standard | High availability |
+| --- | --- | --- |
+| Topology | Single server | Sharded and replicated |
+| Replication | None | ReplicatedMergeTree via ClickHouse Keeper |
+| Survives node loss | No | Yes |
+| Scales beyond one node | No | Yes (sharding) |
+| Best for | Dev, single-node analytics | Production, durability, scale |
+
+## Querying
+
+The HTTP interface accepts SQL in the request body. Using the injected `CLICKHOUSE_URL`, you can run a query directly with `curl`.
+
+```bash title="Query over HTTP"
+curl "$CLICKHOUSE_URL" --data-binary "SELECT version()"
+```
+
+ClickHouse uses table engines to control how data is stored. The `MergeTree` engine is the standard choice for analytical tables.
+
+```sql title="Create, insert, select"
+CREATE TABLE events (
+  id    UInt64,
+  name  String,
+  ts    DateTime
+) ENGINE = MergeTree()
+ORDER BY (ts, id);
+
+INSERT INTO events VALUES (1, 'signup', now());
+
+SELECT name, count() AS n
+FROM events
+GROUP BY name
+ORDER BY n DESC;
+```
+
+## Backups
+
+StackBlaze takes automated, encrypted backups of your ClickHouse instance following the platform backup policy. Backups are encrypted before leaving the host and can be restored from the database dashboard. For schedules, restore steps, and how backups work across services, see [Backups & recovery](/databases/backups/).
+
+:::tip
+Define an explicit `ORDER BY` key on your `MergeTree` tables. It determines how data is sorted on disk and has a large effect on query performance for analytical workloads.
+:::
+
+:::note[Under the hood]
+ClickHouse is a columnar **OLAP** database built for fast analytical queries over large datasets. StackBlaze runs it via a Kubernetes operator with **persistent volumes** for storage. In high availability mode, data is replicated across nodes using **ClickHouse Keeper** so the cluster survives the loss of an individual node.
+:::

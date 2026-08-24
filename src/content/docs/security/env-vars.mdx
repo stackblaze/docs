@@ -1,0 +1,85 @@
+---
+title: Environment Variables
+description: Per-phase config, secrets, and shared values. Manage env vars from the dashboard or the app spec API.
+---
+
+Environment variables configure your application without hardcoding values in source code. StackBlaze supports two types: plain text variables for non-sensitive configuration, and secrets for sensitive values that are encrypted at rest and redacted in logs.
+
+Variables are applied via a rolling deploy, changing an environment variable triggers an automatic redeploy so the new values take effect immediately without manual intervention.
+
+## Variable types
+
+### Plain text
+
+Stored as a Kubernetes ConfigMap. Visible in the dashboard UI. Use for non-sensitive configuration like feature flags, API URLs, log levels, and region names.
+
+```text
+NODE_ENV=production
+LOG_LEVEL=info
+API_BASE_URL=https://api.example.com
+```
+
+### Secret
+
+Stored as a Kubernetes Secret (AES-256 encrypted at rest). Redacted in build logs and dashboard UI, shown as ••••••••. Use for API keys, database passwords, JWT secrets, and OAuth credentials.
+
+```text
+DATABASE_URL=postgresql://...
+STRIPE_SECRET_KEY=sk_live_...
+JWT_SECRET=...
+```
+
+## API
+
+Env vars live on the app spec. Create a `kbr_pat_` token, then read or update the app:
+
+```bash title="terminal"
+export STACKBLAZE_TOKEN=kbr_pat_…
+
+curl -sS https://api.stackblaze.cloud/api/apps/acme-app/production/api \
+  -H "Authorization: Bearer $STACKBLAZE_TOKEN"
+```
+
+There is no `@stackblaze/cli`. See [Automation](/reference/cli/) and the [API reference](/reference/api/).
+
+## Environment Groups
+
+Environment Groups let you define a set of variables once and attach them to multiple services. Changes to a group propagate to all attached services automatically, no need to update the same variable across ten services one by one.
+
+Example group `shared-stripe` (attached to 3 services):
+
+| Key | Value |
+| --- | --- |
+| `STRIPE_SECRET_KEY` | •••••••• (secret) |
+| `STRIPE_WEBHOOK_SECRET` | •••••••• (secret) |
+| `STRIPE_API_VERSION` | `2024-06-20` |
+
+:::note[Under the hood]
+- **ConfigMap for plain variables**: non-secret variables are stored in a Kubernetes ConfigMap in the service's namespace. The ConfigMap is referenced in the pod spec via `envFrom.configMapRef`. All keys in the ConfigMap become environment variables in the container.
+- **Kubernetes Secret for sensitive values**: secret variables are stored as Kubernetes Secrets with base64-encoded values. The cluster's etcd is encrypted at rest using AES-256-CBC. Secrets are referenced via `envFrom.secretRef` and never appear in build logs.
+- **Rolling deploy on change**: updating a ConfigMap or Secret triggers a rolling update by patching the Deployment's `spec.template.metadata.annotations` with a checksum of the new values. Kubernetes detects the annotation change and starts a rolling update.
+:::
+
+## Step by step
+
+1. **Add variables from the dashboard**
+
+   Navigate to Service → Environment → Add Variable. Enter the key name and value. Toggle "Secret" to mark it as sensitive. Click Save, a rolling deploy triggers automatically to apply the new variable.
+
+2. **Bulk import from a .env file**
+
+   Click "Bulk import" and paste your KEY=VALUE pairs, or upload a `.env` file directly. StackBlaze parses the file, detects lines starting with `#` as comments, and lets you review each variable before saving. Existing variables with the same key are overwritten.
+
+3. **Create an Environment Group for shared variables**
+
+   Go to Project → Environment Groups → New Group. Add variables that are shared across multiple services (e.g. a Stripe key used by your API and your webhook worker). Attach the group to any service, all variables in the group are injected alongside service-specific ones.
+
+4. **Override variables per environment**
+
+   Variables can have preview-environment-specific overrides. Navigate to Service → Settings → Preview Environments → Override Variables. Overrides only apply in preview namespaces, production values are unaffected. Useful for using test API keys in previews.
+
+## Next steps
+
+- [Secret files (certs, JSON keys)](/security/secret-files/)
+- [Preview environment variable overrides](/cicd/pr-previews/)
+- [Automation (API, MCP, YAML)](/reference/cli/)
