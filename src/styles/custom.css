@@ -322,6 +322,13 @@ site-search button[data-open-modal]:hover {
 	border-color: var(--sl-color-gray-4);
 }
 
+.pagination-links .link-title {
+	font-size: 0.9375rem;
+	font-weight: 500;
+	line-height: 1.35;
+	font-family: var(--sl-font);
+}
+
 /* Splash page: less template chrome */
 .page:has(.hero) .content-panel:first-child {
 	padding-top: 1.25rem;
