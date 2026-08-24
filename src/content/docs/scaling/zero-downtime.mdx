@@ -19,7 +19,7 @@ The update continues pod-by-pod until all replicas are running the new version. 
 
 1. New pod starts with updated image
 2. Pre-deploy command runs (e.g. `npm run migrate`)
-3. Readiness probe starts polling `/health` every 10 seconds
+3. Readiness probe starts polling the health path (default `/`) every 10 seconds
 4. Once 3 consecutive successful responses received, pod is marked `Ready`
 5. Traffic begins routing to the new pod
 6. Old pod receives `SIGTERM`, finishes in-flight requests, then exits
@@ -44,7 +44,7 @@ A readiness probe tells Kubernetes when your pod is ready to serve traffic. With
 
 ### Default probe
 
-By default, StackBlaze probes `GET /health` on the port your service listens on. The probe expects a 2xx HTTP response.
+By default, StackBlaze probes `GET /` on the port your service listens on. The probe expects a 2xx HTTP response. A dedicated path such as `/health` is recommended.
 
 ### Configuring the probe path
 

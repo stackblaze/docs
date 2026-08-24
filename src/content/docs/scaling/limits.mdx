@@ -3,7 +3,11 @@ title: Memory & CPU Limits
 description: Understanding CPU throttling and OOM kills on StackBlaze. How to diagnose resource issues and configure limits for your plan.
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 Pod sizes, requests, and what happens at the cap. This page is about **per-app CPU and memory**, not plan quotas. For app counts, bandwidth, and other plan caps, see [Limits & quotas](/reference/limits/). For adding replicas, see [Horizontal scaling](/scaling/horizontal/).
+
+<Diagram file="cpu-mem-limits.svg" alt="CPU past the limit is throttled and the process stays up. Memory past the limit OOM-kills the process and the instance restarts." />
 
 ## Configure CPU and memory
 

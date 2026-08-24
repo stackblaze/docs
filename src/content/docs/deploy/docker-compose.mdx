@@ -4,8 +4,11 @@ description: Import Compose, render.yaml, or fly.toml onto the project canvas.
 ---
 
 import { Steps } from '@astrojs/starlight/components';
+import Diagram from '../../../components/Diagram.astro';
 
 From **+ Service → Import**, drop a Compose file, `render.yaml`, or `fly.toml` onto the canvas. Application containers become **services**. Databases and caches become **managed databases** on the same board, with backups and private networking.
+
+<Diagram file="compose-to-canvas.svg" alt="Compose web, postgres, and redis map onto the canvas as a web service plus managed PostgreSQL and Redis, not DIY datastore containers." />
 
 The mapping is usually mechanical. The Compose example below is the common case; Render and Fly imports follow the same canvas result.
 

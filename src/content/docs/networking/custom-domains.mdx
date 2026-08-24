@@ -24,7 +24,7 @@ For subdomains like `app.example.com` or `www.example.com`, create a CNAME recor
 ```text title="DNS record (subdomain)"
 Type:  CNAME
 Name:  app
-Value: my-service.stackblaze.cloud
+Value: my-service.stackblaze.app
 TTL:   300
 ```
 
@@ -48,7 +48,7 @@ TTL:   300
 ```
 
 :::tip[Cloudflare users]
-If you use Cloudflare, enable "Proxied" mode (orange cloud) for automatic ALIAS-style resolution at the apex. Ensure you're pointing to `my-service.stackblaze.cloud` as a CNAME with proxy enabled, this is compatible with both subdomains and apex domains.
+If you use Cloudflare, enable "Proxied" mode (orange cloud) for automatic ALIAS-style resolution at the apex. Ensure you're pointing to `my-service.stackblaze.app` as a CNAME with proxy enabled, this is compatible with both subdomains and apex domains.
 :::
 
 ## Verification

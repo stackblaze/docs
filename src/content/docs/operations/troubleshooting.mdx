@@ -18,7 +18,7 @@ Open **Service → Deploys → [failed deploy] → Logs** and find the first red
 
 ## Health checks
 
-StackBlaze only routes traffic to replicas that return `200` on your health path (default `/health`). A common mistake is checking a dependency that is not ready on cold start.
+StackBlaze only routes traffic to replicas that return `200` on your health path (default `/`). A common mistake is checking a dependency that is not ready on cold start.
 
 :::tip
 Temporarily point the health path at a static `/health` that returns 200 with no DB checks. If deploys succeed, fix the dependency timeout or add a startup grace period (up to 300s).

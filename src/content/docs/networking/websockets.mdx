@@ -3,6 +3,8 @@ title: WebSockets
 description: WebSockets and Server-Sent Events work out of the box on StackBlaze with no configuration. Long-lived connections supported with a 3600s proxy timeout.
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 WebSockets work out of the box on StackBlaze. Long-lived connections are fully supported with no proxy timeout issues.
 
 ## No configuration needed
@@ -110,6 +112,8 @@ A WebSocket connection is pinned to a single pod for its lifetime. When you scal
 
 This means if you need to broadcast an event to all connected clients (e.g. a chat message), you must use a shared pub/sub mechanism so all pods can forward the event to their locally-connected clients.
 
+<Diagram file="websocket-pubsub.svg" alt="A WebSocket stays pinned to one replica. Redis pub/sub carries the broadcast so every replica fans out to its local clients." />
+
 ### Broadcasting with Redis pub/sub (Socket.IO adapter)
 
 ```ts title="server.ts"
@@ -166,7 +170,7 @@ StackBlaze sets a proxy read timeout of 3600 seconds (1 hour) on the Ingress con
 
 ```ts title="Client-side keep-alive"
 // Send a ping every 30 seconds from the client
-const ws = new WebSocket('wss://my-service.stackblaze.cloud/ws')
+const ws = new WebSocket('wss://my-service.stackblaze.app/ws')
 
 const ping = setInterval(() => {
   if (ws.readyState === WebSocket.OPEN) {

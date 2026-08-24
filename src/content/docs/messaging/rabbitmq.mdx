@@ -3,6 +3,8 @@ title: RabbitMQ
 description: "Managed RabbitMQ on StackBlaze: an AMQP message broker with single-node or clustered high-availability deployments using quorum queues."
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 Managed RabbitMQ: an AMQP message broker with single-node or clustered high-availability deployments using quorum queues.
 
 ## Creating a RabbitMQ instance
@@ -24,6 +26,8 @@ amqp://user:password@[service-name]:5672
 Most AMQP client libraries accept this URL directly. The internal hostname resolves only inside the StackBlaze private network, so traffic between your service and the broker never leaves the cluster.
 
 ## Standard vs high availability
+
+<Diagram file="rabbitmq-standard-vs-ha.svg" alt="Standard RabbitMQ is a single node. High availability is a multi-node cluster that replicates messages with quorum queues." />
 
 You choose between Standard and high availability (HA) when you create the instance.
 

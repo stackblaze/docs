@@ -1,11 +1,11 @@
 ---
 title: Deploy Hooks
-description: Trigger StackBlaze deployments from any external system using deploy hooks. Generate a unique HTTPS webhook URL and POST to it from CircleCI, Jenkins, GitHub Actions, or any custom script.
+description: Trigger StackBlaze deployments from any external system. POST to the deployments build API with a personal access token from CircleCI, Jenkins, GitHub Actions, or any custom script.
 ---
 
-Deploy hooks let you trigger a deployment from any external system, CircleCI, Jenkins, a shell script, or anything that can make an HTTP POST request. Each hook is a unique HTTPS URL that acts as both the endpoint and the authentication token.
+Deploy hooks let you trigger a deployment from any external system, CircleCI, Jenkins, a shell script, or anything that can make an HTTP POST request. Authenticate with a personal access token (`kbr_pat_`). There is no unsigned deploy-hook URL.
 
-You can create multiple hooks per service, one per CI provider, one per branch, or one per environment. Each hook can be scoped to deploy a specific branch, giving you fine-grained control over what gets deployed and when.
+POST to the deployments build API for a specific project, environment, and service. Store the same token as a CI secret in each provider if you trigger from more than one system.
 
 ## Triggering a deploy
 
@@ -50,7 +50,7 @@ jobs:
 | System | How to trigger |
 | --- | --- |
 | CircleCI | Trigger a StackBlaze deploy at the end of a successful CircleCI pipeline using a curl step. |
-| Jenkins | Add a post-build action in your Jenkinsfile to POST to the hook URL after tests pass. |
+| Jenkins | Add a post-build action in your Jenkinsfile to POST to the build API after tests pass. |
 | Custom scripts | Call the hook from any shell script, Makefile target, or deployment automation. |
 | Zapier / n8n | Wire up a Zapier webhook action or n8n HTTP Request node to deploy on any trigger. |
 | GitHub Actions | Use a curl step in a GitHub Actions workflow for fine-grained deploy control beyond auto-deploy. |

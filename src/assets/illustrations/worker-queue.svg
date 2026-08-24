@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" fill="none" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif">
+  <rect width="1200" height="400" fill="var(--diagram-canvas, #07070d)"/>
+  <circle cx="160" cy="100" r="150" fill="var(--diagram-violet, #8b5cf6)" opacity="0.09"/>
+  <circle cx="1040" cy="300" r="170" fill="var(--diagram-blue, #3b82f6)" opacity="0.07"/>
+
+  <text x="70" y="48" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.55" font-size="20" font-weight="600">Public HTTP to private workers</text>
+  <text x="70" y="72" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3" font-size="13">Enqueue on Redis · workers have no ingress · scale replicas to drain faster</text>
+
+  <rect x="70" y="160" width="150" height="72" rx="14" fill="var(--diagram-violet-fill, #312e81)" stroke="var(--diagram-violet-2, #a78bfa)" stroke-opacity="0.4"/>
+  <text x="145" y="192" fill="var(--diagram-violet-4, #e9d5ff)" font-size="15" font-weight="600" text-anchor="middle">Internet</text>
+  <text x="145" y="214" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-family="ui-monospace, monospace" font-size="12" text-anchor="middle">HTTPS</text>
+
+  <path d="M220 196 H290" stroke="var(--diagram-violet-2, #a78bfa)" stroke-opacity="0.5" stroke-width="2"/>
+  <polygon points="290,196 278,190 278,202" fill="var(--diagram-violet-2, #a78bfa)" fill-opacity="0.7"/>
+
+  <rect x="300" y="148" width="210" height="96" rx="16" fill="var(--diagram-blue-fill, #1e3a5f)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.45"/>
+  <text x="405" y="186" fill="var(--diagram-blue-3, #93c5fd)" font-size="15" font-weight="600" text-anchor="middle">Public HTTP</text>
+  <text x="405" y="210" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-family="ui-monospace, monospace" font-size="12" text-anchor="middle">POST /send-welcome-email</text>
+  <text x="405" y="228" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3" font-size="12" text-anchor="middle">enqueues the job</text>
+
+  <path d="M510 196 H580" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.5" stroke-width="2"/>
+  <polygon points="580,196 568,190 568,202" fill="var(--diagram-green, #34d399)" fill-opacity="0.7"/>
+  <text x="545" y="182" fill="var(--diagram-green, #34d399)" fill-opacity="0.7" font-size="11" text-anchor="middle">queue</text>
+
+  <rect x="590" y="148" width="180" height="96" rx="16" fill="var(--diagram-green-fill, #064e3b)" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.4"/>
+  <text x="680" y="186" fill="var(--diagram-green-2, #6ee7b7)" font-size="15" font-weight="600" text-anchor="middle">Redis</text>
+  <text x="680" y="210" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-family="ui-monospace, monospace" font-size="12" text-anchor="middle">cache :6379</text>
+  <text x="680" y="228" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3" font-size="12" text-anchor="middle">private only</text>
+
+  <path d="M770 168 H850" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.45" stroke-width="2"/>
+  <path d="M770 196 H850" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.45" stroke-width="2"/>
+  <path d="M770 224 H850" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.45" stroke-width="2"/>
+  <text x="810" y="156" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3" font-size="11" text-anchor="middle">consume</text>
+
+  <rect x="860" y="100" width="270" height="56" rx="13" fill="var(--diagram-blue-fill-2, #15213a)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.35"/>
+  <text x="995" y="126" fill="var(--diagram-blue-3, #93c5fd)" font-size="14" font-weight="600" text-anchor="middle">Worker replica 1</text>
+  <text x="995" y="144" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-size="11" text-anchor="middle">no public domain</text>
+
+  <rect x="860" y="168" width="270" height="56" rx="13" fill="var(--diagram-blue-fill-2, #15213a)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.35"/>
+  <text x="995" y="194" fill="var(--diagram-blue-3, #93c5fd)" font-size="14" font-weight="600" text-anchor="middle">Worker replica 2</text>
+  <text x="995" y="212" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-size="11" text-anchor="middle">no ingress</text>
+
+  <rect x="860" y="236" width="270" height="56" rx="13" fill="var(--diagram-blue-fill-3, #101827)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.25"/>
+  <text x="995" y="262" fill="var(--diagram-blue-3, #93c5fd)" font-size="14" font-weight="600" text-anchor="middle">Worker replica n</text>
+  <text x="995" y="280" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-size="11" text-anchor="middle">scale to process more jobs</text>
+
+  <text x="70" y="360" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-family="ui-monospace, monospace" font-size="13">same build as public HTTP · different start command · same Redis · no public exposure</text>
+</svg>

@@ -3,7 +3,11 @@ title: Private services
 description: Always-on services with no public domain — queue consumers, processors, and other private workloads.
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 A **private service** is an always-on service with no public domain. Same canvas tile and build path as public HTTP; it just is not exposed to the internet. Use it for queue consumers, processors, and other private workloads.
+
+<Diagram file="worker-queue.svg" alt="Public HTTP enqueues a job to Redis. Private worker replicas with no ingress consume from the same queue and scale independently." />
 
 ## When to leave a service private
 
