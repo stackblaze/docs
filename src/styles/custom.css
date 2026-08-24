@@ -357,9 +357,73 @@ site-search button[data-open-modal]:hover {
 	color: var(--sl-color-gray-3);
 }
 
-/* Right TOC */
+/* Right TOC — Railway-style snaking track + active pin */
 .right-sidebar-panel {
 	font-size: 0.8125rem;
+}
+
+.toc-tree {
+	--toc-gutter: 6px;
+	--toc-step: 11px;
+	position: relative;
+}
+
+.toc-tree .toc-path {
+	position: absolute;
+	top: 0;
+	left: 0;
+	pointer-events: none;
+	overflow: visible;
+	z-index: 0;
+}
+
+.toc-tree .toc-path path {
+	fill: none;
+	stroke: var(--sl-color-gray-4);
+	stroke-width: 1.25;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.right-sidebar #starlight__on-this-page {
+	font-size: 0.8125rem;
+	font-weight: 500;
+	color: var(--sl-color-gray-3);
+	letter-spacing: 0;
+	margin-bottom: 0.35rem;
+}
+
+.right-sidebar starlight-toc a {
+	position: relative;
+	z-index: 1;
+	padding-block: 0.3rem;
+	padding-inline-start: calc(var(--toc-gutter, 6px) + var(--depth, 0) * var(--toc-step, 11px) + 0.7rem);
+	padding-inline-end: 0.35rem;
+	color: var(--sl-color-gray-3);
+	line-height: 1.35;
+	border-radius: 0;
+}
+
+.right-sidebar starlight-toc a:hover {
+	color: var(--sl-color-white);
+}
+
+.right-sidebar starlight-toc a[aria-current='true'] {
+	color: var(--sl-color-white);
+	font-weight: 500;
+}
+
+.right-sidebar starlight-toc a[aria-current='true']::before {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: calc(var(--toc-gutter, 6px) + var(--depth, 0) * var(--toc-step, 11px));
+	width: 7px;
+	height: 7px;
+	transform: translate(-50%, -50%);
+	border-radius: 50%;
+	background: var(--sl-color-accent);
+	box-shadow: 0 0 0 3px var(--sl-color-bg);
 }
 
 /*

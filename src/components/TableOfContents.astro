@@ -1,0 +1,112 @@
+---
+import Default from '@astrojs/starlight/components/TableOfContents.astro';
+---
+
+<div class="toc-tree">
+	<Default />
+</div>
+
+<script>
+	const GUTTER = 6;
+	const STEP = 11;
+	const RADIUS = 6;
+
+	function depthOf(link: HTMLElement, root: HTMLElement) {
+		let depth = 0;
+		let node: HTMLElement | null = link.parentElement;
+		while (node && node !== root) {
+			if (node.tagName === 'UL') depth++;
+			node = node.parentElement;
+		}
+		return Math.max(0, depth - 1);
+	}
+
+	function pathFromPoints(pts: { x: number; y: number }[]) {
+		if (pts.length === 0) return '';
+		if (pts.length === 1) {
+			const p = pts[0];
+			return `M ${p.x} ${p.y - 8} L ${p.x} ${p.y + 8}`;
+		}
+
+		const first = pts[0];
+		let d = `M ${first.x} ${first.y - 6} L ${first.x} ${first.y}`;
+
+		for (let i = 1; i < pts.length; i++) {
+			const a = pts[i - 1];
+			const b = pts[i];
+			if (Math.abs(a.x - b.x) < 0.5) {
+				d += ` L ${b.x} ${b.y}`;
+				continue;
+			}
+			const midY = (a.y + b.y) / 2;
+			const dir = Math.sign(b.x - a.x) || 1;
+			const maxR = Math.min(RADIUS, Math.abs(b.x - a.x) / 2, Math.abs(b.y - a.y) / 2);
+			d += ` L ${a.x} ${midY - maxR}`;
+			d += ` Q ${a.x} ${midY} ${a.x + dir * maxR} ${midY}`;
+			d += ` L ${b.x - dir * maxR} ${midY}`;
+			d += ` Q ${b.x} ${midY} ${b.x} ${midY + maxR}`;
+			d += ` L ${b.x} ${b.y}`;
+		}
+
+		const last = pts[pts.length - 1];
+		d += ` L ${last.x} ${last.y + 6}`;
+		return d;
+	}
+
+	function draw(tree: HTMLElement) {
+		const toc = tree.querySelector('starlight-toc');
+		if (!toc) return;
+
+		let svg = tree.querySelector<SVGSVGElement>('svg.toc-path');
+		if (!svg) {
+			svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+			svg.classList.add('toc-path');
+			svg.setAttribute('aria-hidden', 'true');
+			const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+			svg.appendChild(path);
+			tree.prepend(svg);
+		}
+
+		const links = [...toc.querySelectorAll<HTMLAnchorElement>('nav a')];
+		const treeRect = tree.getBoundingClientRect();
+		const pts = links.map((link) => {
+			const rect = link.getBoundingClientRect();
+			return {
+				x: GUTTER + depthOf(link, toc as HTMLElement) * STEP,
+				y: rect.top - treeRect.top + rect.height / 2,
+			};
+		});
+
+		const height = Math.max(tree.offsetHeight, 1);
+		const width = Math.max(GUTTER + STEP * 3, ...pts.map((p) => p.x + 8));
+		svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+		svg.setAttribute('width', String(width));
+		svg.setAttribute('height', String(height));
+		svg.querySelector('path')?.setAttribute('d', pathFromPoints(pts));
+	}
+
+	function bind(tree: HTMLElement) {
+		if (tree.dataset.tocBound === 'true') {
+			draw(tree);
+			return;
+		}
+		tree.dataset.tocBound = 'true';
+		draw(tree);
+		const toc = tree.querySelector('starlight-toc');
+		if (toc) {
+			new MutationObserver(() => draw(tree)).observe(toc, {
+				attributes: true,
+				subtree: true,
+				attributeFilter: ['aria-current'],
+			});
+		}
+		new ResizeObserver(() => draw(tree)).observe(tree);
+	}
+
+	function init() {
+		document.querySelectorAll<HTMLElement>('.toc-tree').forEach(bind);
+	}
+
+	init();
+	document.addEventListener('astro:page-load', init);
+</script>
