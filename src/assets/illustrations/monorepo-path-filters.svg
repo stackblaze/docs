@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" fill="none" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif">
+  <rect width="1200" height="400" fill="var(--diagram-canvas, #07070d)"/>
+  <circle cx="200" cy="100" r="150" fill="var(--diagram-violet, #8b5cf6)" opacity="0.1"/>
+  <circle cx="1020" cy="300" r="170" fill="var(--diagram-blue, #3b82f6)" opacity="0.08"/>
+
+  <text x="70" y="48" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.55" font-size="20" font-weight="600">Path filters</text>
+  <text x="70" y="72" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3" font-size="13">Shared repo · not a shared build</text>
+
+  <rect x="70" y="148" width="250" height="100" rx="16" fill="var(--diagram-violet-fill-2, #1e1b3a)" stroke="var(--diagram-violet-2, #a78bfa)" stroke-opacity="0.4"/>
+  <text x="195" y="188" fill="var(--diagram-violet-4, #e9d5ff)" font-size="16" font-weight="600" text-anchor="middle">Git repo</text>
+  <text x="195" y="212" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.45" font-family="ui-monospace, monospace" font-size="13" text-anchor="middle">acmecorp/monorepo</text>
+  <text x="195" y="234" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-family="ui-monospace, monospace" font-size="12" text-anchor="middle">push: apps/web/**</text>
+
+  <path d="M320 178 H400" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.5" stroke-width="2"/>
+  <polygon points="400,178 388,172 388,184" fill="var(--diagram-green, #34d399)" fill-opacity="0.7"/>
+  <path d="M320 198 H400" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.15" stroke-width="2" stroke-dasharray="5 4"/>
+  <polygon points="400,198 388,192 388,204" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.2"/>
+  <path d="M320 218 H400" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.15" stroke-width="2" stroke-dasharray="5 4"/>
+  <polygon points="400,218 388,212 388,224" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.2"/>
+
+  <rect x="410" y="86" width="310" height="80" rx="14" fill="var(--diagram-green-fill, #064e3b)" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.45"/>
+  <text x="565" y="118" fill="var(--diagram-green-2, #6ee7b7)" font-size="15" font-weight="600" text-anchor="middle">web-frontend</text>
+  <text x="565" y="140" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-family="ui-monospace, monospace" font-size="12" text-anchor="middle">apps/web/** · packages/**</text>
+  <text x="565" y="156" fill="var(--diagram-green, #34d399)" font-size="12" font-weight="600" text-anchor="middle">match · build queued</text>
+
+  <rect x="410" y="178" width="310" height="80" rx="14" fill="var(--diagram-neutral-fill, #1c1917)" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.1"/>
+  <text x="565" y="210" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.7" font-size="15" font-weight="600" text-anchor="middle">web-api</text>
+  <text x="565" y="232" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-family="ui-monospace, monospace" font-size="12" text-anchor="middle">apps/api/** · packages/**</text>
+  <text x="565" y="248" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">no match · skip</text>
+
+  <rect x="410" y="270" width="310" height="80" rx="14" fill="var(--diagram-neutral-fill, #1c1917)" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.1"/>
+  <text x="565" y="302" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.7" font-size="15" font-weight="600" text-anchor="middle">bg-worker</text>
+  <text x="565" y="324" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-family="ui-monospace, monospace" font-size="12" text-anchor="middle">apps/worker/** · packages/**</text>
+  <text x="565" y="340" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">no match · skip</text>
+
+  <rect x="780" y="148" width="350" height="140" rx="16" fill="var(--diagram-blue-fill-3, #101827)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.3"/>
+  <text x="955" y="188" fill="var(--diagram-blue-3, #93c5fd)" font-size="15" font-weight="600" text-anchor="middle">Independent build Jobs</text>
+  <text x="955" y="218" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.45" font-size="13" text-anchor="middle">own root directory</text>
+  <text x="955" y="242" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.45" font-size="13" text-anchor="middle">own build command</text>
+  <text x="955" y="266" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.45" font-size="13" text-anchor="middle">own deploy history</text>
+
+  <text x="70" y="380" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-family="ui-monospace, monospace" font-size="13">changed files in the push · a service builds only when its filter matches</text>
+</svg>

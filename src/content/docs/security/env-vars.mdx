@@ -3,6 +3,8 @@ title: Variables
 description: Service variables, secrets, and values wired from databases.
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 Variables are how you pass configuration and secrets into a service. They are available during the build and in the running container.
 
 Changing a variable stages a config update. [Deploy](/deploy/staged-changes/) (or the automatic rolling deploy when you save from the service sheet) applies it.
@@ -24,6 +26,8 @@ In your app, read them as environment variables (`process.env.DATABASE_URL`, `os
 ## Variables from a database
 
 When you add a database on the same canvas, do not paste the URL by hand. In `stackblaze.yaml` use `fromDatabase`:
+
+<Diagram file="env-from-database.svg" alt="A postgres canvas tile wires fromDatabase connectionString into a service DATABASE_URL. Production and preview each get their own string; preview values are not copied from production." />
 
 ```yaml title="stackblaze.yaml"
 envVars:

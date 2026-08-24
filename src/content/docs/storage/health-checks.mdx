@@ -3,7 +3,11 @@ title: Health Checks
 description: StackBlaze only routes traffic to pods that pass health checks. Learn how readiness, liveness, and startup probes work, how to implement a /health endpoint in Node.js and Python, and how to configure grace periods for slow-starting services.
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 StackBlaze only routes traffic to pods that pass health checks. A new deployment is not marked live until its readiness probe succeeds. If a running pod fails its liveness probe, Kubernetes restarts it automatically. This gives you zero-downtime deploys and automatic recovery from crashes.
+
+<Diagram file="health-probes.svg" alt="Readiness keeps the edge sending traffic only to passing replicas. Liveness restarts a stuck process after three failures. Startup grace pauses liveness during slow boot." />
 
 Health checks are configured per-service and run continuously throughout the pod's lifetime. There are three probe types: **readiness** (is the pod ready for traffic?), **liveness** (is the pod still healthy?), and **startup** (for slow-starting services).
 

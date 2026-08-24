@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" fill="none" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif">
+  <rect width="1200" height="400" fill="var(--diagram-canvas, #07070d)"/>
+  <circle cx="180" cy="90" r="150" fill="var(--diagram-violet, #8b5cf6)" opacity="0.09"/>
+  <circle cx="1040" cy="310" r="170" fill="var(--diagram-blue, #3b82f6)" opacity="0.07"/>
+
+  <text x="70" y="48" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.55" font-size="20" font-weight="600">Health probes</text>
+  <text x="70" y="72" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3" font-size="13">Edge traffic only reaches replicas that pass readiness</text>
+
+  <rect x="70" y="100" width="340" height="220" rx="16" fill="var(--diagram-green-fill-2, #06281e)" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.4"/>
+  <text x="240" y="136" fill="var(--diagram-green-2, #6ee7b7)" font-size="16" font-weight="600" text-anchor="middle">Readiness</text>
+  <text x="240" y="160" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-family="ui-monospace, monospace" font-size="12" text-anchor="middle">HTTP GET · every 10s</text>
+  <rect x="96" y="180" width="288" height="48" rx="10" fill="var(--diagram-green-fill, #064e3b)" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.35"/>
+  <text x="240" y="210" fill="var(--diagram-green-2, #6ee7b7)" font-size="13" font-weight="600" text-anchor="middle">200-299 · in endpoints</text>
+  <rect x="96" y="240" width="288" height="56" rx="10" fill="var(--diagram-pink-fill, #1f1317)" stroke="var(--diagram-red, #fca5a5)" stroke-opacity="0.25"/>
+  <text x="240" y="264" fill="var(--diagram-red, #fca5a5)" font-size="13" font-weight="600" text-anchor="middle">Fail or timeout</text>
+  <text x="240" y="284" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">edge stops sending traffic</text>
+
+  <rect x="430" y="100" width="340" height="220" rx="16" fill="var(--diagram-blue-fill-3, #101827)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.35"/>
+  <text x="600" y="136" fill="var(--diagram-blue-3, #93c5fd)" font-size="16" font-weight="600" text-anchor="middle">Liveness</text>
+  <text x="600" y="160" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-family="ui-monospace, monospace" font-size="12" text-anchor="middle">HTTP GET · every 15s</text>
+  <rect x="456" y="180" width="288" height="48" rx="10" fill="var(--diagram-blue-fill, #1e3a5f)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.3"/>
+  <text x="600" y="210" fill="var(--diagram-blue-3, #93c5fd)" font-size="13" font-weight="600" text-anchor="middle">stuck or deadlocked process</text>
+  <rect x="456" y="240" width="288" height="56" rx="10" fill="var(--diagram-violet-fill-2, #1e1b3a)" stroke="var(--diagram-violet-2, #a78bfa)" stroke-opacity="0.3"/>
+  <text x="600" y="264" fill="var(--diagram-violet-3, #c4b5fd)" font-size="13" font-weight="600" text-anchor="middle">3 consecutive failures</text>
+  <text x="600" y="284" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">container is restarted</text>
+
+  <rect x="790" y="100" width="340" height="220" rx="16" fill="var(--diagram-violet-fill-2, #1e1b3a)" stroke="var(--diagram-amber-2, #fbbf24)" stroke-opacity="0.35"/>
+  <text x="960" y="136" fill="var(--diagram-amber, #fde68a)" font-size="16" font-weight="600" text-anchor="middle">Startup</text>
+  <text x="960" y="160" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">slow boot · grace up to 300s</text>
+  <rect x="816" y="180" width="288" height="48" rx="10" fill="var(--diagram-neutral-fill, #1c1917)" stroke="var(--diagram-amber-2, #fbbf24)" stroke-opacity="0.3"/>
+  <text x="960" y="210" fill="var(--diagram-amber, #fde68a)" font-size="13" font-weight="600" text-anchor="middle">liveness is paused</text>
+  <rect x="816" y="240" width="288" height="56" rx="10" fill="var(--diagram-blue-fill-4, #0f1830)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.25"/>
+  <text x="960" y="264" fill="var(--diagram-blue-3, #93c5fd)" font-size="13" font-weight="600" text-anchor="middle">JVM warmup · ML models</text>
+  <text x="960" y="284" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">no premature restart during boot</text>
+
+  <text x="600" y="360" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-family="ui-monospace, monospace" font-size="13" text-anchor="middle">new deploy is not live until readiness succeeds · failed new pods keep old traffic</text>
+</svg>

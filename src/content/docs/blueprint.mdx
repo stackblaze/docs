@@ -3,7 +3,11 @@ title: Config as Code
 description: Describe a project as stackblaze.yaml. Export a live environment, plan, and apply when Infrastructure as Code is enabled.
 ---
 
+import Diagram from '../../components/Diagram.astro';
+
 A **config as code** file is `stackblaze.yaml` at the repo root. It names a project and lists services and databases. Export a live environment from the dashboard or `GET /api/iac/blueprint/export?pipeline=…&phase=…`. Apply requires Infrastructure as Code on that project.
+
+<Diagram file="blueprint-plan-apply.svg" alt="stackblaze.yaml goes through validate (no live reads), plan (diff against live), and apply (upsert only, never deletes). Secrets marked sync false are answered at apply and not stored in the file." />
 
 You can also **import** Compose, `render.yaml`, or `fly.toml` from **+ Service → Import** on the canvas. That path compiles onto the canvas; it does not replace `stackblaze.yaml`.
 

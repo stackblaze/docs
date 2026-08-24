@@ -3,11 +3,15 @@ title: Observability
 description: Coroot metrics, logs, and traces for StackBlaze apps, plus dashboard notifications.
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 Built-in metrics and logs, plus how to forward telemetry to your existing stack.
 
 ## Coroot
 
 Observability is **Coroot** (eBPF metrics, logs, and traces). Open it from an app in the dashboard — StackBlaze mints a one-time handoff and opens Coroot in a new tab. Billing and in-dashboard charts query PromQL `query_range` with an API key; there is no instant `/query` endpoint.
+
+<Diagram file="coroot-handoff.svg" alt="A service in the dashboard mints a one-time handoff that opens Coroot for metrics, logs, traces, and a service map. Billing and in-dashboard charts query PromQL query_range with an API key." />
 
 | Signal | Use it for |
 | --- | --- |

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" fill="none" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif">
+  <rect width="1200" height="400" fill="var(--diagram-canvas, #07070d)"/>
+  <circle cx="180" cy="90" r="150" fill="var(--diagram-violet, #8b5cf6)" opacity="0.1"/>
+  <circle cx="1040" cy="310" r="170" fill="var(--diagram-blue, #3b82f6)" opacity="0.08"/>
+
+  <text x="70" y="48" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.55" font-size="20" font-weight="600">Cron run</text>
+  <text x="70" y="72" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3" font-size="13">Fresh container · start command · exit</text>
+
+  <rect x="70" y="118" width="190" height="80" rx="14" fill="var(--diagram-violet-fill, #312e81)" stroke="var(--diagram-violet-2, #a78bfa)" stroke-opacity="0.4"/>
+  <text x="165" y="150" fill="var(--diagram-violet-4, #e9d5ff)" font-size="15" font-weight="600" text-anchor="middle">Schedule</text>
+  <text x="165" y="174" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.45" font-family="ui-monospace, monospace" font-size="13" text-anchor="middle">0 2 * * * UTC</text>
+
+  <path d="M260 158 H310" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.2" stroke-width="2" stroke-dasharray="6 4"/>
+  <polygon points="310,158 298,152 298,164" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3"/>
+
+  <rect x="320" y="118" width="200" height="80" rx="14" fill="var(--diagram-blue-fill, #1e3a5f)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.4"/>
+  <text x="420" y="150" fill="var(--diagram-blue-3, #93c5fd)" font-size="15" font-weight="600" text-anchor="middle">Fresh container</text>
+  <text x="420" y="174" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">isolated each run</text>
+
+  <path d="M520 158 H570" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.2" stroke-width="2" stroke-dasharray="6 4"/>
+  <polygon points="570,158 558,152 558,164" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3"/>
+
+  <rect x="580" y="118" width="200" height="80" rx="14" fill="var(--diagram-blue-fill-2, #15213a)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.3"/>
+  <text x="680" y="150" fill="var(--diagram-blue-3, #93c5fd)" font-size="15" font-weight="600" text-anchor="middle">Start command</text>
+  <text x="680" y="174" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-family="ui-monospace, monospace" font-size="12" text-anchor="middle">same as any service</text>
+
+  <path d="M780 158 H830" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.5" stroke-width="2"/>
+  <polygon points="830,158 818,152 818,164" fill="var(--diagram-green, #34d399)" fill-opacity="0.7"/>
+
+  <rect x="840" y="118" width="190" height="80" rx="14" fill="var(--diagram-green-fill, #064e3b)" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.4"/>
+  <text x="935" y="150" fill="var(--diagram-green-2, #6ee7b7)" font-size="15" font-weight="600" text-anchor="middle">Exit</text>
+  <text x="935" y="174" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">0 = success</text>
+
+  <text x="70" y="236" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.45" font-size="14" font-weight="600">If a run is still going when the next tick arrives</text>
+
+  <rect x="70" y="256" width="340" height="72" rx="14" fill="var(--diagram-violet-fill-2, #1e1b3a)" stroke="var(--diagram-violet-2, #a78bfa)" stroke-opacity="0.35"/>
+  <text x="240" y="286" fill="var(--diagram-violet-3, #c4b5fd)" font-family="ui-monospace, monospace" font-size="14" font-weight="600" text-anchor="middle">Forbid</text>
+  <text x="240" y="308" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">skip the new run · default</text>
+
+  <rect x="430" y="256" width="340" height="72" rx="14" fill="var(--diagram-blue-fill-3, #101827)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.3"/>
+  <text x="600" y="286" fill="var(--diagram-blue-3, #93c5fd)" font-family="ui-monospace, monospace" font-size="14" font-weight="600" text-anchor="middle">Replace</text>
+  <text x="600" y="308" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">cancel previous · start fresh</text>
+
+  <rect x="790" y="256" width="340" height="72" rx="14" fill="var(--diagram-neutral-fill, #1c1917)" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.1"/>
+  <text x="960" y="286" fill="var(--diagram-amber, #fde68a)" font-family="ui-monospace, monospace" font-size="14" font-weight="600" text-anchor="middle">Allow</text>
+  <text x="960" y="308" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">both runs at once</text>
+
+  <text x="70" y="372" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-family="ui-monospace, monospace" font-size="13">nothing shared between runs except what you persist · timeout default 1 hour</text>
+</svg>

@@ -3,9 +3,13 @@ title: Monorepo Deployments
 description: Deploy multiple services from a single GitHub repository on StackBlaze. Configure root directories, build filters, and per-service commands for Turborepo, Nx, pnpm workspaces, and other monorepo setups.
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 StackBlaze supports monorepos out of the box. Multiple services can point to the same GitHub repository, each with its own root directory, build command, build filters, and deploy history. Turborepo, Nx, pnpm workspaces, and plain npm/yarn monorepos all work.
 
 Build filters ensure that only the relevant services rebuild when you push a change. A commit that only touches `apps/web` won't trigger a build for `apps/api`, saving build time and preventing unnecessary churn.
+
+<Diagram file="monorepo-path-filters.svg" alt="One Git repository fans out to web-frontend, web-api, and bg-worker. Path filters queue a build only for services whose patterns match the changed files. A shared repo is not a shared build." />
 
 ## Example monorepo structure
 

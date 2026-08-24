@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" fill="none" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif">
+  <rect width="1200" height="400" fill="var(--diagram-canvas, #07070d)"/>
+  <circle cx="180" cy="90" r="150" fill="var(--diagram-violet, #8b5cf6)" opacity="0.1"/>
+  <circle cx="1040" cy="300" r="170" fill="var(--diagram-blue, #3b82f6)" opacity="0.08"/>
+
+  <text x="70" y="48" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.55" font-size="20" font-weight="600">Coroot handoff</text>
+  <text x="70" y="72" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3" font-size="13">Open observability from a service · one-time token</text>
+
+  <rect x="70" y="130" width="200" height="80" rx="14" fill="var(--diagram-violet-fill, #312e81)" stroke="var(--diagram-violet-2, #a78bfa)" stroke-opacity="0.4"/>
+  <text x="170" y="164" fill="var(--diagram-violet-4, #e9d5ff)" font-size="15" font-weight="600" text-anchor="middle">Service</text>
+  <text x="170" y="186" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">dashboard tile</text>
+
+  <path d="M270 170 H340" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.2" stroke-width="2"/>
+  <polygon points="340,170 328,164 328,176" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3"/>
+
+  <rect x="350" y="130" width="220" height="80" rx="14" fill="var(--diagram-blue-fill, #1e3a5f)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.45"/>
+  <text x="460" y="164" fill="var(--diagram-blue-3, #93c5fd)" font-size="15" font-weight="600" text-anchor="middle">One-time handoff</text>
+  <text x="460" y="186" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">minted, then opens a tab</text>
+
+  <path d="M570 170 H640" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.5" stroke-width="2"/>
+  <polygon points="640,170 628,164 628,176" fill="var(--diagram-green, #34d399)" fill-opacity="0.7"/>
+
+  <rect x="650" y="100" width="480" height="140" rx="16" fill="var(--diagram-green-fill-2, #06281e)" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.4"/>
+  <text x="890" y="134" fill="var(--diagram-green-2, #6ee7b7)" font-size="16" font-weight="600" text-anchor="middle">Coroot</text>
+  <text x="890" y="154" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-size="12" text-anchor="middle">eBPF metrics, logs, and traces</text>
+  <rect x="678" y="172" width="100" height="44" rx="10" fill="var(--diagram-green-fill, #064e3b)"/>
+  <text x="728" y="199" fill="var(--diagram-green-2, #6ee7b7)" font-size="12" font-weight="600" text-anchor="middle">Metrics</text>
+  <rect x="790" y="172" width="100" height="44" rx="10" fill="var(--diagram-green-fill, #064e3b)"/>
+  <text x="840" y="199" fill="var(--diagram-green-2, #6ee7b7)" font-size="12" font-weight="600" text-anchor="middle">Logs</text>
+  <rect x="902" y="172" width="100" height="44" rx="10" fill="var(--diagram-green-fill, #064e3b)"/>
+  <text x="952" y="199" fill="var(--diagram-green-2, #6ee7b7)" font-size="12" font-weight="600" text-anchor="middle">Traces</text>
+  <rect x="1014" y="172" width="96" height="44" rx="10" fill="var(--diagram-green-fill, #064e3b)"/>
+  <text x="1062" y="199" fill="var(--diagram-green-2, #6ee7b7)" font-size="12" font-weight="600" text-anchor="middle">Map</text>
+
+  <rect x="70" y="248" width="200" height="72" rx="14" fill="var(--diagram-neutral-fill, #1c1917)" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.1"/>
+  <text x="170" y="278" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.7" font-size="14" font-weight="600" text-anchor="middle">Billing charts</text>
+  <text x="170" y="300" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-size="12" text-anchor="middle">in the dashboard</text>
+
+  <path d="M270 284 H340" stroke="var(--diagram-amber-2, #fbbf24)" stroke-opacity="0.45" stroke-width="2"/>
+  <polygon points="340,284 328,278 328,290" fill="var(--diagram-amber-2, #fbbf24)" fill-opacity="0.6"/>
+
+  <rect x="350" y="248" width="420" height="72" rx="14" fill="var(--diagram-blue-fill-3, #101827)" stroke="var(--diagram-amber-2, #fbbf24)" stroke-opacity="0.35"/>
+  <text x="560" y="278" fill="var(--diagram-amber, #fde68a)" font-family="ui-monospace, monospace" font-size="14" font-weight="600" text-anchor="middle">PromQL query_range</text>
+  <text x="560" y="300" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-family="ui-monospace, monospace" font-size="12" text-anchor="middle">X-API-Key · no instant /query</text>
+
+  <text x="70" y="368" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-family="ui-monospace, monospace" font-size="13">your own OpenTelemetry exporters stay independent of Coroot</text>
+</svg>

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" fill="none" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif">
+  <rect width="1200" height="400" fill="var(--diagram-canvas, #07070d)"/>
+  <circle cx="180" cy="90" r="150" fill="var(--diagram-violet, #8b5cf6)" opacity="0.1"/>
+  <circle cx="1040" cy="310" r="170" fill="var(--diagram-blue, #3b82f6)" opacity="0.08"/>
+
+  <text x="70" y="48" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.55" font-size="20" font-weight="600">Config as code</text>
+  <text x="70" y="72" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3" font-size="13">stackblaze.yaml · validate, plan, apply</text>
+
+  <rect x="70" y="118" width="210" height="88" rx="14" fill="var(--diagram-violet-fill, #312e81)" stroke="var(--diagram-violet-2, #a78bfa)" stroke-opacity="0.4"/>
+  <text x="175" y="154" fill="var(--diagram-violet-4, #e9d5ff)" font-family="ui-monospace, monospace" font-size="14" font-weight="600" text-anchor="middle">stackblaze.yaml</text>
+  <text x="175" y="178" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">project · services · DBs</text>
+
+  <path d="M280 162 H330" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.2" stroke-width="2" stroke-dasharray="6 4"/>
+  <polygon points="330,162 318,156 318,168" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3"/>
+
+  <rect x="340" y="118" width="180" height="88" rx="14" fill="var(--diagram-neutral-fill, #1c1917)" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.12"/>
+  <text x="430" y="154" fill="var(--diagram-amber, #fde68a)" font-size="15" font-weight="600" text-anchor="middle">Validate</text>
+  <text x="430" y="178" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">no live reads</text>
+
+  <path d="M520 162 H570" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.2" stroke-width="2" stroke-dasharray="6 4"/>
+  <polygon points="570,162 558,156 558,168" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3"/>
+
+  <rect x="580" y="118" width="180" height="88" rx="14" fill="var(--diagram-blue-fill, #1e3a5f)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.4"/>
+  <text x="670" y="154" fill="var(--diagram-blue-3, #93c5fd)" font-size="15" font-weight="600" text-anchor="middle">Plan</text>
+  <text x="670" y="178" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">diff against live</text>
+
+  <path d="M760 162 H810" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.5" stroke-width="2"/>
+  <polygon points="810,162 798,156 798,168" fill="var(--diagram-green, #34d399)" fill-opacity="0.7"/>
+
+  <rect x="820" y="106" width="310" height="112" rx="16" fill="var(--diagram-green-fill-2, #06281e)" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.45"/>
+  <text x="975" y="146" fill="var(--diagram-green-2, #6ee7b7)" font-size="16" font-weight="600" text-anchor="middle">Apply</text>
+  <text x="975" y="170" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.5" font-size="13" text-anchor="middle">upsert project · services · DBs</text>
+  <text x="975" y="194" fill="var(--diagram-green, #34d399)" font-size="13" font-weight="600" text-anchor="middle">never deletes</text>
+
+  <rect x="70" y="248" width="430" height="72" rx="14" fill="var(--diagram-blue-fill-3, #101827)" stroke="var(--diagram-amber-2, #fbbf24)" stroke-opacity="0.35"/>
+  <text x="285" y="278" fill="var(--diagram-amber, #fde68a)" font-family="ui-monospace, monospace" font-size="14" font-weight="600" text-anchor="middle">sync: false</text>
+  <text x="285" y="300" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">secret prompted at apply · not stored in the file</text>
+
+  <rect x="520" y="248" width="610" height="72" rx="14" fill="var(--diagram-neutral-fill, #1c1917)" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.1"/>
+  <text x="825" y="278" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.65" font-size="14" font-weight="600" text-anchor="middle">Not the canvas changeset</text>
+  <text x="825" y="300" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-size="12" text-anchor="middle">IaC must be enabled · apply is upsert only</text>
+
+  <text x="70" y="368" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-family="ui-monospace, monospace" font-size="13">CLI, dashboard, or kbr_pat_ token · compile can still land tiles on the canvas</text>
+</svg>

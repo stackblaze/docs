@@ -3,7 +3,11 @@ title: Rollbacks
 description: Revert to any previous successful deployment from the dashboard or the deployments API.
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 Every successful deployment is stored as an immutable snapshot. If a new deploy causes issues, you can roll back to any of the last 20 deployments with a single click, no rebuild required. StackBlaze simply re-deploys the previously built Docker image via a rolling update.
+
+<Diagram file="rollback-revisions.svg" alt="Deployment history of immutable image tags. Pick a prior revision to re-roll the same image in 15 to 30 seconds with no rebuild. Database migrations are not undone." />
 
 Rollbacks complete in **15–30 seconds** because the image is already in the internal registry. There is no npm CLI — roll back from the dashboard or the deployments API.
 

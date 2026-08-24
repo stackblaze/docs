@@ -3,7 +3,11 @@ title: Cron Jobs
 description: Schedule recurring tasks with standard cron syntax. Each run is a fresh, isolated container.
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 A **cron service** is a canvas tile with a schedule. At the scheduled time StackBlaze starts the container, runs the start command, and exits. Same Git/Docker source and [variables](/security/env-vars/) as an always-on service — it just does not stay running.
+
+<Diagram file="cron-lifecycle.svg" alt="A cron schedule tick starts a fresh container, runs the start command, and exits. Overlapping runs follow Forbid (default skip), Replace (cancel previous), or Allow (run both)." />
 
 Add one from **+ Service** (Git or Docker), then set the schedule on the service.
 

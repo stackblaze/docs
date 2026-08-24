@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" fill="none" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif">
+  <rect width="1200" height="400" fill="var(--diagram-canvas, #07070d)"/>
+  <circle cx="180" cy="90" r="150" fill="var(--diagram-violet, #8b5cf6)" opacity="0.1"/>
+  <circle cx="1040" cy="300" r="170" fill="var(--diagram-blue, #3b82f6)" opacity="0.08"/>
+
+  <text x="70" y="48" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.55" font-size="20" font-weight="600">Object model</text>
+  <text x="70" y="72" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3" font-size="13">Project contains environments contains services</text>
+
+  <rect x="70" y="112" width="230" height="188" rx="16" fill="var(--diagram-violet-fill-2, #1e1b3a)" stroke="var(--diagram-violet-2, #a78bfa)" stroke-opacity="0.4"/>
+  <text x="185" y="154" fill="var(--diagram-violet-4, #e9d5ff)" font-size="16" font-weight="600" text-anchor="middle">Project</text>
+  <text x="185" y="178" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="13" text-anchor="middle">one canvas</text>
+  <text x="185" y="214" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.45" font-family="ui-monospace, monospace" font-size="12" text-anchor="middle">api · worker · postgres</text>
+  <text x="185" y="246" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-size="12" text-anchor="middle">pinned to a region</text>
+  <text x="185" y="270" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3" font-family="ui-monospace, monospace" font-size="12" text-anchor="middle">us-east-1</text>
+
+  <path d="M300 206 H360" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.2" stroke-width="2"/>
+  <polygon points="360,206 348,200 348,212" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3"/>
+
+  <rect x="370" y="100" width="230" height="212" rx="16" fill="var(--diagram-blue-fill-3, #101827)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.35"/>
+  <text x="485" y="132" fill="var(--diagram-blue-3, #93c5fd)" font-size="16" font-weight="600" text-anchor="middle">Environments</text>
+  <text x="485" y="152" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-size="12" text-anchor="middle">isolated copies of the canvas</text>
+  <rect x="394" y="168" width="182" height="36" rx="10" fill="var(--diagram-violet-fill, #312e81)" stroke="var(--diagram-violet-2, #a78bfa)" stroke-opacity="0.35"/>
+  <text x="485" y="191" fill="var(--diagram-violet-4, #e9d5ff)" font-size="13" font-weight="600" text-anchor="middle">Production</text>
+  <rect x="394" y="212" width="182" height="36" rx="10" fill="var(--diagram-blue-fill, #1e3a5f)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.3"/>
+  <text x="485" y="235" fill="var(--diagram-blue-3, #93c5fd)" font-size="13" font-weight="600" text-anchor="middle">Custom</text>
+  <rect x="394" y="256" width="182" height="36" rx="10" fill="var(--diagram-green-fill, #064e3b)" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.3"/>
+  <text x="485" y="279" fill="var(--diagram-green-2, #6ee7b7)" font-size="13" font-weight="600" text-anchor="middle">Preview</text>
+
+  <path d="M600 206 H660" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.2" stroke-width="2"/>
+  <polygon points="660,206 648,200 648,212" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3"/>
+
+  <rect x="670" y="112" width="460" height="188" rx="16" fill="var(--diagram-blue-fill-2, #15213a)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.3"/>
+  <text x="900" y="146" fill="var(--diagram-blue-3, #93c5fd)" font-size="16" font-weight="600" text-anchor="middle">Inside one environment</text>
+  <rect x="698" y="168" width="120" height="48" rx="10" fill="var(--diagram-violet-fill, #312e81)" stroke="var(--diagram-violet-2, #a78bfa)" stroke-opacity="0.35"/>
+  <text x="758" y="197" fill="var(--diagram-violet-4, #e9d5ff)" font-size="14" font-weight="600" text-anchor="middle">api</text>
+  <rect x="834" y="168" width="120" height="48" rx="10" fill="var(--diagram-blue-fill, #1e3a5f)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.35"/>
+  <text x="894" y="197" fill="var(--diagram-blue-3, #93c5fd)" font-size="14" font-weight="600" text-anchor="middle">worker</text>
+  <rect x="970" y="168" width="132" height="48" rx="10" fill="var(--diagram-green-fill, #064e3b)" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.35"/>
+  <text x="1036" y="197" fill="var(--diagram-green-2, #6ee7b7)" font-size="14" font-weight="600" text-anchor="middle">postgres</text>
+  <text x="900" y="246" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.45" font-family="ui-monospace, monospace" font-size="13" text-anchor="middle">private network · scoped to this environment</text>
+  <text x="900" y="274" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-size="12" text-anchor="middle">reach each other by service name · postgres:5432</text>
+
+  <text x="600" y="360" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-family="ui-monospace, monospace" font-size="13" text-anchor="middle">dashboard: project · environment · service    API: pipeline · phase · app</text>
+</svg>
