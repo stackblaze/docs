@@ -33,10 +33,13 @@
 	--sl-color-text-accent: #c4b5fd;
 	--sl-color-bg-accent: #8b5cf6;
 
-	--sl-text-h1: 2.5rem;
-	--sl-line-height: 1.7;
-	--sl-line-height-headings: 1.15;
-	--sl-content-width: 46rem;
+	--sl-text-h1: 1.9rem;
+	--sl-text-h2: 1.25rem;
+	--sl-text-base: 0.9375rem;
+	--sl-text-body: 0.9375rem;
+	--sl-line-height: 1.65;
+	--sl-line-height-headings: 1.2;
+	--sl-content-width: 42rem;
 	--sl-sidebar-width: 16.5rem;
 	--sl-nav-height: 3.25rem;
 
@@ -149,21 +152,26 @@ main h1,
 
 main h1,
 .hero h1 {
-	font-size: clamp(2rem, 4vw, 2.6rem);
-	line-height: 1.12;
+	font-size: clamp(1.625rem, 2.6vw, 1.95rem);
+	line-height: 1.15;
 }
 
 .sl-markdown-content h2 {
-	font-size: 1.5rem;
-	margin-top: 2.4rem;
+	font-size: 1.25rem;
+	margin-top: 2rem;
 	font-weight: 500;
 }
 
 .sl-markdown-content h3 {
 	font-family: var(--sl-font);
-	font-size: 1.05rem;
+	font-size: 0.95rem;
 	font-weight: 600;
 	letter-spacing: -0.02em;
+}
+
+.sl-markdown-content {
+	font-size: var(--sl-text-body);
+	line-height: var(--sl-line-height);
 }
 
 .sl-markdown-content p,
@@ -359,7 +367,7 @@ site-search button[data-open-modal]:hover {
 
 /* Right TOC — Railway-style snaking track + active pin */
 .right-sidebar-panel {
-	font-size: 0.8125rem;
+	font-size: 0.875rem;
 }
 
 .toc-tree {
@@ -396,11 +404,12 @@ site-search button[data-open-modal]:hover {
 .right-sidebar starlight-toc a {
 	position: relative;
 	z-index: 1;
-	padding-block: 0.3rem;
-	padding-inline-start: calc(var(--toc-gutter, 6px) + var(--depth, 0) * var(--toc-step, 11px) + 0.7rem);
-	padding-inline-end: 0.35rem;
+	font-size: 0.875rem;
+	padding-block: 0.42rem;
+	padding-inline-start: calc(var(--toc-gutter, 6px) + var(--depth, 0) * var(--toc-step, 11px) + 0.75rem);
+	padding-inline-end: 0.5rem;
 	color: var(--sl-color-gray-3);
-	line-height: 1.35;
+	line-height: 1.45;
 	border-radius: 0;
 }
 
@@ -432,9 +441,22 @@ site-search button[data-open-modal]:hover {
  * draws a classic scrollbar through the fixed header (up-arrow + thumb).
  */
 @media (min-width: 72rem) {
+	.right-sidebar-container {
+		/* Become the containing block for the fixed TOC so it isn't 100vw. */
+		transform: translateZ(0);
+		width: 20rem;
+		min-width: 20rem;
+	}
+
+	.right-sidebar-panel .sl-container {
+		width: auto;
+		max-width: none;
+	}
+
 	.right-sidebar {
 		top: var(--sl-nav-height);
 		height: calc(100vh - var(--sl-nav-height));
+		width: 100%;
 		padding-top: 0.75rem;
 		z-index: 1;
 		scrollbar-width: none;
