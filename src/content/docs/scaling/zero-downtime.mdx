@@ -3,6 +3,8 @@ title: Zero-Downtime Deployments
 description: Every StackBlaze deploy uses a rolling update strategy. New pods pass readiness probes before old ones terminate, no downtime for your users.
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 Every deploy on StackBlaze uses a rolling update strategy. New pods become ready before old ones are terminated, your users never see an outage.
 
 ## How rolling updates work
@@ -11,7 +13,7 @@ When you push a new deploy, StackBlaze starts a new pod running the updated vers
 
 The update continues pod-by-pod until all replicas are running the new version. The timeline looks like this:
 
-![Timeline of rolling update replacing v1 pods with v2 pods one at a time](/illustrations/zero-downtime-rolling.svg)
+<Diagram file="zero-downtime-rolling.svg" alt="Timeline of rolling update replacing v1 pods with v2 pods one at a time" />
 
 *New pods pass readiness checks before old pods terminate, traffic never drops to zero.*
 

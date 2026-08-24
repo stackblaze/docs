@@ -39,6 +39,36 @@
 	--sl-content-width: 46rem;
 	--sl-sidebar-width: 16.5rem;
 	--sl-nav-height: 3.25rem;
+
+	--diagram-canvas: #07070d;
+	--diagram-ink: #ffffff;
+	--diagram-violet: #8b5cf6;
+	--diagram-violet-2: #a78bfa;
+	--diagram-violet-3: #c4b5fd;
+	--diagram-violet-4: #e9d5ff;
+	--diagram-violet-fill: #312e81;
+	--diagram-violet-fill-2: #1e1b3a;
+	--diagram-blue: #3b82f6;
+	--diagram-blue-2: #60a5fa;
+	--diagram-blue-3: #93c5fd;
+	--diagram-blue-fill: #1e3a5f;
+	--diagram-blue-fill-2: #15213a;
+	--diagram-blue-fill-3: #101827;
+	--diagram-blue-fill-4: #0f1830;
+	--diagram-cyan: #38bdf8;
+	--diagram-cyan-2: #7dd3fc;
+	--diagram-cyan-3: #67e8f9;
+	--diagram-green: #34d399;
+	--diagram-green-2: #6ee7b7;
+	--diagram-green-fill: #064e3b;
+	--diagram-green-fill-2: #06281e;
+	--diagram-pink: #f472b6;
+	--diagram-pink-2: #fda4af;
+	--diagram-pink-fill: #1f1317;
+	--diagram-amber: #fde68a;
+	--diagram-amber-2: #fbbf24;
+	--diagram-red: #fca5a5;
+	--diagram-neutral-fill: #1c1917;
 }
 
 :root[data-theme='light'] {
@@ -67,6 +97,36 @@
 	--sl-color-text-accent: #6d28d9;
 	--sl-color-bg-accent: #6d28d9;
 	--sl-color-text-invert: #ffffff;
+
+	--diagram-canvas: #f4f2ee;
+	--diagram-ink: #201f27;
+	--diagram-violet: #7c3aed;
+	--diagram-violet-2: #6d28d9;
+	--diagram-violet-3: #5b21b6;
+	--diagram-violet-4: #4c1d95;
+	--diagram-violet-fill: #ede9fe;
+	--diagram-violet-fill-2: #e4dff8;
+	--diagram-blue: #2563eb;
+	--diagram-blue-2: #1d4ed8;
+	--diagram-blue-3: #1e40af;
+	--diagram-blue-fill: #dbeafe;
+	--diagram-blue-fill-2: #eff6ff;
+	--diagram-blue-fill-3: #e8eef7;
+	--diagram-blue-fill-4: #e0e7f5;
+	--diagram-cyan: #0284c7;
+	--diagram-cyan-2: #0369a1;
+	--diagram-cyan-3: #0e7490;
+	--diagram-green: #059669;
+	--diagram-green-2: #047857;
+	--diagram-green-fill: #d1fae5;
+	--diagram-green-fill-2: #ecfdf5;
+	--diagram-pink: #db2777;
+	--diagram-pink-2: #be185d;
+	--diagram-pink-fill: #fce7f3;
+	--diagram-amber: #b45309;
+	--diagram-amber-2: #d97706;
+	--diagram-red: #b91c1c;
+	--diagram-neutral-fill: #e7e5e4;
 }
 
 html {
@@ -126,13 +186,23 @@ main h1,
 /* Header */
 header.header,
 .header {
-	border-bottom: 1px solid var(--sl-color-hairline);
 	background: var(--sl-color-bg-nav);
 	backdrop-filter: blur(10px);
 	/* Starlight uses width:100% on a fixed header, which slides under the
 	   Windows scrollbar. Stretch with insets instead. */
 	width: auto;
 	inset-inline-end: 0;
+}
+
+/* Drop the full-width hairline under the nav. */
+header.header {
+	border-bottom: none !important;
+	box-shadow: none;
+}
+
+/* Mobile TOC sits 1px under the header and draws its own hairline. */
+mobile-starlight-toc nav {
+	border-top: none;
 }
 
 site-search button[data-open-modal] {
@@ -165,8 +235,9 @@ site-search button[data-open-modal]:hover {
 	position: absolute;
 	top: 0;
 	inset-inline-start: 0.35rem;
-	inset-inline-end: calc(-1 * var(--sl-sidebar-pad-x));
+	inset-inline-end: 0;
 	border-top: 1px solid var(--sl-color-hairline);
+	pointer-events: none;
 }
 
 .sidebar a {
@@ -362,6 +433,16 @@ site-search button[data-open-modal]:hover {
 	border: 1px solid var(--sl-color-hairline);
 }
 
-.sl-markdown-content img[src$='.svg'] {
-	background: #0c0c0e;
+.diagram {
+	margin-block: 1rem;
+}
+
+.diagram svg,
+.diagram-svg {
+	display: block;
+	width: 100%;
+	height: auto;
+	border-radius: 0.85rem;
+	border: 1px solid var(--sl-color-hairline);
+	background: var(--diagram-canvas);
 }

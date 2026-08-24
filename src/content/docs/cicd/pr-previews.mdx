@@ -3,11 +3,13 @@ title: PR Preview Environments
 description: Every pull request automatically gets a live, isolated preview environment on StackBlaze. Learn how PR previews work, how to configure databases in previews, and how namespaces are torn down on merge.
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 Each pull request can get its own [environment](/deploy/environments/) — a copy of the canvas with its own URL. Review the real stack before you merge. No extra staging project to keep around.
 
 The preview is torn down when the PR closes or merges. Databases in that environment are separate from production.
 
-![Diagram of isolated PR preview with web, Postgres, and Redis services](/illustrations/pr-previews.svg)
+<Diagram file="pr-previews.svg" alt="Diagram of isolated PR preview with web, Postgres, and Redis services" />
 
 *Each pull request gets a full-stack preview URL, web, workers, and databases provisioned together.*
 

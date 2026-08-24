@@ -3,6 +3,8 @@ title: Kafka
 description: "Managed Apache Kafka on StackBlaze: single-broker or multi-broker high availability (KRaft), a catalog of source and sink connectors (Debezium CDC, JDBC, S3, MongoDB, ClickHouse) with zero-config setup, topic and consumer-group tooling, a message viewer, and Prometheus metrics."
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 Managed Apache Kafka: a distributed event-streaming platform with single-broker or multi-broker high availability, a built-in catalog of source and sink connectors, topic and consumer tooling, and Prometheus metrics.
 
 Kafka is not a traditional database. It is a distributed, append-only event log. Producers write messages to named **topics**, each topic is split into **partitions** for parallelism, and **consumers** read at their own pace. Messages are retained on disk so multiple consumers can replay the same stream independently. StackBlaze runs Kafka with the Strimzi operator in KRaft mode (no ZooKeeper) and adds a managed layer on top: a connector catalog, topic and consumer-group tooling, a message viewer, and metrics.
@@ -57,7 +59,7 @@ produce().then(consume)
 
 You choose the topology when you create the cluster. Both modes run in KRaft mode, where each broker is a combined controller and broker (there is no separate ZooKeeper to operate).
 
-![A producer writes to the partition leader on broker 1. The leader replicates to in-sync replicas on brokers 2 and 3. A consumer reads from the leader. If the leader fails, an in-sync replica is promoted automatically.](/illustrations/kafka-ha.svg)
+<Diagram file="kafka-ha.svg" alt="A producer writes to the partition leader on broker 1. The leader replicates to in-sync replicas on brokers 2 and 3. A consumer reads from the leader. If the leader fails, an in-sync replica is promoted automatically." />
 
 *In HA, each partition has a leader and in-sync replicas on other brokers. Lose the leader, and a replica is promoted automatically.*
 
@@ -84,7 +86,7 @@ Scaling from Standard to HA raises the broker count and replication factor; Stac
 
 Most data does not start or end in Kafka. **Kafka Connect** moves it in and out without writing custom producers or consumers. **Source connectors** stream changes from another system into topics, and **sink connectors** stream topic records out to another system. StackBlaze ships a curated catalog with the connector plugins pre-baked into the runtime image, so there is nothing to install.
 
-![Source connectors (Postgres CDC and MySQL/MariaDB CDC via Debezium) stream changes into Kafka brokers and topics. Sink connectors (JDBC, S3 on RustFS, MongoDB, ClickHouse) stream records out to those systems.](/illustrations/kafka-connect-topology.svg)
+<Diagram file="kafka-connect-topology.svg" alt="Source connectors (Postgres CDC and MySQL/MariaDB CDC via Debezium) stream changes into Kafka brokers and topics. Sink connectors (JDBC, S3 on RustFS, MongoDB, ClickHouse) stream records out to those systems." />
 
 *Source connectors stream changes in; sink connectors stream records out. Connection details auto-fill from a paired add-on.*
 

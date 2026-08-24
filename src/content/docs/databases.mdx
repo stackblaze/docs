@@ -4,6 +4,7 @@ description: "Every managed database on StackBlaze runs as a Standard single ins
 ---
 
 import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+import Diagram from '../../components/Diagram.astro';
 
 Add a database from **+ Service → Databases**. It lands on the canvas, joins the environment private network, and can inject connection strings through [variables](/security/env-vars/).
 
@@ -13,7 +14,7 @@ Every managed database can run as a single Standard instance or as a replicated,
 
 You choose Standard or HA when you create the instance (you can raise replica count later).
 
-![Standard deployment is a single database pod with one volume. High-availability deployment is a primary plus replicas spread across nodes, fronted by a service, with streaming replication and automatic failover.](/illustrations/standard-vs-ha.svg)
+<Diagram file="standard-vs-ha.svg" alt="Standard deployment is a single database pod with one volume. High-availability deployment is a primary plus replicas spread across nodes, fronted by a service, with streaming replication and automatic failover." />
 
 *Standard runs one instance and one volume. HA runs a primary plus replicas across nodes, with automatic failover.*
 

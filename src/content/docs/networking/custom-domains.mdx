@@ -3,9 +3,11 @@ title: Public networking
 description: Generate a StackBlaze domain or attach your own. TLS is issued after DNS checks out.
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 **Public networking** is how a service reaches the internet. Generate a `*.stackblaze.app` domain from the service sheet, or attach your own hostname. TLS is issued after DNS verification.
 
-![Diagram of CNAME from custom domain to StackBlaze edge with automatic TLS](/illustrations/custom-domain-dns.svg)
+<Diagram file="custom-domain-dns.svg" alt="Diagram of CNAME from custom domain to StackBlaze edge with automatic TLS" />
 
 *Point your DNS at StackBlaze, cert-manager provisions and renews TLS certificates automatically.*
 

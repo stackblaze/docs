@@ -4,8 +4,9 @@ description: Restore managed PostgreSQL to any point in the last 7 days using th
 ---
 
 import { Steps } from '@astrojs/starlight/components';
+import Diagram from '../../../components/Diagram.astro';
 
-![Point-in-time recovery from continuous WAL archives](/illustrations/pitr-backup.svg)
+<Diagram file="pitr-backup.svg" alt="Point-in-time recovery from continuous WAL archives" />
 
 Accidental `DROP TABLE`, a bad migration, or a bad deploy can corrupt data in seconds. PITR is how you roll the database clock back without restoring from a stale daily backup.
 

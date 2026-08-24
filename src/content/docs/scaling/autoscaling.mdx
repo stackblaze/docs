@@ -3,9 +3,11 @@ title: Autoscaling
 description: Automatically scale your service based on CPU utilization, memory pressure, or request rate. Powered by Kubernetes HPA with conservative scale-down behavior.
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 Automatically scale your service up and down based on CPU utilization, memory pressure, or request rate, without manual intervention.
 
-![Chart showing traffic spike, replica count scaling up, and hourly spend cap line](/illustrations/autoscaling.svg)
+<Diagram file="autoscaling.svg" alt="Chart showing traffic spike, replica count scaling up, and hourly spend cap line" />
 
 *Replicas scale with load; optional spend caps prevent runaway bills during traffic spikes.*
 

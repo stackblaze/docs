@@ -3,9 +3,11 @@ title: Backups & Recovery
 description: Automated daily backups and on-demand snapshots for all managed databases, with point-in-time recovery for PostgreSQL. Backups are encrypted at rest.
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 Automated daily backups and on-demand manual snapshots for all managed databases, plus point-in-time recovery for PostgreSQL.
 
-![Diagram of daily base backup plus continuous WAL archiving for point-in-time recovery](/illustrations/pitr-backup.svg)
+<Diagram file="pitr-backup.svg" alt="Diagram of daily base backup plus continuous WAL archiving for point-in-time recovery" />
 
 *Daily snapshots plus WAL archiving let you restore to a specific timestamp, not just the last backup.*
 

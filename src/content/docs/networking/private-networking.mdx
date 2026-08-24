@@ -3,13 +3,15 @@ title: Private networking
 description: Services in the same environment reach each other by name on a private network.
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 Services in the same **environment** talk over a private network using stable internal hostnames. Traffic never goes over the public internet.
 
 ## How it works
 
 Every service and database you deploy is reachable by its name on the project's private network. That hostname resolves to a stable ClusterIP address that is only accessible within the same project's network. Traffic between services never leaves the cluster.
 
-![Diagram showing public HTTPS to API and private connections to Postgres and Redis](/illustrations/private-networking.svg)
+<Diagram file="private-networking.svg" alt="Diagram showing public HTTPS to API and private connections to Postgres and Redis" />
 
 *Public traffic hits your web service; app-to-database traffic uses internal service hostnames on the private fabric.*
 
