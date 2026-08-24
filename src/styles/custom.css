@@ -153,11 +153,20 @@ site-search button[data-open-modal]:hover {
 	padding-top: 0.75rem;
 }
 
-/* Railway-style divider between the ungrouped intro links and the first folder. */
-.sidebar-content nav > ul > li:not(:has(details)) + li:has(details) {
-	border-top: 1px solid var(--sl-color-hairline);
+/* Divider after Keyboard shortcuts, before the first collapsed group. */
+.sidebar-content ul.top-level > li:not(:has(details)) + li:has(details) {
+	position: relative;
 	margin-top: 0.65rem;
 	padding-top: 0.75rem;
+}
+
+.sidebar-content ul.top-level > li:not(:has(details)) + li:has(details)::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	inset-inline-start: 0.35rem;
+	inset-inline-end: calc(-1 * var(--sl-sidebar-pad-x));
+	border-top: 1px solid var(--sl-color-hairline);
 }
 
 .sidebar a {
