@@ -3,7 +3,11 @@ title: Environments
 description: Production, custom environments, and pull-request previews — isolated copies of the project canvas.
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 An **environment** is an isolated copy of a project's canvas: the same services and databases, separate runtime and data.
+
+<Diagram file="environments-isolation.svg" alt="Three isolated environments in one project: durable production, a custom staging or QA copy, and a review environment torn down when the pull request closes" />
 
 ## Production
 

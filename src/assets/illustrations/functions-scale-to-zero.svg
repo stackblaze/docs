@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" fill="none" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif">
+  <rect width="1200" height="400" fill="var(--diagram-canvas, #07070d)"/>
+  <circle cx="240" cy="200" r="180" fill="var(--diagram-violet, #8b5cf6)" opacity="0.07"/>
+  <circle cx="960" cy="200" r="200" fill="var(--diagram-blue, #3b82f6)" opacity="0.07"/>
+  <line x1="600" y1="56" x2="600" y2="340" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.08" stroke-dasharray="4 6"/>
+
+  <!-- Always-on -->
+  <text x="60" y="48" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.55" font-size="20" font-weight="600">Always-on service</text>
+  <text x="60" y="72" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3" font-size="13">Canvas service · stays running</text>
+
+  <rect x="90" y="120" width="150" height="64" rx="14" fill="var(--diagram-violet-fill, #312e81)" stroke="var(--diagram-violet-2, #a78bfa)" stroke-opacity="0.45"/>
+  <text x="165" y="148" fill="var(--diagram-violet-4, #e9d5ff)" font-size="14" font-weight="600" text-anchor="middle">Replica 1</text>
+  <text x="165" y="168" fill="var(--diagram-violet-3, #c4b5fd)" fill-opacity="0.8" font-size="12" text-anchor="middle">ready</text>
+
+  <rect x="270" y="120" width="150" height="64" rx="14" fill="var(--diagram-violet-fill, #312e81)" stroke="var(--diagram-violet-2, #a78bfa)" stroke-opacity="0.45"/>
+  <text x="345" y="148" fill="var(--diagram-violet-4, #e9d5ff)" font-size="14" font-weight="600" text-anchor="middle">Replica 2</text>
+  <text x="345" y="168" fill="var(--diagram-violet-3, #c4b5fd)" fill-opacity="0.8" font-size="12" text-anchor="middle">ready</text>
+
+  <path d="M165 184 V230 H345 V184" stroke="var(--diagram-violet-2, #a78bfa)" stroke-opacity="0.35" stroke-width="2" fill="none"/>
+  <rect x="190" y="230" width="130" height="48" rx="12" fill="var(--diagram-violet-fill-2, #1e1b3a)" stroke="var(--diagram-violet-2, #a78bfa)" stroke-opacity="0.35"/>
+  <text x="255" y="260" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.8" font-size="13" text-anchor="middle">Public HTTPS</text>
+
+  <text x="255" y="318" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="13" text-anchor="middle">Replicas stay running when idle</text>
+  <text x="255" y="356" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-size="13" text-anchor="middle">APIs, frontends, workers</text>
+
+  <!-- Function -->
+  <text x="650" y="48" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.55" font-size="20" font-weight="600">Function</text>
+  <text x="650" y="72" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3" font-size="13">Knative Serving · not a canvas service</text>
+
+  <rect x="680" y="110" width="140" height="56" rx="12" fill="var(--diagram-blue-fill, #1e3a5f)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.4"/>
+  <text x="750" y="144" fill="var(--diagram-blue-3, #93c5fd)" font-family="ui-monospace, monospace" font-size="14" text-anchor="middle">Request</text>
+
+  <path d="M830 138 H890" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.2" stroke-width="2" stroke-dasharray="6 4"/>
+  <polygon points="890,138 878,132 878,144" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3"/>
+
+  <rect x="900" y="110" width="220" height="56" rx="12" fill="var(--diagram-amber-2, #fbbf24)" fill-opacity="0.12" stroke="var(--diagram-amber-2, #fbbf24)" stroke-opacity="0.45"/>
+  <text x="1010" y="144" fill="var(--diagram-amber, #fde68a)" font-size="14" font-weight="600" text-anchor="middle">Cold start</text>
+
+  <path d="M1010 166 V200" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.4" stroke-width="2"/>
+
+  <rect x="900" y="200" width="220" height="56" rx="12" fill="var(--diagram-green-fill, #064e3b)" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.4"/>
+  <text x="1010" y="226" fill="var(--diagram-green-2, #6ee7b7)" font-size="14" font-weight="600" text-anchor="middle">1 replica</text>
+  <text x="1010" y="246" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">serves the request</text>
+
+  <path d="M1010 256 V286" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.2" stroke-width="2" stroke-dasharray="4 4"/>
+
+  <rect x="900" y="286" width="220" height="40" rx="12" fill="var(--diagram-neutral-fill, #1c1917)" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.1"/>
+  <text x="1010" y="312" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.55" font-size="13" text-anchor="middle">Idle · scale to zero</text>
+
+  <text x="820" y="356" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-size="13">Prebuilt image · invoke URL · same environment add-ons</text>
+</svg>

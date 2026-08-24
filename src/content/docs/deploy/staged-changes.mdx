@@ -3,7 +3,11 @@ title: Staged changes
 description: Canvas edits are collected into a changeset. Review, then deploy — or discard.
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 Edits on the project canvas are **staged** until you deploy. Adding a service, attaching a database, changing variables, or removing a tile does not hit production until you confirm.
+
+<Diagram file="staged-changes.svg" alt="Canvas edits become a staged changeset, then you review and either deploy or discard" />
 
 This is the same idea as a reviewable changeset: you compose, then apply.
 

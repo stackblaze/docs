@@ -3,7 +3,11 @@ title: Horizontal Scaling
 description: Run multiple replicas of your service for higher throughput and availability. Zero-downtime scaling with round-robin load balancing.
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 Run multiple replicas of your service to handle higher traffic and improve availability. New replicas become ready before traffic is redistributed.
+
+<Diagram file="horizontal-replicas.svg" alt="HTTPS requests reaching a service that spreads traffic across three healthy replicas with no sticky sessions" />
 
 ## Setting replica count
 

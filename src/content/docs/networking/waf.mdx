@@ -3,7 +3,11 @@ title: WAF
 description: App Shield — per-service web application firewall.
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 **App Shield** is a WAF you attach to a public HTTP service. It is not a separate catalog database; it shows up on the canvas next to the service (`waf-<service>`) with Overview, Protection, and Rules.
+
+<Diagram file="app-shield.svg" alt="Internet HTTPS traffic passing through App Shield protection and rules before reaching a public HTTP service" />
 
 Enable it from the service sheet or:
 

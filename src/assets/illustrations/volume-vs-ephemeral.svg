@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" fill="none" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif">
+  <rect width="1200" height="400" fill="var(--diagram-canvas, #07070d)"/>
+  <circle cx="260" cy="200" r="180" fill="var(--diagram-violet, #8b5cf6)" opacity="0.07"/>
+  <circle cx="940" cy="200" r="200" fill="var(--diagram-blue, #3b82f6)" opacity="0.07"/>
+  <line x1="600" y1="56" x2="600" y2="340" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.08" stroke-dasharray="4 6"/>
+
+  <!-- Ephemeral -->
+  <text x="60" y="48" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.55" font-size="20" font-weight="600">Ephemeral disk</text>
+  <text x="60" y="72" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3" font-size="13">Files inside the container</text>
+
+  <rect x="120" y="120" width="200" height="72" rx="14" fill="var(--diagram-violet-fill, #312e81)" stroke="var(--diagram-violet-2, #a78bfa)" stroke-opacity="0.4"/>
+  <text x="220" y="152" fill="var(--diagram-violet-4, #e9d5ff)" font-size="15" font-weight="600" text-anchor="middle">Service</text>
+  <text x="220" y="174" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-family="ui-monospace, monospace" font-size="12" text-anchor="middle">one replica</text>
+
+  <line x1="220" y1="192" x2="220" y2="228" stroke="var(--diagram-red, #fca5a5)" stroke-opacity="0.5" stroke-width="2" stroke-dasharray="3 4"/>
+  <rect x="130" y="228" width="180" height="56" rx="12" fill="var(--diagram-pink-fill, #1f1317)" stroke="var(--diagram-red, #fca5a5)" stroke-opacity="0.35"/>
+  <text x="220" y="254" fill="var(--diagram-red, #fca5a5)" font-size="14" font-weight="600" text-anchor="middle">Container FS</text>
+  <text x="220" y="274" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-family="ui-monospace, monospace" font-size="12" text-anchor="middle">/tmp · /app</text>
+
+  <text x="220" y="334" fill="var(--diagram-red, #fca5a5)" fill-opacity="0.8" font-size="13" text-anchor="middle">Lost on restart or redeploy</text>
+  <text x="220" y="356" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-size="13" text-anchor="middle">Fine for caches you can rebuild</text>
+
+  <!-- Volume -->
+  <text x="650" y="48" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.55" font-size="20" font-weight="600">Volume</text>
+  <text x="650" y="72" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3" font-size="13">Attached to one service instance</text>
+
+  <rect x="760" y="110" width="200" height="72" rx="14" fill="var(--diagram-blue-fill, #1e3a5f)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.45"/>
+  <text x="860" y="142" fill="var(--diagram-blue-3, #93c5fd)" font-size="15" font-weight="600" text-anchor="middle">Service</text>
+  <text x="860" y="164" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-family="ui-monospace, monospace" font-size="12" text-anchor="middle">one replica</text>
+
+  <line x1="860" y1="182" x2="860" y2="218" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.5" stroke-width="2" stroke-dasharray="3 4"/>
+  <ellipse cx="860" cy="232" rx="52" ry="11" fill="var(--diagram-green-fill, #064e3b)" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.4"/>
+  <path d="M808 232 v28 a52 11 0 0 0 104 0 v-28" fill="var(--diagram-green-fill, #064e3b)" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.4"/>
+  <text x="860" y="256" fill="var(--diagram-green-2, #6ee7b7)" font-size="13" font-weight="600" text-anchor="middle">Volume</text>
+
+  <text x="860" y="300" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.45" font-family="ui-monospace, monospace" font-size="12" text-anchor="middle">mount /data/uploads</text>
+  <text x="860" y="334" fill="var(--diagram-green, #34d399)" fill-opacity="0.85" font-size="13" text-anchor="middle">Survives restart and redeploy</text>
+  <text x="860" y="356" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-size="13" text-anchor="middle">Not shared across replicas</text>
+</svg>

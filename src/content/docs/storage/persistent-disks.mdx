@@ -3,9 +3,13 @@ title: Volumes
 description: Attach a disk to a service so data survives restarts and redeploys.
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 Files inside a container are ephemeral. A **volume** is block storage mounted into a service so data survives restarts and redeploys. Use it for SQLite, uploads, model caches, and similar.
 
 A volume is attached to one service instance. It is not shared across replicas. For data every replica must see, use object storage or a database on the canvas.
+
+<Diagram file="volume-vs-ephemeral.svg" alt="Ephemeral container filesystem lost on restart, compared with a volume mounted on one service replica that survives restart and redeploy" />
 
 ## Performance specifications
 

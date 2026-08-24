@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" fill="none" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif">
+  <rect width="1200" height="400" fill="var(--diagram-canvas, #07070d)"/>
+  <circle cx="200" cy="100" r="150" fill="var(--diagram-violet, #8b5cf6)" opacity="0.1"/>
+  <circle cx="1020" cy="300" r="160" fill="var(--diagram-blue, #3b82f6)" opacity="0.08"/>
+
+  <text x="70" y="50" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.55" font-size="20" font-weight="600">Staged changes</text>
+  <text x="70" y="74" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3" font-size="13">Canvas edits stay a changeset until you confirm</text>
+
+  <rect x="70" y="140" width="170" height="72" rx="14" fill="var(--diagram-violet-fill, #312e81)" stroke="var(--diagram-violet-2, #a78bfa)" stroke-opacity="0.4"/>
+  <text x="155" y="172" fill="var(--diagram-violet-4, #e9d5ff)" font-size="15" font-weight="600" text-anchor="middle">Canvas edit</text>
+  <text x="155" y="194" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">add · config · remove</text>
+
+  <path d="M250 176 H310" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.2" stroke-width="2" stroke-dasharray="6 4"/>
+  <polygon points="310,176 298,170 298,182" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3"/>
+
+  <rect x="320" y="140" width="190" height="72" rx="14" fill="var(--diagram-blue-fill, #1e3a5f)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.4"/>
+  <text x="415" y="172" fill="var(--diagram-blue-3, #93c5fd)" font-size="15" font-weight="600" text-anchor="middle">Staged</text>
+  <text x="415" y="194" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">tiles on the canvas</text>
+
+  <path d="M520 176 H580" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.2" stroke-width="2" stroke-dasharray="6 4"/>
+  <polygon points="580,176 568,170 568,182" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3"/>
+
+  <rect x="590" y="140" width="170" height="72" rx="14" fill="var(--diagram-neutral-fill, #1c1917)" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.12"/>
+  <text x="675" y="172" fill="var(--diagram-amber, #fde68a)" font-size="15" font-weight="600" text-anchor="middle">Review</text>
+  <text x="675" y="194" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">changeset panel</text>
+
+  <path d="M770 160 H830" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.5" stroke-width="2"/>
+  <polygon points="830,160 818,154 818,166" fill="var(--diagram-green, #34d399)" fill-opacity="0.7"/>
+  <path d="M770 192 H830" stroke="var(--diagram-red, #fca5a5)" stroke-opacity="0.4" stroke-width="2"/>
+  <polygon points="830,192 818,186 818,198" fill="var(--diagram-red, #fca5a5)" fill-opacity="0.6"/>
+
+  <rect x="840" y="116" width="170" height="60" rx="14" fill="var(--diagram-green-fill, #064e3b)" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.45"/>
+  <text x="925" y="152" fill="var(--diagram-green-2, #6ee7b7)" font-size="15" font-weight="600" text-anchor="middle">Deploy</text>
+
+  <rect x="840" y="196" width="170" height="60" rx="14" fill="var(--diagram-pink-fill, #1f1317)" stroke="var(--diagram-red, #fca5a5)" stroke-opacity="0.3"/>
+  <text x="925" y="232" fill="var(--diagram-red, #fca5a5)" font-size="15" font-weight="600" text-anchor="middle">Discard</text>
+
+  <text x="70" y="300" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-family="ui-monospace, monospace" font-size="14">nothing hits production until Deploy</text>
+  <text x="70" y="334" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3" font-size="13">Failed builds leave running services on the previous revision</text>
+</svg>

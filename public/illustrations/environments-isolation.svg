@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" fill="none" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif">
+  <rect width="1200" height="400" fill="var(--diagram-canvas, #07070d)"/>
+  <circle cx="200" cy="80" r="160" fill="var(--diagram-violet, #8b5cf6)" opacity="0.08"/>
+  <circle cx="1000" cy="320" r="180" fill="var(--diagram-blue, #3b82f6)" opacity="0.08"/>
+
+  <text x="70" y="48" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.55" font-size="20" font-weight="600">Environment isolation</text>
+  <text x="70" y="72" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3" font-size="13">Same canvas topology, separate runtime and data</text>
+
+  <!-- Production -->
+  <rect x="70" y="96" width="340" height="228" rx="16" fill="var(--diagram-violet-fill-2, #1e1b3a)" stroke="var(--diagram-violet-2, #a78bfa)" stroke-opacity="0.4"/>
+  <text x="240" y="128" fill="var(--diagram-violet-3, #c4b5fd)" font-size="16" font-weight="600" text-anchor="middle">Production</text>
+  <text x="240" y="150" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">created with the project</text>
+  <rect x="96" y="172" width="138" height="52" rx="10" fill="var(--diagram-violet-fill, #312e81)" stroke="var(--diagram-violet-2, #a78bfa)" stroke-opacity="0.35"/>
+  <text x="165" y="204" fill="var(--diagram-violet-4, #e9d5ff)" font-size="14" font-weight="600" text-anchor="middle">web</text>
+  <rect x="246" y="172" width="138" height="52" rx="10" fill="var(--diagram-green-fill, #064e3b)" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.35"/>
+  <text x="315" y="204" fill="var(--diagram-green-2, #6ee7b7)" font-size="14" font-weight="600" text-anchor="middle">postgres</text>
+  <text x="240" y="254" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.45" font-family="ui-monospace, monospace" font-size="12" text-anchor="middle">own variables · own disks</text>
+  <text x="240" y="300" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-size="12" text-anchor="middle">Durable until the project is deleted</text>
+
+  <!-- Custom -->
+  <rect x="430" y="96" width="340" height="228" rx="16" fill="var(--diagram-blue-fill-3, #101827)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.35"/>
+  <text x="600" y="128" fill="var(--diagram-blue-3, #93c5fd)" font-size="16" font-weight="600" text-anchor="middle">Custom</text>
+  <text x="600" y="150" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">staging or QA from project settings</text>
+  <rect x="456" y="172" width="138" height="52" rx="10" fill="var(--diagram-blue-fill, #1e3a5f)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.35"/>
+  <text x="525" y="204" fill="var(--diagram-blue-3, #93c5fd)" font-size="14" font-weight="600" text-anchor="middle">web</text>
+  <rect x="606" y="172" width="138" height="52" rx="10" fill="var(--diagram-green-fill, #064e3b)" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.35"/>
+  <text x="675" y="204" fill="var(--diagram-green-2, #6ee7b7)" font-size="14" font-weight="600" text-anchor="middle">postgres</text>
+  <text x="600" y="254" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.45" font-family="ui-monospace, monospace" font-size="12" text-anchor="middle">own network · no prod data</text>
+  <text x="600" y="300" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-size="12" text-anchor="middle">Durable until you delete it</text>
+
+  <!-- Review -->
+  <rect x="790" y="96" width="340" height="228" rx="16" fill="var(--diagram-blue-fill-2, #15213a)" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.3"/>
+  <text x="960" y="128" fill="var(--diagram-green-2, #6ee7b7)" font-size="16" font-weight="600" text-anchor="middle">Review</text>
+  <text x="960" y="150" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">pull-request preview</text>
+  <rect x="816" y="172" width="138" height="52" rx="10" fill="var(--diagram-blue-fill, #1e3a5f)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.35"/>
+  <text x="885" y="204" fill="var(--diagram-blue-3, #93c5fd)" font-size="14" font-weight="600" text-anchor="middle">web</text>
+  <rect x="966" y="172" width="138" height="52" rx="10" fill="var(--diagram-green-fill, #064e3b)" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.35"/>
+  <text x="1035" y="204" fill="var(--diagram-green-2, #6ee7b7)" font-size="14" font-weight="600" text-anchor="middle">postgres</text>
+  <text x="960" y="254" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.45" font-family="ui-monospace, monospace" font-size="12" text-anchor="middle">cloned add-ons · isolated</text>
+  <text x="960" y="300" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-size="12" text-anchor="middle">Torn down when the PR closes</text>
+
+  <text x="600" y="364" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-family="ui-monospace, monospace" font-size="13" text-anchor="middle">canvas shows one environment at a time</text>
+</svg>

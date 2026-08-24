@@ -3,7 +3,11 @@ title: Auto Deploy on Push
 description: Configure GitHub-triggered automatic deployments on StackBlaze. Learn how the git push → build → rolling deploy pipeline works, how to skip deploys with [skip ci], and how to restrict trigger paths in a monorepo.
 ---
 
+import Diagram from '../../../components/Diagram.astro';
+
 A Git-connected service [auto-deploys](/deploy/github/) on every push to its branch unless you skip the commit. Typical path from `git push` to live traffic is **60–180 seconds**, depending on build time.
+
+<Diagram file="deploy-lifecycle.svg" alt="Deploy lifecycle from GitHub push through build and Kubernetes rollout to a live stackblaze.app URL" />
 
 You can skip a deploy by adding `[skip ci]` to your commit message. You can also restrict which file paths trigger a deploy, useful for monorepos where documentation changes shouldn't rebuild your API server.
 

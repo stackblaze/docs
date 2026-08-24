@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" fill="none" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif">
+  <rect width="1200" height="400" fill="var(--diagram-canvas, #07070d)"/>
+  <circle cx="180" cy="120" r="150" fill="var(--diagram-violet, #8b5cf6)" opacity="0.1"/>
+  <circle cx="1020" cy="280" r="170" fill="var(--diagram-blue, #3b82f6)" opacity="0.08"/>
+
+  <text x="70" y="50" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.55" font-size="20" font-weight="600">Replicas behind a service</text>
+  <text x="70" y="74" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3" font-size="13">Round-robin across healthy instances</text>
+
+  <rect x="70" y="154" width="180" height="72" rx="14" fill="var(--diagram-violet-fill, #312e81)" stroke="var(--diagram-violet-2, #a78bfa)" stroke-opacity="0.4"/>
+  <text x="160" y="186" fill="var(--diagram-violet-4, #e9d5ff)" font-size="15" font-weight="600" text-anchor="middle">Requests</text>
+  <text x="160" y="208" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-family="ui-monospace, monospace" font-size="12" text-anchor="middle">HTTPS</text>
+
+  <path d="M260 190 H340" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.2" stroke-width="2"/>
+  <polygon points="340,190 328,184 328,196" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.3"/>
+
+  <rect x="350" y="154" width="200" height="72" rx="14" fill="var(--diagram-blue-fill, #1e3a5f)" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.45"/>
+  <text x="450" y="186" fill="var(--diagram-blue-3, #93c5fd)" font-size="15" font-weight="600" text-anchor="middle">Service</text>
+  <text x="450" y="208" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.4" font-size="12" text-anchor="middle">spreads traffic</text>
+
+  <path d="M550 168 H640" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.45" stroke-width="2"/>
+  <path d="M550 190 H640" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.45" stroke-width="2"/>
+  <path d="M550 212 H640" stroke="var(--diagram-blue-2, #60a5fa)" stroke-opacity="0.45" stroke-width="2"/>
+
+  <rect x="650" y="86" width="220" height="60" rx="13" fill="var(--diagram-green-fill, #064e3b)" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.4"/>
+  <text x="760" y="122" fill="var(--diagram-green-2, #6ee7b7)" font-size="15" font-weight="600" text-anchor="middle">Replica 1</text>
+
+  <rect x="650" y="160" width="220" height="60" rx="13" fill="var(--diagram-green-fill, #064e3b)" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.4"/>
+  <text x="760" y="196" fill="var(--diagram-green-2, #6ee7b7)" font-size="15" font-weight="600" text-anchor="middle">Replica 2</text>
+
+  <rect x="650" y="234" width="220" height="60" rx="13" fill="var(--diagram-green-fill, #064e3b)" stroke="var(--diagram-green, #34d399)" stroke-opacity="0.4"/>
+  <text x="760" y="270" fill="var(--diagram-green-2, #6ee7b7)" font-size="15" font-weight="600" text-anchor="middle">Replica 3</text>
+
+  <rect x="920" y="154" width="210" height="72" rx="14" fill="var(--diagram-neutral-fill, #1c1917)" stroke="var(--diagram-ink, #ffffff)" stroke-opacity="0.08"/>
+  <text x="1025" y="186" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.55" font-size="13" text-anchor="middle">No sticky sessions</text>
+  <text x="1025" y="208" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-size="12" text-anchor="middle">any replica can answer</text>
+
+  <text x="70" y="350" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-family="ui-monospace, monospace" font-size="14">stateless service · sessions in Redis · files in object storage</text>
+</svg>

@@ -4,10 +4,13 @@ description: A service is a deploy target on the project canvas — Git, Docker,
 ---
 
 import { Steps } from '@astrojs/starlight/components';
+import Diagram from '../../../components/Diagram.astro';
 
 A **service** is a container StackBlaze builds and runs. Add one from the canvas with **+ Service**. Source is a Git repository, a Docker image, or a template. Databases are services on the same board.
 
 Web, worker, and cron are **settings** on a service (public domain, no domain, or a schedule) — not separate products.
+
+<Diagram file="service-types.svg" alt="Five service types on one project canvas: Web with public HTTPS, Worker with no ingress, Cron on a schedule, and Postgres and Redis add-ons on a private network" />
 
 ## Types of services
 

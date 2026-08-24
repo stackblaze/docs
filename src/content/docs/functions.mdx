@@ -3,7 +3,11 @@ title: Functions
 description: Knative services that scale to zero. Not the same thing as a canvas app.
 ---
 
+import Diagram from '../../components/Diagram.astro';
+
 A **function** is a request-driven container (Knative Serving). It scales to zero when idle and cold-starts on the first request. It is **not** an always-on [service](/build-deploy/apps/).
+
+<Diagram file="functions-scale-to-zero.svg" alt="Always-on service replicas stay running, compared with a Knative function that cold-starts on the first request and scales to zero when idle" />
 
 Functions live in the same project environment as your apps and can use the same private add-ons. The public invoke URL looks like:
 
