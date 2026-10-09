@@ -150,7 +150,7 @@ jobs:
 ```
 
 - Keep the `actions/checkout` step: `up` reads the repository and branch from the checkout.
-- `up` builds the head of the branch. CI checkouts are often a detached HEAD; `up` then reads the branch from `GITHUB_HEAD_REF`, `GITHUB_REF_NAME`, `CI_COMMIT_REF_NAME` or `BUILDKITE_BRANCH` (see [branch detection](/cli/up/#branch-detection)). To build exactly the pushed commit instead, run `stackblaze builds trigger --commit-sha "$GITHUB_SHA"` followed by `stackblaze builds logs -f --ci`.
+- `up` builds exactly the pushed commit: it reads it from `GITHUB_SHA` (the pull request's head commit on `pull_request` events), `CI_COMMIT_SHA` or `BUILDKITE_COMMIT`, and the `--ci` deploy event includes it as `commitSha`. CI checkouts are often a detached HEAD; `up` then reads the branch from `GITHUB_HEAD_REF`, `GITHUB_REF_NAME`, `CI_COMMIT_REF_NAME` or `BUILDKITE_BRANCH` (see [branch detection](/cli/up/#branch-detection)). The very first build of a brand-new app uses the head of the branch.
 - `--wait` also waits up to 90 seconds for the new version to be running. Drop it to finish when the build succeeds.
 - For an image app, run `stackblaze up --ci --wait --image ghcr.io/acme/web --tag "$GITHUB_SHA"`. Without `--wait`, an image deploy ends with `"state":"submitted"` because nothing checked that it runs.
 
