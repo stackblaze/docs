@@ -1,14 +1,14 @@
 ---
-title: List
-description: stackblaze list
+title: stackblaze list
+description: "List pipelines and their phases. Alias of pipelines list."
 ---
 
-List projects. Alias of `pipelines list`.
+Same as [`stackblaze pipelines list`](/cli/pipelines/). Alias: `stackblaze ls`.
 
-```bash
-stackblaze list
+## Usage
+
+```text
+stackblaze list [options]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
-
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.

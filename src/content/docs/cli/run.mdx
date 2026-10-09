@@ -1,14 +1,25 @@
 ---
-title: Run
-description: stackblaze run
+title: stackblaze run
+description: "Run a local command with the app's environment variables."
 ---
 
-Run a local command with the remote service environment injected.
+Runs a command on your machine with the linked app's variables added to the environment. Variables from the app win over your local ones. `STACKBLAZE_PIPELINE`, `STACKBLAZE_PHASE` and `STACKBLAZE_APP` are set too.
 
-```bash
-stackblaze run -- npm test
+## Usage
+
+```text
+stackblaze run [scope flags] <command> [args...]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+Put CLI flags before the command: everything after the command name is passed to it unchanged.
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+Also accepts `-p, --pipeline`, `--phase`, `-a, --app`, `--token` and `--api-url` (see [scope](/cli/#scope-and-common-flags)). No JSON output.
+
+## Examples
+
+```bash
+stackblaze run npm test
+stackblaze run -a api node scripts/migrate.js --dry-run
+```
+
+`run` exits with the command's exit code. The injected variables are the ones `stackblaze variables list` shows.

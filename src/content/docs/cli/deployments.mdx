@@ -1,14 +1,49 @@
 ---
-title: Deployments
-description: stackblaze deployments
+title: stackblaze deployments
+description: "Show deploy history and roll back to an earlier image or configuration."
 ---
 
-List revisions and `rollback`.
+Alias: `deployment`.
 
-```bash
-stackblaze deployments list
+## Usage
+
+```text
+stackblaze deployments list [-n <limit>]
+stackblaze deployments rollback [deploy-id] [--wait] [-y]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+| Subcommand | Description |
+| --- | --- |
+| `list` | Deploy history of the app: git builds, image deploys and configuration releases, with status, trigger and ref (commit or image tag) |
+| `rollback [deploy-id]` | Roll back to an earlier deploy. Without an ID, the previous successful deploy. Asks for confirmation unless `-y` |
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+## Options
+
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `-n, --limit <n>` | `list` | Maximum entries (server default 100) |
+| `--build <name>` | `rollback` | Build name to roll back to (same as the positional ID) |
+| `--wait` | `rollback` | Wait up to 90 seconds until the app is running again; exits `1` if it does not become ready |
+| `-y, --yes` | `rollback` | Skip the confirmation |
+
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+## Examples
+
+```bash
+stackblaze deployments list -n 20
+stackblaze deployments rollback -y --wait
+stackblaze deployments rollback web-1a2b3c -y
+stackblaze deployments rollback <deploy-id> -y --wait --json | jq .wait.ready
+```
+
+## How it works
+
+`<deploy-id>` is an ID from `stackblaze deployments list`: a history entry's ID or a build name. What a rollback does depends on the entry:
+
+- **Image deploys and builds** roll back to that entry's image tag. This works for image apps as well as apps built from source.
+- **Configuration releases** (variable and scale changes) roll back the configuration to that revision.
+
+Without an ID, `rollback` picks the newest deploy that succeeded and is not the one running now. The confirmation names the target: `image tag …` or `configuration revision …`.
+
+With `--wait --json`, stdout carries one JSON document: the rollback result (`deploy`, `kind` `image` or `config`, `tag` or `revisionId`) with the readiness check under `wait`. The exit code is `1` when the app does not come up.

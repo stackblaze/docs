@@ -1,14 +1,45 @@
 ---
-title: Scale
-description: stackblaze scale
+title: stackblaze scale
+description: "Set web and worker replicas, or autoscaling, in one release."
 ---
 
-Set replica count. `0` pauses.
+Sets the replica count or autoscaling of the linked app's web and worker processes. Everything in one command is applied as one release. Same command as `stackblaze apps scale`.
 
-```bash
-stackblaze scale --replicas 2
+## Usage
+
+```text
+stackblaze scale [web=N] [worker=N] [--autoscale <process=min:max>]... [--autoscale-off <process>]... [options]
+stackblaze scale -r <n> [--process web|worker]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+`web=N` and `worker=N` set a fixed replica count, `0` to `50`. `0` stops that process.
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+## Options
+
+| Flag | Description |
+| --- | --- |
+| `--autoscale <process=min:max>` | Turn on autoscaling between `min` and `max` replicas, e.g. `web=2:5` (repeatable). `min` is at least `1` |
+| `--autoscale-off <process>` | Turn off autoscaling for a process, back to a fixed count (repeatable) |
+| `--skip-deploy` | Stage the change instead of deploying it; ship it later with [`stackblaze pending apply`](/cli/pending/) |
+| `-m, --message <text>` | Release message shown in the deployment history |
+| `-r, --replicas <n>` | Replica count for `--process`, `0` to `50` (older single-process form) |
+| `--process <name>` | `web` (default) or `worker`, for `-r` |
+
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+## Examples
+
+```bash
+stackblaze scale web=3                    # 3 web replicas
+stackblaze scale web=2 worker=1           # both processes, one release
+stackblaze scale --autoscale web=2:5      # autoscale web between 2 and 5 replicas
+stackblaze scale --autoscale-off web      # back to a fixed replica count
+stackblaze scale web=4 --skip-deploy      # stage, apply later
+stackblaze scale -r 0 --process worker    # older single-process form
+```
+
+## How it works
+
+The CLI sends only the requested change; the server applies it and records one release in the [deployment history](/cli/deployments/), with your `-m` message. Replica counts are checked against your plan's per-service limit. The text output shows the previous count, for example `web → 3 replica(s) (was 1)`.
+
+To stop every process of an app, including cron jobs, and bring it back later as it was, use [`stackblaze down`](/cli/down/) and [`stackblaze resume`](/cli/resume/).

@@ -1,14 +1,29 @@
 ---
-title: Completion
-description: stackblaze completion
+title: stackblaze completion
+description: "Generate shell completion for bash, zsh or fish."
 ---
 
-Shell completion for bash, zsh, or fish.
+Prints a completion script for your shell to stdout.
 
-```bash
-stackblaze completion bash
+## Usage
+
+```text
+stackblaze completion bash|zsh|fish
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+## Install
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+```bash
+# bash
+stackblaze completion bash > ~/.local/share/bash-completion/completions/stackblaze
+# or, in ~/.bashrc:  source <(stackblaze completion bash)
+
+# zsh
+stackblaze completion zsh > "${fpath[1]}/_stackblaze"
+# or, in ~/.zshrc:   source <(stackblaze completion zsh)
+
+# fish
+stackblaze completion fish > ~/.config/fish/completions/stackblaze.fish
+```
+
+Regenerate the script after upgrading to pick up new commands.

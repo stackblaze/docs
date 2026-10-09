@@ -1,14 +1,23 @@
 ---
-title: Diagnose
-description: stackblaze diagnose
+title: stackblaze diagnose
+description: "Check an app's configuration, metrics, logs and add-ons for problems."
 ---
 
-Performance findings and hints for the linked service.
+Collects the linked app's configuration, resource metrics, recent logs and add-on state, and reports findings and hints.
 
-```bash
-stackblaze diagnose
+## Usage
+
+```text
+stackblaze diagnose [options]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+| Flag | Description |
+| --- | --- |
+| `--scale <window>` | Metrics window: `2h` (default), `24h` or `7d` |
+| `--log-minutes <n>` | Log search window in minutes |
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+```bash
+stackblaze diagnose --scale 24h
+```

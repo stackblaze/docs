@@ -1,14 +1,18 @@
 ---
-title: Shell
-description: stackblaze shell
+title: stackblaze shell
+description: "Open a local subshell with the app's environment variables."
 ---
 
-Interactive subshell with remote env vars.
+Starts your shell (`$SHELL`; `cmd.exe` on Windows) on your machine with the linked app's variables set, like [`run`](/cli/run/) for an interactive session. Type `exit` to leave.
 
-```bash
-stackblaze shell
+## Usage
+
+```text
+stackblaze shell [options]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+Also accepts `-p, --pipeline`, `--phase`, `-a, --app`, `--token` and `--api-url` (see [scope](/cli/#scope-and-common-flags)). No JSON output.
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+`STACKBLAZE_PIPELINE`, `STACKBLAZE_PHASE` and `STACKBLAZE_APP` are set inside the subshell, so `stackblaze` commands you run there target the same app.
+
+To get a shell inside the running container instead, use [`stackblaze ssh`](/cli/ssh/).

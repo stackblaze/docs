@@ -1,14 +1,14 @@
 ---
-title: Docs
-description: stackblaze docs
+title: stackblaze docs
+description: "Print and open the CLI documentation URL."
 ---
 
-Open this documentation.
+Prints the CLI documentation URL and opens it in your browser. The command reference is the [CLI](/cli/) section of these docs.
 
-```bash
-stackblaze docs
+```text
+stackblaze docs [--no-browser]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
-
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+| Flag | Description |
+| --- | --- |
+| `--no-browser` | Only print the URL |

@@ -1,14 +1,25 @@
 ---
-title: Audit
-description: stackblaze audit
+title: stackblaze audit
+description: "Show the audit trail: who did what, and when."
 ---
 
-Who did what, when (org audit log).
+Prints recent audit log entries. When an app is in scope (flags, environment or a linked directory) it shows that app's entries; otherwise your organization's. Text mode shows the newest 20; `-o json` returns everything fetched.
 
-```bash
-stackblaze audit
+## Usage
+
+```text
+stackblaze audit [options]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+| Flag | Description |
+| --- | --- |
+| `--action <keyword>` | Only entries whose action contains this text, e.g. `delete`, `scale` |
+| `--actor <user>` | Only entries whose actor contains this text |
+| `--since-minutes <n>` | Only entries from the last `n` minutes |
+| `-n, --limit <n>` | Entries to fetch before filtering (default `100`) |
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+```bash
+stackblaze audit --action delete --since-minutes 1440
+```

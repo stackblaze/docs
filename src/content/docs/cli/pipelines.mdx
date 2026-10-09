@@ -1,14 +1,39 @@
 ---
-title: Pipelines
-description: stackblaze pipelines
+title: stackblaze pipelines
+description: "List, create and delete pipelines (projects)."
 ---
 
-List, create, delete projects (API name: pipelines).
+A pipeline is a project; its phases are environments. Alias: `pipeline`.
 
-```bash
+## Usage
+
+```text
 stackblaze pipelines list
+stackblaze pipelines create -p <name> [--phases <names...>] [--domain <host>]
+stackblaze pipelines delete [name] [-y]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+| Subcommand | Description |
+| --- | --- |
+| `list` | Pipelines and their phases (also `stackblaze list`) |
+| `create` | Create a pipeline named by `--pipeline` |
+| `delete [name]` | Delete a pipeline and all its apps (default: the linked pipeline); asks you to type its name unless `-y` |
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `--phases <names...>` | `create` | Phases to create (default `production`) |
+| `--domain <host>` | `create` | Wildcard domain for the pipeline's apps |
+| `-y, --yes` | `delete` | Skip the confirmation |
+
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+`delete` takes the pipeline as a positional name or `--pipeline` (passing both with different values is an error). Without either, it targets `STACKBLAZE_PIPELINE` or the linked pipeline, names it on stderr, and still asks you to type the name unless `-y`. When the deleted pipeline is the linked one, `.stackblaze/project.json` is removed. With `-o json` the result is `{"deleted": true, "pipeline": "…"}`. Check the target with [`stackblaze context`](/cli/context/) first.
+
+## Examples
+
+```bash
+stackblaze pipelines create -p shop --phases staging production
+stackblaze pipelines delete shop-old -y
+```
+
+To create a pipeline and link the directory in one step, use [`stackblaze init`](/cli/init/).

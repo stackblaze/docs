@@ -1,14 +1,34 @@
 ---
-title: Redeploy
-description: stackblaze redeploy
+title: stackblaze redeploy
+description: "Redeploy an app: rebuild a git app or re-pull an image app."
 ---
 
-Redeploy the current (or `--tag`) image.
+Starts a new deployment of the linked app:
+
+- **Git app:** starts a new build from the branch configured on the app. Follow it with [`stackblaze builds logs`](/cli/builds/).
+- **Image app:** re-pulls the configured image and tag (useful for moving tags such as `latest`).
+- **`--tag <tag>`:** deploys that image tag instead.
+
+To restart the running version without building or pulling, use [`stackblaze restart`](/cli/restart/). Same command as `stackblaze apps redeploy`. To ship changes staged with `--skip-deploy` as well, use [`stackblaze deploy --apply-pending`](/cli/deploy/).
+
+## Usage
+
+```text
+stackblaze redeploy [--tag <tag>] [options]
+```
+
+| Flag | Description |
+| --- | --- |
+| `--tag <tag>` | Deploy this image tag |
+
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+## Examples
 
 ```bash
 stackblaze redeploy
+stackblaze redeploy && stackblaze builds logs --ci     # git app: rebuild and stream the build
+stackblaze redeploy --tag 1.4.3 -a api
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
-
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+With `-o json`, the result has `mode`: `build` (git rebuild), `image` (re-pull) or `tag`.

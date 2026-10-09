@@ -1,14 +1,131 @@
 ---
-title: Up
-description: stackblaze up
+title: stackblaze up
+description: "Deploy a folder, a git repository or a container image. Safe to re-run on every push."
 ---
 
-Deploy the current directory (git build) or `--image` for a registry image. `--ci` streams NDJSON for pipelines.
+Deploys to the linked (or given) pipeline and phase. What gets deployed depends on the folder and the flags:
 
-```bash
-stackblaze up --wait
+- **Git checkout:** when the folder (default: the current directory) has a git remote, the app is built from that remote and the current branch. Unpushed local changes are not deployed.
+- **Local folder:** when the folder has no git remote, or you pass `--local`, `up` packs the folder, uploads it and builds it. See [Deploying a local folder](#deploying-a-local-folder).
+- **Image:** pass `--image` to run a container image; git and local files are not used.
+
+If the app does not exist yet, `up` creates it. If it exists, `up` updates it with the flags you pass and deploys again: a new build for git and local-folder apps, a re-pull (or the new `--tag`) for image apps. Re-running `up` is safe, so CI can run it on every push.
+
+After the deploy starts, `up` streams the build log live and exits when the build finishes (unless `--detach`).
+
+## Usage
+
+```text
+stackblaze up [path] [options]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+`[path]` is the folder to deploy (default: the current directory).
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+## Options
+
+| Flag | Description |
+| --- | --- |
+| `--name <name>`, `-a, --app <name>` | App name (default: the linked app, else the folder name) |
+| `-p, --pipeline <name>` | Pipeline (default: the linked pipeline) |
+| `--phase <name>` | Phase (default: the linked phase, else `production`) |
+| `-y, --yes` | When the directory is not linked, create or reuse a pipeline named after the directory |
+| `--new` | Same as `-y` |
+| `--local` | Upload the folder instead of building its git remote |
+| `--image <repo>` | Run this container image (skips git and local files) |
+| `--tag <tag>` | Image tag (default `latest`) |
+| `--repository <url>` | Git URL (default: the folder's git remote) |
+| `--branch <name>` | Git branch (default: the current branch; see [Branch detection](#branch-detection)) |
+| `--buildstrategy <s>` | `nixpacks`, `dockerfile`, `buildpacks` or `plain` |
+| `--build-context <dir>` | Build context inside the repo (monorepos) |
+| `--dockerfile-path <path>` | Dockerfile path |
+| `--path <dir>` | Deploy a subdirectory (monorepos) |
+| `--path-as-root` | Treat `--path` as the build root, so Dockerfile paths are relative to it (requires `--path`) |
+| `--port <n>` | Container port (see [Ports](#ports)) |
+| `--worker` | Run as a background worker: no port, no public URL |
+| `--replicas <n>` | Replica count (default `1` for a new app) |
+| `--domain <host>` | Custom domain |
+| `--env <KEY=value>` | Environment variable (repeatable) |
+| `--wait` | After the build, wait up to 90 seconds for the app to be running |
+| `-d, --detach` | Start the deploy and exit without streaming the build |
+| `--ci` | Stream NDJSON records and exit when the build finishes (see [CI mode](#ci-mode)) |
+| `--resume` | Resume the paused app instead of deploying (same as [`stackblaze resume`](/cli/resume/)) |
+| `--verbose` | Print extra deploy diagnostics |
+| `-o, --output <text\|json>`, `--json` | Output format |
+
+Also accepts `--token` and `--api-url`. `--wait` and `--ci` cannot be combined with `--detach`. `--worker` cannot be combined with `--port` or `--domain`. `--local` cannot be combined with `--image` or `--repository`. `--resume` cannot be combined with deploy flags such as `--image`, `--port` or `--env`.
+
+## Examples
+
+```bash
+stackblaze up                                   # git checkout → build; otherwise upload this folder
+stackblaze up ./api --local                     # upload ./api even though it is in git
+stackblaze up -y                                # unlinked: create a pipeline named after the directory
+stackblaze up -p shop --phase staging --name api --env NODE_ENV=production --wait
+stackblaze up --image nginx --tag 1.27          # port read from the image's EXPOSE
+stackblaze up --image ghcr.io/acme/jobs --worker
+stackblaze up --path services/api --name api    # monorepo subdirectory
+stackblaze up --ci --wait                       # CI: NDJSON, exit 1 on failure
+stackblaze up --resume                          # bring a paused app back
+```
+
+## How it works
+
+1. `up` resolves the pipeline, phase and app name, then looks the app up.
+2. **New app:** it detects settings from the folder and creates the app. Without `--buildstrategy`, a folder with a Dockerfile builds with `dockerfile`, otherwise with `nixpacks`. Run [`stackblaze inspect`](/cli/inspect/) to see what will be detected.
+3. **Existing app:** only the flags you pass are applied (for example `--env`, `--replicas`, `--port`, `--branch`), then it deploys again. Detected settings such as the Dockerfile port or the build strategy are used only when the app is first created, so re-running `up` never rewrites them.
+4. `up` saves the app to `.stackblaze/project.json` in this directory, then follows the build.
+
+An existing app keeps its kind: `up --image` only updates image apps, and `up` without `--image` only updates apps that build from source (git or local folder). Use a different `--name` to deploy something of the other kind.
+
+## Deploying a local folder
+
+With no git remote, or with `--local`, `up` uploads the folder instead of building a repository:
+
+```bash
+stackblaze up                 # current directory (no git remote)
+stackblaze up ./api --local   # a sub-folder, even inside a git checkout
+```
+
+- **Ignore files:** `.gitignore`, `.stackblazeignore` and `.railwayignore` are honoured, including nested files and `!` re-includes.
+- **Always left out:** `.git`, `node_modules` and `.env*` files. A warning names every `.env` file that was skipped. Set secrets with [`stackblaze variables set`](/cli/variables/), or add `!.env.production` to `.stackblazeignore` to upload a file anyway.
+- **Upload:** the CLI prints the file count and compressed size, then uploads with a progress line on stderr. The limit is **200 MB compressed**. An unchanged folder is not uploaded twice.
+- **Rebuilds:** variable changes and dashboard redeploys rebuild the last upload for 7 days. After that, run `stackblaze up` again.
+- **Symlinks:** links that point outside the folder are refused.
+
+## Ports
+
+- **Git and local folders:** a new app uses `--port`, else the port detected from the Dockerfile, else `3000`.
+- **Images:** without `--port`, `up` reads the image's `EXPOSE` port. When the image declares none, it deploys a web service on port `3000` and prints a warning. Pass `--port <n>` to choose, or `--worker` for a background process with no port and no public URL.
+
+## Branch detection
+
+`up` builds the current branch of the checkout. CI systems often check out a detached HEAD; then `up` reads the branch from the first of these environment variables that is set:
+
+| Variable | CI system |
+| --- | --- |
+| `GITHUB_HEAD_REF` | GitHub Actions, pull request events |
+| `GITHUB_REF_NAME` | GitHub Actions, push events |
+| `CI_COMMIT_REF_NAME` | GitLab CI |
+| `BUILDKITE_BRANCH` | Buildkite |
+
+If none is set, `up` stops with `detached HEAD — pass --branch <name>`.
+
+## Build logs
+
+`up` attaches to the build's live log stream and prints each line as the build writes it. It is the same stream as [`stackblaze builds logs -f`](/cli/builds/). If the live stream is not available, the CLI polls the build log instead, automatically. Set `STACKBLAZE_BUILD_STREAM=poll` to force polling.
+
+`up` exits when the build finishes: `0` on success, `1` when the build fails, does not start within 2 minutes, does not finish within 10 minutes, or reports an `Unknown` state for 30 seconds. `--detach` skips the stream.
+
+## Linking
+
+Without `--pipeline` and without a link, `up` stops and asks you to pass `--pipeline`, run [`link`](/cli/link/), or use `-y`. After the deploy, the app name is saved to `.stackblaze/project.json` in this directory if no app is linked yet.
+
+In a terminal without credentials, `up` starts [`login`](/cli/login/) first. Without a terminal it exits `2`.
+
+## CI mode
+
+`--ci` writes one JSON object per line (NDJSON) to stdout: a `deploy` record, `build` records on each state change, a `log` record per build log line, an `error` record on failure, and a `status` record. Notices and upload progress go to stderr. The full format is in [CI and GitHub Actions](/cli/#up---ci-record-format).
+
+An image deploy has no build to follow. Without `--wait` it ends with a `status` record whose `state` is `submitted` and `ready` is `null`: the deploy was accepted, but nothing checked that it runs. Add `--wait` to wait for it.
+
+Exit codes: `1` when the build fails or times out, or `--wait` ends without the app running. See [exit codes](/cli/#output-and-exit-codes).

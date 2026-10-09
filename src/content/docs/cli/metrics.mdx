@@ -1,14 +1,16 @@
 ---
-title: Metrics
-description: stackblaze metrics
+title: stackblaze metrics
+description: "Show current CPU and memory usage per pod."
 ---
 
-CPU and memory snapshot for the service.
+Prints current CPU (millicores) and memory (MiB) for each of the linked app's pods.
 
-```bash
-stackblaze metrics
+## Usage
+
+```text
+stackblaze metrics [options]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+For history and analysis, use [`stackblaze diagnose`](/cli/diagnose/) or the dashboard.

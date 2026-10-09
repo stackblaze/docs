@@ -1,14 +1,32 @@
 ---
-title: Phases
-description: stackblaze phases
+title: stackblaze phases
+description: "List, create, delete and switch phases (environments) of a pipeline."
 ---
 
-List, create, delete, and `use` environments (API name: phases).
+Phases are a pipeline's environments, such as `staging` and `production`. Alias: `phase`.
 
-```bash
+## Usage
+
+```text
 stackblaze phases list
+stackblaze phases create <name>
+stackblaze phases delete <name> [-y]
+stackblaze phases use [name]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+| Subcommand | Description |
+| --- | --- |
+| `list` | Phases of the pipeline |
+| `create <name>` | Add a phase |
+| `delete <name>` | Remove a phase; asks you to type its name unless `-y`. Apps in the phase are not deleted. You cannot delete a pipeline's only phase |
+| `use [name]` | Switch the phase in this directory's link (`.stackblaze/project.json`); without a name, pick from a list |
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+## Examples
+
+```bash
+stackblaze phases create staging
+stackblaze phase use staging
+stackblaze phases delete preview -y
+```

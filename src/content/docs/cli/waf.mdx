@@ -1,14 +1,28 @@
 ---
-title: WAF
-description: stackblaze waf
+title: stackblaze waf
+description: "Show and change App Shield (web application firewall) for an app."
 ---
 
-App Shield: status, enable, disable, under-attack mode.
+App Shield is the per-app web application firewall. `stackblaze waf` with no subcommand shows its status.
 
-```bash
-stackblaze waf status
+## Usage
+
+```text
+stackblaze waf [status]
+stackblaze waf enable
+stackblaze waf disable
+stackblaze waf under-attack status|enable|disable
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+| Subcommand | Description |
+| --- | --- |
+| `status` | Whether App Shield is on, and its mode |
+| `enable` | Turn on App Shield in detection-only mode (keeps blocking mode if it is already on) |
+| `disable` | Turn off App Shield |
+| `under-attack status` | Whether Under Attack Mode (blocking) is on |
+| `under-attack enable` | Block matching requests |
+| `under-attack disable` | Return to detection-only |
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+See [App Shield](/networking/waf/).

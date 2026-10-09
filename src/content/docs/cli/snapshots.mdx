@@ -1,14 +1,36 @@
 ---
-title: Snapshots
-description: stackblaze snapshots
+title: stackblaze snapshots
+description: "List, create and restore volume snapshots for an app."
 ---
 
-List, create, and restore volume snapshots.
+Alias: `snapshot`.
 
-```bash
+## Usage
+
+```text
 stackblaze snapshots list
+stackblaze snapshots create [--group-id <id>]
+stackblaze snapshots restore --group-id <id> [-y]
+stackblaze snapshots restore --pvc-name <name> --snapshot-name <name> [-y]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+| Subcommand | Description |
+| --- | --- |
+| `list` | Snapshots of the app's volumes |
+| `create` | Snapshot every snapshot-capable volume of the app as one group |
+| `restore` | Restore a whole group, or one volume from one snapshot. Asks for confirmation unless `-y` |
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `--group-id <id>` | `create`, `restore` | Group ID to create, or the group to restore |
+| `--pvc-name <name>`, `--snapshot-name <name>` | `restore` | Restore a single volume |
+| `-y, --yes` | `restore` | Skip the confirmation |
+
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+## Example
+
+```bash
+stackblaze snapshots create --group-id before-migration
+stackblaze snapshots restore --group-id before-migration -y
+```

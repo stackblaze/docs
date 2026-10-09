@@ -1,14 +1,20 @@
 ---
-title: Billing
-description: stackblaze billing
+title: stackblaze billing
+description: "Show your plan, usage credit and resource usage."
 ---
 
-Plan, usage, and resource breakdown.
+Prints your plan, usage credit and current resource usage (CPU, memory and more).
 
-```bash
-stackblaze billing
+## Usage
+
+```text
+stackblaze billing [options]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+```bash
+stackblaze billing -o json
+```
+
+Manage payment and plans in the dashboard.

@@ -1,14 +1,76 @@
 ---
-title: Apps
-description: stackblaze apps
+title: stackblaze apps
+description: "List, inspect, create, update, restart, redeploy, scale and delete apps."
 ---
 
-List, get, create, update, restart, redeploy, scale, delete services (API name: apps).
+Manages apps (services). Alias: `app`. Commands that act on one app use the linked app or `-p`/`--phase`/`-a`.
 
-```bash
+## Usage
+
+```text
 stackblaze apps list
+stackblaze apps get
+stackblaze apps create [name] --mode docker|git [options]
+stackblaze apps update [options]
+stackblaze apps restart
+stackblaze apps redeploy [--tag <tag>]
+stackblaze apps scale [web=N] [worker=N] [--autoscale <process=min:max>]
+stackblaze apps delete [-y]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+| Subcommand | Description |
+| --- | --- |
+| `list` | Apps across your pipelines, filtered to the pipeline and phase in scope (flags, environment or link) |
+| `get` | Details for one app: URL, status, pod count, variable count |
+| `create [name]` | Create an app from an image (`--mode docker`) or a git repo (`--mode git`) |
+| `update` | Change an existing app's configuration |
+| `restart` | Rolling restart, same image (same as [`restart`](/cli/restart/)) |
+| `redeploy` | Rebuild (git) or re-pull (image), or deploy `--tag` (same as [`redeploy`](/cli/redeploy/)) |
+| `scale` | Set web and worker replicas or autoscaling in one release (same as [`scale`](/cli/scale/)) |
+| `delete` | Delete the app; asks you to type its name unless `-y` |
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+## `apps create`
+
+| Flag | Description |
+| --- | --- |
+| `--mode <mode>` | `docker` or `git` (required) |
+| `--name <name>` | App name (or pass it positionally) |
+| `--image <repo>`, `--tag <tag>` | Image and tag (docker mode; tag default `latest`) |
+| `--repository <url>`, `--branch <name>` | Git URL and branch (git mode; branch default `main`) |
+| `--buildstrategy <s>` | `buildpacks`, `dockerfile`, `nixpacks` or `plain` |
+| `--build-context <dir>`, `--dockerfile-path <path>` | Monorepo build context and Dockerfile path |
+| `--port <n>` | Container port (docker mode: default is the image's `EXPOSE` port) |
+| `--worker` | Background worker: no port, no public URL |
+| `--replicas <n>` | Replicas (default `1`) |
+| `--domain <host>` | Custom domain |
+| `--addon <name>` | Attach an add-on by kind or name (repeatable) |
+| `--env <KEY=value>` | Variable (repeatable) |
+| `--wait` | Wait until the app is running |
+
+The pipeline is required; the phase defaults to `production`. As with [`up`](/cli/up/#ports), an image app created without `--port`, `--domain` or `--worker` uses the image's `EXPOSE` port, or a web service on `3000` with a warning when the image declares none.
+
+## `apps update`
+
+| Flag | Description |
+| --- | --- |
+| `--branch <name>` | Git branch |
+| `--image <repo>`, `--tag <tag>` | Image repository and tag |
+| `--port <n>` | Container port |
+| `-r, --replicas <n>`, `--worker-replicas <n>` | Web and worker replicas |
+| `--podsize <name>` | Pod size by name |
+| `--domain <host>` | Custom domain (replaces the existing hosts) |
+| `--buildstrategy <s>`, `--build-context <dir>`, `--dockerfile-path <path>` | Build settings |
+| `--env <KEY=value>` | Set a variable (repeatable) |
+
+At least one change is required.
+
+## Examples
+
+```bash
+stackblaze apps list -o json | jq -r '.[] | "\(.pipeline)/\(.phase)/\(.app)"'
+stackblaze apps create api --mode docker --image ghcr.io/acme/api --tag 1.4.2 --port 8080 -p shop --wait
+stackblaze apps update --podsize medium --env FEATURE_X=on
+stackblaze apps delete -a old-api -y
+```

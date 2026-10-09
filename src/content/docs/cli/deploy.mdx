@@ -1,0 +1,38 @@
+---
+title: stackblaze deploy
+description: "Redeploy the linked app, or ship every staged change as one release."
+---
+
+Without flags, `deploy` is [`stackblaze redeploy`](/cli/redeploy/): a git or local-folder app rebuilds, an image app re-pulls its image. If the app has staged changes, it warns that they are not part of this deploy.
+
+With `--apply-pending`, it applies every change staged with `--skip-deploy` as one release, the same as [`stackblaze pending apply`](/cli/pending/).
+
+## Usage
+
+```text
+stackblaze deploy [--tag <tag>]
+stackblaze deploy --apply-pending [-m <text>]
+```
+
+## Options
+
+| Flag | Description |
+| --- | --- |
+| `--apply-pending` | Apply every staged change (see [`pending list`](/cli/pending/)) as one release |
+| `-m, --message <text>` | Release message shown in the deployment history (with `--apply-pending`) |
+| `--tag <tag>` | Deploy this image tag instead (not with `--apply-pending`) |
+
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+## Examples
+
+```bash
+stackblaze variables set FOO=1 --skip-deploy
+stackblaze scale web=3 --skip-deploy
+stackblaze deploy --apply-pending -m "Bump FOO and scale up"
+stackblaze deploy --tag 1.4.3
+```
+
+## How it works
+
+Staging lets you collect several variable and scale changes and roll them out together instead of one release each. `deploy --apply-pending` asks the server to apply them all at once; plain `deploy` redeploys what is already configured and leaves staged changes staged.

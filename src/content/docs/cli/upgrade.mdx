@@ -1,14 +1,31 @@
 ---
-title: Upgrade
-description: stackblaze upgrade
+title: stackblaze upgrade
+description: "Update the CLI binary in place."
 ---
 
-Self-update the CLI binary from GHCR.
+Downloads the newest CLI build for your platform and replaces the running binary.
+
+## Usage
+
+```text
+stackblaze upgrade [--channel stable|dev] [--version <x.y.z>] [--install-path <file>]
+```
+
+| Flag | Description |
+| --- | --- |
+| `--channel <name>` | `stable` (default) or `dev` (prereleases); also `STACKBLAZE_CHANNEL` |
+| `--version <tag>` | Install a specific version, e.g. `1.0.0` |
+| `--install-path <path>` | Binary to replace (default: the running binary; also `STACKBLAZE_INSTALL_PATH`) |
+| `--oras` | Download with the `oras` tool instead of the built-in client |
+
+## Examples
 
 ```bash
 stackblaze upgrade
+stackblaze upgrade --channel dev
+stackblaze upgrade --version 1.0.0
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+On Linux and macOS the old binary is kept next to the new one as `stackblaze.bak` (if it can be renamed). On Windows, the running binary cannot be replaced: `upgrade` writes `stackblaze.new.exe` next to it and asks you to swap the files after closing the terminal. Re-running the [installer](/cli/#install) also upgrades.
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+Check the version with `stackblaze --version`.

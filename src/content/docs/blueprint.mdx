@@ -145,7 +145,7 @@ services:
 
 ## Plan and apply
 
-When IaC is enabled on the organization, `stackblaze plan` and `stackblaze apply` wrap the same API. You can also plan/apply from the dashboard or with a `kbr_pat_` token. Apply never deletes.
+When IaC is enabled on the organization, plan and apply `stackblaze.yaml` from the dashboard or with a `kbr_pat_` token against the API below. Apply never deletes. (The CLI's `stackblaze plan` / `apply` take a different, manifest-based format; see [stackblaze apply](/cli/apply/).)
 
 ```bash title="terminal"
 # Validate (no live reads)

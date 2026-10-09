@@ -1,14 +1,37 @@
 ---
-title: Templates
-description: stackblaze templates
+title: stackblaze templates
+description: "Search the template catalog and deploy a template into a pipeline."
 ---
 
-Search the catalog and deploy a template onto a project.
+Alias: `template`.
 
-```bash
-stackblaze templates search n8n
+## Usage
+
+```text
+stackblaze templates search [query] [--category <name>] [-n <limit>]
+stackblaze templates deploy <template> [options]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+| Subcommand | Description |
+| --- | --- |
+| `search [query]` | Search or browse the catalog; without a query, lists templates |
+| `deploy <template>` | Deploy a template as a new app in the pipeline in scope (phase default `production`) |
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+## `templates deploy`
+
+| Flag | Description |
+| --- | --- |
+| `--name <name>` | App name (default: from the template) |
+| `--deployment-type <id>` | Variant: `standard` (default) or `ha`, when the template offers it |
+| `--env <KEY=value>` | Override a template variable (repeatable) |
+| `--wait` | Wait until the app is running. With `--json`, stdout carries one JSON document with the readiness check under `wait`; a wait that does not end ready exits `1` |
+
+## Examples
+
+```bash
+stackblaze templates search postgres
+stackblaze templates search --category analytics -n 5
+stackblaze templates deploy n8n -p automations --name n8n --wait
+```

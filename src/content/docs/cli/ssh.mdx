@@ -1,14 +1,29 @@
 ---
-title: SSH
-description: stackblaze ssh
+title: stackblaze ssh
+description: "Open an interactive shell inside a running app container."
 ---
 
-Interactive shell into the running service (WebSocket console).
+Opens an interactive terminal in one of the linked app's pods over the API (no SSH keys or open ports). Remote console access must be enabled on the platform; if it is not, the command reports a console error.
+
+## Usage
+
+```text
+stackblaze ssh [options]
+```
+
+| Flag | Description |
+| --- | --- |
+| `--pod <name>` | Pod to connect to (default: the app's first pod) |
+| `--container <name>` | Container (default: `kuberoapp-web`, else the first container) |
+| `--command <shell>` | Command to start (default `sh`) |
+
+Also accepts `-p, --pipeline`, `--phase`, `-a, --app`, `--token` and `--api-url` (see [scope](/cli/#scope-and-common-flags)). No JSON output.
+
+## Examples
 
 ```bash
 stackblaze ssh
+stackblaze ssh --command bash -a worker
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
-
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+The CLI exits with the remote session's exit code.

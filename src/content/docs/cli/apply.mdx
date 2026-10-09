@@ -1,14 +1,28 @@
 ---
-title: Apply
-description: stackblaze apply
+title: stackblaze apply
+description: "Create or update pipelines and apps from manifest files."
 ---
 
-Apply `stackblaze.yaml` (IaC must be enabled). Never deletes.
+Creates or updates every pipeline and app declared in the manifests (pipelines first). It never deletes; use [`destroy`](/cli/destroy/) for that.
 
-```bash
-stackblaze apply ./stackblaze.yaml
+## Usage
+
+```text
+stackblaze apply <path> [--continue-on-error] [-o text|json]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+| Flag | Description |
+| --- | --- |
+| `--continue-on-error` | Keep going after a resource fails (default: stop at the first failure) |
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+Also accepts `--token`, `--api-url`, `-o, --output` and `--json` (see [common flags](/cli/#scope-and-common-flags)).
+
+The manifest format is the one [`stackblaze export`](/cli/export/) writes: YAML documents of `kind: KuberoPipeline` or `kind: KuberoApp`. App documents need `metadata.pipeline` and `metadata.phase`. A path can be a file or a directory (all `.yaml` / `.yml` files, recursively). This is separate from the `stackblaze.yaml` [config as code](/blueprint/) file.
+
+Infrastructure as Code must be enabled; check with [`stackblaze status`](/cli/status/).
+
+Exits `1` if any resource failed. The JSON result lists each resource with `action`: `created`, `updated` or `failed`.
+
+```bash
+stackblaze plan ./stackblaze && stackblaze apply ./stackblaze
+```

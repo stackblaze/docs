@@ -1,14 +1,16 @@
 ---
-title: Context
-description: stackblaze context
+title: stackblaze context
+description: "Show the API URL, pipeline, phase and app the CLI resolves here."
 ---
 
-Show resolved API URL and link scope.
+Prints what the CLI would use in this directory: the API URL and the pipeline, phase and app after applying flags, `STACKBLAZE_*` environment variables and `.stackblaze/project.json` (see [scope](/cli/#scope-and-common-flags)).
 
-```bash
-stackblaze context
+## Usage
+
+```text
+stackblaze context [options]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+Needs credentials (it reads the API URL from them) but makes no API call.

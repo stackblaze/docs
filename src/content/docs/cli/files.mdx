@@ -1,14 +1,45 @@
 ---
-title: Files
-description: stackblaze files
+title: stackblaze files
+description: "Browse, download, upload, rename and delete files on an app's volumes."
 ---
 
-Browse and transfer files on volume mounts.
+Works on files inside the app's volume mounts, through a running pod.
+
+## Usage
+
+```text
+stackblaze files mounts
+stackblaze files list --path <dir>
+stackblaze files download --path <path> [--out <file>]
+stackblaze files upload <local> --path <path> [--extract]
+stackblaze files rename --from <path> --to <path>
+stackblaze files delete --path <path> [-y]
+```
+
+| Subcommand | Description |
+| --- | --- |
+| `mounts` | Volume mount paths you can use |
+| `list` | Files under a path |
+| `download` | Download a file or directory as a tar archive (default `<basename>.tar`) |
+| `upload <local>` | Upload a local file. With a `--path` ending in `/` or `--extract`, a tar archive is extracted there (automatic for `.tar` / `.tgz`) |
+| `rename` | Rename or move a file |
+| `delete` | Delete a file or directory; asks for confirmation unless `-y` |
+
+| Flag | Description |
+| --- | --- |
+| `--path <path>` | Absolute path under a mount, e.g. `/data` |
+| `--out <file>` | `download`: local file to write (default `<basename>.tar`) |
+| `--pod <name>`, `--container <name>` | Target pod and container (default: the app's main pod, `kuberoapp-web`) |
+
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+`files download` still accepts `-o <file>` as an older spelling of `--out`; `-o json` and `-o text` select the output format as on every other command.
+
+## Examples
 
 ```bash
 stackblaze files mounts
+stackblaze files list --path /data
+stackblaze files download --path /data/uploads --out uploads.tar
+stackblaze files upload ./seed.tgz --path /data/
 ```
-
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
-
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).

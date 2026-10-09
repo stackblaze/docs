@@ -1,14 +1,29 @@
 ---
-title: Open
-description: stackblaze open
+title: stackblaze open
+description: "Open the dashboard page for an app or pipeline, or the app itself."
 ---
 
-Print (and open) the dashboard URL for the linked project or service.
+Prints the URL of the linked app's dashboard page and opens it in your browser. With no app in scope, it opens the pipeline page.
+
+## Usage
+
+```text
+stackblaze open [options]
+```
+
+| Flag | Description |
+| --- | --- |
+| `--app-url` | Open the app's public URL instead of the dashboard (needs an app with a domain) |
+| `--no-browser` | Only print the URL |
+
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+The browser opens only when stdout is a terminal and JSON output is off. Set `STACKBLAZE_DASHBOARD_URL` if your dashboard is not at the default address.
+
+## Examples
 
 ```bash
 stackblaze open
+stackblaze open --app-url
+stackblaze open --no-browser -o json | jq -r .url
 ```
-
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
-
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).

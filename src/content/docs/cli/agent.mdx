@@ -1,14 +1,42 @@
 ---
-title: Agent
-description: stackblaze agent
+title: stackblaze agent
+description: "Chat with the StackBlaze agent from your terminal, interactively or one-shot."
 ---
 
-CLI agent helper for MCP-oriented workflows.
+Without a prompt, starts an interactive chat. With a prompt (positional or `--prompt`), sends one message, prints the answer and exits.
 
-```bash
-stackblaze agent --help
+## Usage
+
+```text
+stackblaze agent [prompt...] [options]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+| Flag | Description |
+| --- | --- |
+| `--prompt <text>` | One-shot prompt (or pass it positionally, not both) |
+| `-p, --pipeline <name>`, `--phase <name>`, `-a, --app <name>` | Give the conversation this scope |
+| `--json` | One-shot only: print `sessionId`, `response`, `toolCalls` and `model` as JSON |
+| `--plain` | Plain text, without the streaming terminal UI |
+| `-y, --yes` | Approve the agent's destructive actions automatically |
+| `--list` | List saved sessions on this machine |
+| `--thread-id <id>`, `--session-id <id>` | Resume a saved session |
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+Also accepts `--token`, `--api-url` and `-o, --output`.
+
+`-p` means `--pipeline`, as in every other command. Pass the prompt as text: `stackblaze agent "why is my app slow?"`.
+
+## Examples
+
+```bash
+stackblaze agent
+stackblaze agent "why did my last deploy fail?" -a api
+stackblaze agent --json --prompt "list my apps" | jq -r .response
+stackblaze agent --list
+stackblaze agent --session-id 3f2c…
+```
+
+## Confirmations
+
+When the agent wants to take a destructive action, it asks you first. Without a terminal, those requests are declined unless you pass `-y`. A one-shot run whose turn fails exits `3`.
+
+Sessions are saved under `~/.config/stackblaze/`.

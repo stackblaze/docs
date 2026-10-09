@@ -1,14 +1,24 @@
 ---
-title: Destroy
-description: stackblaze destroy
+title: stackblaze destroy
+description: "Delete the pipelines and apps declared in manifest files."
 ---
 
-Delete resources declared in a YAML path. Confirmation required.
+Deletes every resource declared in the manifests: apps first, then pipelines. Lists what will be deleted and asks you to type `yes` unless `-y`.
 
-```bash
-stackblaze destroy ./stackblaze.yaml
+## Usage
+
+```text
+stackblaze destroy <path> [-y] [-o text|json]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+| Flag | Description |
+| --- | --- |
+| `-y, --yes` | Do not prompt |
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+Also accepts `--token`, `--api-url`, `-o, --output` and `--json` (see [common flags](/cli/#scope-and-common-flags)).
+
+The manifest format is the one [`stackblaze export`](/cli/export/) writes: YAML documents of `kind: KuberoPipeline` or `kind: KuberoApp`. App documents need `metadata.pipeline` and `metadata.phase`. A path can be a file or a directory (all `.yaml` / `.yml` files, recursively). This is separate from the `stackblaze.yaml` [config as code](/blueprint/) file.
+
+Infrastructure as Code must be enabled; check with [`stackblaze status`](/cli/status/).
+
+Exits `1` if any deletion failed. In scripts, always pass `-y`.

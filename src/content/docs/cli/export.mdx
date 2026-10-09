@@ -1,14 +1,25 @@
 ---
-title: Export
-description: stackblaze export
+title: stackblaze export
+description: "Write live pipelines and apps out as manifest files."
 ---
 
-Download live topology as YAML.
+Writes one YAML file per pipeline (`<pipeline>.pipeline.yaml`) and per app (`<pipeline>.<phase>.<app>.app.yaml`) that [`plan`](/cli/plan/) and [`apply`](/cli/apply/) accept.
 
-```bash
-stackblaze export --out ./infra
+## Usage
+
+```text
+stackblaze export [--out <dir>] [-p <pipeline>] [-o text|json]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+| Flag | Description |
+| --- | --- |
+| `--out <dir>` | Output directory (default `stackblaze`) |
+| `-p, --pipeline <name>` | Export one pipeline (default: all you can see) |
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+Also accepts `--token`, `--api-url`, `-o, --output` and `--json` (see [common flags](/cli/#scope-and-common-flags)).
+
+Infrastructure as Code must be enabled. Exported app specs include variable values; review the files before committing them.
+
+```bash
+stackblaze export --out ./infra -p shop
+```
