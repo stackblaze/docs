@@ -54,22 +54,22 @@ export STACKBLAZE_TOKEN=kbr_pat_…
 stackblaze whoami
 ```
 
-`STACKBLAZE_API_URL` is required whenever no saved login exists. Flags (`--token`, `--api-url`) override the environment, which overrides the saved config. See [login](/cli/login/), [logout](/cli/logout/), [whoami](/cli/whoami/).
+`STACKBLAZE_API_URL` defaults to `https://api.stackblaze.cloud`; `STACKBLAZE_TOKEN` is required whenever no saved login exists. Flags (`--token`, `--api-url`) override the environment, which overrides the saved config. See [login](/cli/login/), [logout](/cli/logout/), [whoami](/cli/whoami/).
 
 ## Quick start
 
-From a git checkout whose `origin` remote StackBlaze can build:
+From a project folder:
 
 ```bash
 stackblaze init            # create a project (pipeline) and link this directory
-stackblaze up              # create the app from this repo and stream the build
+stackblaze up              # create the app and stream the build
 stackblaze logs            # recent app logs (add -f to follow)
 stackblaze open            # open the app's dashboard page (--app-url opens the app)
 ```
 
 - `init` writes `.stackblaze/project.json`, so later commands know which pipeline and phase to use.
-- `up` builds from the git remote and branch, not from local files: push your commits first. It also saves the app name in the link when none is set yet.
-- `up` creates a new app. To ship new commits to an existing app, run [`stackblaze redeploy`](/cli/redeploy/).
+- In a git checkout with a remote, `up` builds from the remote and current branch, not from local files: push your commits first. In a folder without a git remote (or with `--local`), it uploads the folder and builds that. See [up](/cli/up/).
+- Run `up` again to ship changes: it updates the existing app and deploys again. It also saves the app name in the link when none is set yet.
 
 ## Scope and common flags
 
@@ -104,7 +104,9 @@ With `-o json` (or `--json`), stdout carries only the JSON result, and text that
 stackblaze apps list -o json | jq -r '.[].app'
 ```
 
-Streaming commands write one JSON record per line (NDJSON) instead: `up --ci` and `builds logs --ci`. Commands that open an interactive session (`ssh`, `shell`, `connect`, `run`) and the local tooling commands (`setup`, `completion`, `upgrade`, `docs`) have no JSON mode. Set `NO_COLOR=1` to turn off colour; colour is already off when output is not a terminal.
+Streaming commands write one JSON record per line (NDJSON) instead: `up --ci`, `builds logs --ci` and `logs -f --json`.
+
+Commands that take `--wait` (`deployments rollback`, `addons add`, `templates deploy`) print **one** JSON document with `--wait --json`: the command's result with the readiness check under `wait`. A wait that does not end with the app running exits `1`, so `command --wait && next` only continues on a running app. Commands that open an interactive session (`ssh`, `shell`, `connect`, `run`) and the local tooling commands (`setup`, `completion`, `upgrade`, `docs`) have no JSON mode. Set `NO_COLOR=1` to turn off colour; colour is already off when output is not a terminal.
 
 | Exit code | Meaning |
 | --- | --- |
@@ -117,11 +119,11 @@ Destructive commands ask for confirmation. When stdin is not a terminal (CI) the
 
 `stackblaze run` exits with the exit code of the command it runs, and `ssh` with the exit code of the remote shell.
 
-Network tuning: `STACKBLAZE_HTTP_TIMEOUT` (seconds per request, default `30`, `0` disables) and `STACKBLAZE_HTTP_RETRIES` (extra attempts for read requests, default `2`).
+Network tuning: `STACKBLAZE_HTTP_TIMEOUT` (seconds per request, default `60`, `0` disables) and `STACKBLAZE_HTTP_RETRIES` (extra attempts for read requests, default `2`).
 
 ## CI and GitHub Actions
 
-Create the app once (locally with `stackblaze up`, or in the dashboard). In CI, rebuild it and stream the build. The job fails when the build fails:
+`stackblaze up` is safe to re-run, so the same command works on every push: the first run creates the app, later runs update it and build again. With `--ci` it streams the build as NDJSON, and the job fails when the build fails:
 
 ```yaml title=".github/workflows/deploy.yml"
 name: Deploy
@@ -138,28 +140,28 @@ jobs:
       STACKBLAZE_PHASE: production
       STACKBLAZE_APP: web
     steps:
+      - uses: actions/checkout@v4
       - name: Install StackBlaze CLI
         run: |
           curl -fsSL https://stackblaze.com/install.sh | sh
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-      - name: Rebuild from the app's branch
-        run: stackblaze redeploy
-      - name: Stream the build log
-        run: stackblaze builds logs --ci
+      - name: Deploy
+        run: stackblaze up --ci --wait
 ```
 
-- `redeploy` rebuilds a git app from the branch configured on the app. To build exactly the pushed commit, use `stackblaze builds trigger --commit-sha "$GITHUB_SHA"` instead.
-- `builds logs --ci` follows the newest build and exits `0` when it succeeds, `1` when it fails or does not finish within 10 minutes.
-- To wait for the new version to be running as well, add a step with `stackblaze wait --timeout 300`.
+- Keep the `actions/checkout` step: `up` reads the repository and branch from the checkout.
+- `up` builds the head of the branch. CI checkouts are often a detached HEAD; `up` then reads the branch from `GITHUB_HEAD_REF`, `GITHUB_REF_NAME`, `CI_COMMIT_REF_NAME` or `BUILDKITE_BRANCH` (see [branch detection](/cli/up/#branch-detection)). To build exactly the pushed commit instead, run `stackblaze builds trigger --commit-sha "$GITHUB_SHA"` followed by `stackblaze builds logs -f --ci`.
+- `--wait` also waits up to 90 seconds for the new version to be running. Drop it to finish when the build succeeds.
+- For an image app, run `stackblaze up --ci --wait --image ghcr.io/acme/web --tag "$GITHUB_SHA"`. Without `--wait`, an image deploy ends with `"state":"submitted"` because nothing checked that it runs.
 
 If the app [auto-deploys](/cicd/auto-deploy/) on push, you do not need this workflow.
 
 ### `up --ci` record format
 
-`stackblaze up --ci` creates an app and streams NDJSON to stdout (one JSON object per line):
+`stackblaze up --ci` streams NDJSON to stdout (one JSON object per line). Notices and upload progress go to stderr:
 
 ```json
-{"type":"deploy","pipeline":"my-project","phase":"production","app":"web","mode":"git","repository":"https://github.com/acme/web","branch":"main","buildstrategy":"nixpacks"}
+{"type":"deploy","pipeline":"my-project","phase":"production","app":"web","mode":"git","action":"updated","repository":"https://github.com/acme/web","branch":"main","buildstrategy":"nixpacks","changed":[]}
 {"type":"build","build":"web-1a2b3c","state":"Active"}
 {"type":"log","build":"web-1a2b3c","container":"build","message":"…"}
 {"type":"build","build":"web-1a2b3c","state":"Succeeded","success":true}
@@ -167,22 +169,23 @@ If the app [auto-deploys](/cicd/auto-deploy/) on push, you do not need this work
 
 | `type` | Fields | When |
 | --- | --- | --- |
-| `deploy` | `pipeline`, `phase`, `app`, `mode`, plus `repository`, `branch`, `buildstrategy` (git) or `image`, `tag` (image) | Once, after the app is created |
+| `deploy` | `pipeline`, `phase`, `app`, `mode` (`git`, `upload` or `docker`), `action` (`created` or `updated`), `changed` (settings changed on an existing app), plus `repository`, `branch`, `buildstrategy` (git), `uploadId`, `sha256`, `sizeBytes`, `files` (upload) or `image`, `tag` (docker) | Once, after the app is created or updated |
 | `build` | `build`, `state` (`Active`, `Succeeded`, `Failed`, …); the final record also has `success` | First seen, then on every state change |
-| `log` | `build`, `container`, `message` | Each new build log line |
+| `log` | `build`, `container`, `message` | Each build log line, as it is written |
 | `error` | `message` | The build failed or timed out |
-| `status` | `ready`, `pipeline`, `phase`, `app`, and when known `phaseStatus`, `url`, `message`, `failed`, `timedOut`, `note` | With `--wait`, after the build; for image deploys, always |
+| `status` | `ready`, `pipeline`, `phase`, `app`, and when known `phaseStatus`, `url`, `message`, `failed`, `timedOut`, `note` | With `--wait`, after the build |
+| `status` | `state: "submitted"`, `ready: null`, `pipeline`, `phase`, `app`, `note` | Image deploys without `--wait`: the deploy was accepted, nothing checked that it runs |
 
-Exit code is `1` when the build fails or times out, or when `--wait` ends without the app ready. `builds logs --ci` emits the same `build`, `log` and `error` records.
+Exit code is `1` when the build fails or times out, or when `--wait` ends without the app ready. `builds logs --ci` emits the same `build`, `log` and `error` records. Build logs stream live; set `STACKBLAZE_BUILD_STREAM=poll` to poll instead.
 
 ## Command index
 
 Use the sidebar for every page. By task:
 
 - **Sign in and link:** [login](/cli/login/), [logout](/cli/logout/), [whoami](/cli/whoami/), [init](/cli/init/), [link](/cli/link/), [unlink](/cli/unlink/), [context](/cli/context/), [list](/cli/list/), [status](/cli/status/)
-- **Deploy and operate:** [up](/cli/up/), [redeploy](/cli/redeploy/), [restart](/cli/restart/), [scale](/cli/scale/), [down](/cli/down/), [wait](/cli/wait/), [open](/cli/open/), [inspect](/cli/inspect/)
+- **Deploy and operate:** [up](/cli/up/), [deploy](/cli/deploy/), [redeploy](/cli/redeploy/), [restart](/cli/restart/), [scale](/cli/scale/), [down](/cli/down/), [resume](/cli/resume/), [wait](/cli/wait/), [open](/cli/open/), [inspect](/cli/inspect/)
 - **Observe and debug:** [logs](/cli/logs/), [metrics](/cli/metrics/), [events](/cli/events/), [diagnose](/cli/diagnose/), [ssh](/cli/ssh/), [shell](/cli/shell/), [run](/cli/run/), [connect](/cli/connect/)
-- **Resources:** [apps](/cli/apps/), [pipelines](/cli/pipelines/), [phases](/cli/phases/), [builds](/cli/builds/), [deployments](/cli/deployments/), [domain](/cli/domain/), [variables](/cli/variables/), [env](/cli/env/), [addons](/cli/addons/), [templates](/cli/templates/), [functions](/cli/functions/), [waf](/cli/waf/), [volume](/cli/volume/), [snapshots](/cli/snapshots/), [files](/cli/files/)
+- **Resources:** [apps](/cli/apps/), [pipelines](/cli/pipelines/), [phases](/cli/phases/), [builds](/cli/builds/), [deployments](/cli/deployments/), [domain](/cli/domain/), [variables](/cli/variables/), [pending](/cli/pending/), [env](/cli/env/), [addons](/cli/addons/), [templates](/cli/templates/), [functions](/cli/functions/), [waf](/cli/waf/), [volume](/cli/volume/), [snapshots](/cli/snapshots/), [files](/cli/files/)
 - **Manifests (Infrastructure as Code):** [plan](/cli/plan/), [apply](/cli/apply/), [export](/cli/export/), [destroy](/cli/destroy/)
 - **AI tooling:** [agent](/cli/agent/), [setup](/cli/setup/) (aliases: [mcp](/cli/mcp/), [skills](/cli/skills/))
 - **Account and CLI:** [billing](/cli/billing/), [audit](/cli/audit/), [upgrade](/cli/upgrade/), [completion](/cli/completion/), [docs](/cli/docs/)

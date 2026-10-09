@@ -10,7 +10,7 @@ Works on files inside the app's volume mounts, through a running pod.
 ```text
 stackblaze files mounts
 stackblaze files list --path <dir>
-stackblaze files download --path <path> [-o <file>]
+stackblaze files download --path <path> [--out <file>]
 stackblaze files upload <local> --path <path> [--extract]
 stackblaze files rename --from <path> --to <path>
 stackblaze files delete --path <path> [-y]
@@ -28,17 +28,18 @@ stackblaze files delete --path <path> [-y]
 | Flag | Description |
 | --- | --- |
 | `--path <path>` | Absolute path under a mount, e.g. `/data` |
+| `--out <file>` | `download`: local file to write (default `<basename>.tar`) |
 | `--pod <name>`, `--container <name>` | Target pod and container (default: the app's main pod, `kuberoapp-web`) |
 
 Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
-`files download` is the exception: its `-o, --output <file>` is the local file to write, so use `--json` there for JSON output.
+`files download` still accepts `-o <file>` as an older spelling of `--out`; `-o json` and `-o text` select the output format as on every other command.
 
 ## Examples
 
 ```bash
 stackblaze files mounts
 stackblaze files list --path /data
-stackblaze files download --path /data/uploads -o uploads.tar
+stackblaze files download --path /data/uploads --out uploads.tar
 stackblaze files upload ./seed.tgz --path /data/
 ```

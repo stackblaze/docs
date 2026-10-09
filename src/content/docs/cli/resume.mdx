@@ -1,0 +1,33 @@
+---
+title: stackblaze resume
+description: "Resume an app paused with stackblaze down."
+---
+
+Resumes an app paused with [`stackblaze down`](/cli/down/). It starts again with its saved replica count or autoscaling settings and its cron jobs re-enabled, running the latest built image. `stackblaze up --resume` does the same.
+
+## Usage
+
+```text
+stackblaze resume [-m <text>] [options]
+stackblaze up --resume
+```
+
+## Options
+
+| Flag | Description |
+| --- | --- |
+| `-m, --message <text>` | Reason, recorded in the deployment history |
+
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+## Examples
+
+```bash
+stackblaze resume
+stackblaze resume -p shop --phase production -a web
+stackblaze up --resume
+```
+
+## How it works
+
+`resume` clears the paused state on the server. If a git push built a new image while the app was paused, the app starts on that image. `up --resume` only resumes: it cannot be combined with deploy flags such as `--image`, `--port` or `--env`.

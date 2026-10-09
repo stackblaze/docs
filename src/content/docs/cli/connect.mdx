@@ -1,14 +1,18 @@
 ---
 title: stackblaze connect
-description: "Open a database shell (psql, mysql or redis-cli) for an app's add-on."
+description: "Open a database shell for an app's add-on, in the app's container or on your machine through a private tunnel."
 ---
 
-Opens an interactive database client for an add-on attached to the linked app. The client runs inside the app's container, using the connection details the app already has, so the client program (`psql`, `mysql` or `redis-cli`) must exist in the app's image. Uses the same console access as [`ssh`](/cli/ssh/).
+Opens an interactive database client (`psql`, `mysql` or `redis-cli`) for an add-on attached to the linked app.
+
+- **Default:** the client runs inside the app's container, using the connection details the app already has. The client program must exist in the app's image.
+- **`--local`:** the client runs on your machine, through a private tunnel to the database.
+- **`--tunnel`:** keeps a private tunnel open and prints host, port, user and database for GUI tools.
 
 ## Usage
 
 ```text
-stackblaze connect <addon> [--instance <name>] [scope flags]
+stackblaze connect <addon> [--instance <name>] [--local | --tunnel] [--port <port>] [--print-only] [scope flags]
 ```
 
 `<addon>` is the database type:
@@ -19,15 +23,34 @@ stackblaze connect <addon> [--instance <name>] [scope flags]
 | `mysql`, `mariadb` | `mysql` |
 | `redis`, `valkey` | `redis-cli` |
 
+## Options
+
 | Flag | Description |
 | --- | --- |
 | `--instance <name>` | Which add-on instance, when the app has more than one of that type |
+| `--local` | Run the client on this machine through a private tunnel (needs `psql`, `mysql` or `redis-cli` installed) |
+| `--tunnel` | Keep a private tunnel open for GUI tools and print host, port, user and database |
+| `--port <port>` | Local port for `--local` or `--tunnel` (default: a free port) |
+| `--print-only` | With `--local`: print the connection string instead of launching a client; the tunnel stays open |
 
 Also accepts `-p, --pipeline`, `--phase`, `-a, --app`, `--token` and `--api-url` (see [scope](/cli/#scope-and-common-flags)). No JSON output.
 
 ## Examples
 
 ```bash
-stackblaze connect postgres
-stackblaze connect redis --instance cache
+stackblaze connect postgres                          # psql inside the app's container
+stackblaze connect postgres --local                  # psql on this machine, via the tunnel
+stackblaze connect mysql --local --instance orders   # pick one of several add-ons
+stackblaze connect postgres --local --port 15432 --print-only
+#   postgresql://app:…@127.0.0.1:15432/app  (the tunnel stays open until Ctrl-C)
+stackblaze connect redis --tunnel --port 16379       # host/port/user/db for a GUI tool
 ```
+
+## How it works
+
+With `--local` or `--tunnel`, the CLI listens on `127.0.0.1` only. Each connection your client opens is carried over its own authenticated connection to the StackBlaze API, which forwards it to the add-on. The database is never exposed publicly.
+
+- **Access:** requires **write** access to the app (the same as [`ssh`](/cli/ssh/)). Only add-ons attached to the app are reachable. Every tunnel session is written to the [audit log](/cli/audit/).
+- **Limits:** at most 5 open tunnel connections per user. A tunnel closes after 30 minutes idle. Ctrl-C closes it.
+- **Credentials:** with `--local`, the password is passed to the client through `PGPASSWORD`, `MYSQL_PWD` or `REDISCLI_AUTH`, never on the command line. `--tunnel` prints the password so you can paste it into a GUI tool.
+- **TLS:** Redis or Valkey over TLS is opened with `redis-cli --tls --insecure`, because the certificate cannot match `127.0.0.1`. In a GUI tool, turn off certificate verification for the same reason.

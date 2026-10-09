@@ -1,34 +1,70 @@
 ---
 title: stackblaze domain
-description: "List, set, check and remove an app's custom domains."
+description: "Add, verify, list and remove an app's custom domains."
 ---
 
-Alias: `domains`. `stackblaze domain` with no subcommand lists the app's hosts.
+Manages custom domains for the linked app. Alias: `domains`. `stackblaze domain` with no subcommand lists the app's domains.
 
 ## Usage
 
 ```text
-stackblaze domain
-stackblaze domain add <host>
-stackblaze domain status [host]
+stackblaze domain [list]
+stackblaze domain add <host> [--wait] [--timeout <seconds>]
+stackblaze domain verify <host> [--wait] [--timeout <seconds>]
 stackblaze domain remove <host> [-y]
+stackblaze domain status [host]
 ```
 
 | Subcommand | Description |
 | --- | --- |
-| *(none)* | List the app's hosts |
-| `add <host>` | Make `host` the app's domain. This **replaces** the app's current hosts |
-| `status [host]` | Ingress state, hosts, whether each host has a TLS entry, and the pipeline's wildcard domain |
-| `remove <host>` | Remove a host. Removing the last host turns off the app's public ingress, so it asks for confirmation unless `-y` |
+| `list` | The app's domains with verification and certificate status. Alias: `ls` |
+| `add <host>` | Add a custom domain and print the DNS records to create |
+| `verify <host>` | Check DNS now and move the domain forward |
+| `remove <host>` | Remove a custom domain; asks for confirmation unless `-y`. Alias: `rm` |
+| `status [host]` | The app's ingress hosts, whether each has TLS, and the pipeline's wildcard domain |
+
+## Options
+
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `--wait` | `add`, `verify` | Keep checking until the domain is active (HTTPS ready) |
+| `--timeout <seconds>` | `add`, `verify` | Maximum `--wait` time (default `600`) |
+| `--interval <seconds>` | `add`, `verify` | Seconds between checks while waiting (default `10`) |
+| `-y, --yes` | `remove` | Skip the confirmation |
 
 Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
 ## Examples
 
 ```bash
-stackblaze domain add www.example.com
-stackblaze domain status www.example.com
-stackblaze domain remove old.example.com
+stackblaze domain add www.example.com          # prints the DNS records to create
+stackblaze domain verify www.example.com --wait
+stackblaze domain add www.example.com --wait --timeout 900
+stackblaze domain list
+stackblaze domain remove old.example.com -y
 ```
+
+## How it works
+
+`domain add` prints two DNS records to create at your DNS provider:
+
+| Type | Name | Value |
+| --- | --- | --- |
+| `TXT` | `_stackblaze-verify.<host>` | The verification token shown by `domain add` |
+| `CNAME` | `<host>` | The app's platform URL |
+
+The TXT record proves you own the domain; the CNAME sends its traffic to the app. Once DNS verifies, the HTTPS certificate is issued automatically at the edge. The domain moves through these states:
+
+| Status | JSON `status` | Meaning |
+| --- | --- | --- |
+| `waiting for DNS` | `pending_dns` | The records are not found yet |
+| `DNS verified` | `verified` | Ownership is proven |
+| `issuing certificate` | `cert_pending` | The HTTPS certificate is being issued |
+| `active` | `active` | The domain serves the app over HTTPS |
+| `error` | `error` | Verification failed; the reason is shown |
+
+The platform re-checks pending domains every 5 minutes. Run `domain verify <host>` to check right away, or pass `--wait` to `add` or `verify` to keep checking until the domain is active. `--wait` exits `1` with the reason when the domain ends in `error` or the timeout passes; `verify` without `--wait` also exits `1` on `error`.
+
+The app's platform URL is listed too, but cannot be removed. Removing a custom domain stops it from serving the app; visitors using it get errors until it is added again.
 
 DNS setup is covered in [Custom domains](/networking/custom-domains/).

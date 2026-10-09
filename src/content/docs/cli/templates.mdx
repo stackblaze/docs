@@ -26,7 +26,7 @@ Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-fla
 | `--name <name>` | App name (default: from the template) |
 | `--deployment-type <id>` | Variant: `standard` (default) or `ha`, when the template offers it |
 | `--env <KEY=value>` | Override a template variable (repeatable) |
-| `--wait` | Wait until the app is running |
+| `--wait` | Wait until the app is running. With `--json`, stdout carries one JSON document with the readiness check under `wait`; a wait that does not end ready exits `1` |
 
 ## Examples
 

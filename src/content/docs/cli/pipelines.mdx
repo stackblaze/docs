@@ -10,14 +10,14 @@ A pipeline is a project; its phases are environments. Alias: `pipeline`.
 ```text
 stackblaze pipelines list
 stackblaze pipelines create -p <name> [--phases <names...>] [--domain <host>]
-stackblaze pipelines delete [-p <name>] [-y]
+stackblaze pipelines delete [name] [-y]
 ```
 
 | Subcommand | Description |
 | --- | --- |
 | `list` | Pipelines and their phases (also `stackblaze list`) |
 | `create` | Create a pipeline named by `--pipeline` |
-| `delete` | Delete a pipeline and all its apps; asks you to type its name unless `-y` |
+| `delete [name]` | Delete a pipeline and all its apps (default: the linked pipeline); asks you to type its name unless `-y` |
 
 | Flag | Applies to | Description |
 | --- | --- | --- |
@@ -27,13 +27,13 @@ stackblaze pipelines delete [-p <name>] [-y]
 
 Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
-`delete` targets the linked pipeline when you do not pass `--pipeline`. Check with [`stackblaze context`](/cli/context/) first.
+`delete` takes the pipeline as a positional name or `--pipeline` (passing both with different values is an error). Without either, it targets `STACKBLAZE_PIPELINE` or the linked pipeline, names it on stderr, and still asks you to type the name unless `-y`. When the deleted pipeline is the linked one, `.stackblaze/project.json` is removed. With `-o json` the result is `{"deleted": true, "pipeline": "…"}`. Check the target with [`stackblaze context`](/cli/context/) first.
 
 ## Examples
 
 ```bash
 stackblaze pipelines create -p shop --phases staging production
-stackblaze pipelines delete -p shop-old -y
+stackblaze pipelines delete shop-old -y
 ```
 
 To create a pipeline and link the directory in one step, use [`stackblaze init`](/cli/init/).

@@ -1,0 +1,45 @@
+---
+title: stackblaze pending
+description: "List, apply or discard changes staged with --skip-deploy."
+---
+
+Changes made with `--skip-deploy` (on [`variables`](/cli/variables/) and [`scale`](/cli/scale/)) are staged on the server for the app instead of deployed. `pending` shows them and ships or drops them.
+
+## Usage
+
+```text
+stackblaze pending list
+stackblaze pending apply [-m <text>]
+stackblaze pending discard [-y]
+```
+
+| Subcommand | Description |
+| --- | --- |
+| `list` | List the staged changes. Values of staged variables are never shown |
+| `apply` | Apply every staged change as one release |
+| `discard` | Drop every staged change; asks for confirmation unless `-y` |
+
+## Options
+
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `-m, --message <text>` | `apply` | Release message shown in the deployment history |
+| `-y, --yes` | `discard` | Skip the confirmation |
+
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+## Examples
+
+```bash
+stackblaze variables set FEATURE_X=on --skip-deploy
+stackblaze scale web=4 --skip-deploy
+stackblaze pending list
+stackblaze pending apply -m "Launch FEATURE_X"    # or: stackblaze deploy --apply-pending
+stackblaze pending discard -y
+```
+
+## How it works
+
+Staged changes are stored per app on the server, so anyone with access to the app sees the same list, and the dashboard shows them on the app with Apply and Discard. Staged values are encrypted at rest and never shown back.
+
+`list` prints one line per change (`set KEY`, `unset KEY`, `scale web replicas=4`) with who staged it. `apply` sends everything as one release: an app built from source rebuilds once, other apps roll once. [`stackblaze deploy --apply-pending`](/cli/deploy/) does the same.

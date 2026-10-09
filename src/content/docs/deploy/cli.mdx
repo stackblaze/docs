@@ -3,7 +3,7 @@ title: Automation
 description: Deploy from CI with the CLI, REST API, stackblaze.yaml, or MCP.
 ---
 
-Use the [CLI](/cli/) from GitHub Actions or GitLab CI. Create the app once (with `stackblaze up` or in the dashboard), then rebuild it from CI and stream the build. The job fails if the build fails:
+Use the [CLI](/cli/) from GitHub Actions or GitLab CI. `stackblaze up` is safe to re-run: the first run creates the app, every later push updates it and builds again. The job fails if the build fails:
 
 ```yaml title=".github/workflows/deploy.yml"
 name: Deploy
@@ -20,14 +20,13 @@ jobs:
       STACKBLAZE_PHASE: production
       STACKBLAZE_APP: web
     steps:
+      - uses: actions/checkout@v4
       - name: Install StackBlaze CLI
         run: |
           curl -fsSL https://stackblaze.com/install.sh | sh
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-      - name: Rebuild
-        run: stackblaze redeploy
-      - name: Stream the build log
-        run: stackblaze builds logs --ci
+      - name: Deploy
+        run: stackblaze up --ci --wait
 ```
 
 Details, output format and exit codes: [CLI → CI and GitHub Actions](/cli/#ci-and-github-actions).

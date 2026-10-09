@@ -1,26 +1,44 @@
 ---
 title: stackblaze down
-description: "Pause an app by scaling its web process to zero."
+description: "Pause an app: stop all its pods but keep the deployment."
 ---
 
-Scales the linked app's web process to 0 replicas. Nothing is deleted; scale back up with [`stackblaze scale`](/cli/scale/). Asks for confirmation unless you pass `-y`.
+Pauses the linked app. All its pods stop (web, worker and cron jobs), but the deployment is kept. Bring it back with [`stackblaze resume`](/cli/resume/) (or `stackblaze up --resume`).
+
+:::note
+Unlike Railway, where `railway down` removes the latest deployment, `stackblaze down` does **not** remove anything. It only pauses the app. To delete an app, use [`stackblaze apps delete`](/cli/apps/).
+:::
 
 ## Usage
 
 ```text
-stackblaze down [options]
+stackblaze down [-y] [-m <text>] [options]
 ```
+
+## Options
 
 | Flag | Description |
 | --- | --- |
 | `-y, --yes` | Skip the confirmation |
+| `-m, --message <text>` | Reason, recorded in the deployment history |
 | `--build <name>` | Also delete this build (see `stackblaze builds list`) |
 
 Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
-## Example
+## Examples
 
 ```bash
-stackblaze down -y
-stackblaze scale -r 1     # bring it back
+stackblaze down                              # asks for confirmation
+stackblaze down -y -m "pausing over the weekend"
+stackblaze resume                            # bring it back
 ```
+
+## How it works
+
+- Web, worker and cron jobs all stop. Autoscaling is switched off while the app is paused.
+- The replica count, autoscaling settings, volumes, add-ons, variables and domains are kept, so `resume` brings the app back as it was.
+- Compute stops billing. Volumes and add-ons keep running, and billing.
+- Builds still run while the app is paused: a git push builds a new image, but no pods start until you resume.
+- Visitors to the app's URL see a "paused by its owner" page.
+- [`stackblaze status`](/cli/status/) and `stackblaze apps get` show the app as `paused`; the dashboard shows a Paused badge with Pause and Resume actions.
+- Pausing and resuming are recorded in the deployment history and the [audit log](/cli/audit/).

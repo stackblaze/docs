@@ -1,27 +1,29 @@
 ---
 title: stackblaze builds
-description: "List, trigger and stream build jobs for a git app."
+description: "List, trigger and follow build jobs live for a git or local-folder app."
 ---
 
-Build jobs of a git-built app. Alias: `build`.
+Build jobs of an app built from source. Alias: `build`.
 
 ## Usage
 
 ```text
 stackblaze builds list
 stackblaze builds trigger [options]
-stackblaze builds logs [build] [--ci]
+stackblaze builds logs [build] [-f] [--ci]
 ```
 
 | Subcommand | Description |
 | --- | --- |
 | `list` | The app's build jobs, newest first |
 | `trigger` | Start a build with the app's settings, optionally overridden |
-| `logs [build]` | Follow a build's log until it finishes (default: the newest build) |
+| `logs [build]` | Stream a build's log until it finishes (default: the newest build) |
 
 Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
-## `builds trigger`
+## Options
+
+### `builds trigger`
 
 | Flag | Description |
 | --- | --- |
@@ -31,20 +33,34 @@ Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-fla
 | `--buildstrategy <s>` | `buildpacks`, `dockerfile`, `nixpacks` or `plain` |
 | `--dockerfile-path <path>` | Dockerfile path (dockerfile strategy) |
 
-## `builds logs`
-
-Prints the build log until the build succeeds or fails, then exits: `0` on success, `1` on failure or when the build does not finish within 10 minutes. Without a build name, it follows the newest build; in a terminal with no builds matched, it lets you pick one.
+### `builds logs`
 
 | Flag | Description |
 | --- | --- |
+| `-f, --follow` | Follow the build live: each line is printed as the build writes it |
 | `--ci` | Write NDJSON `build`, `log` and `error` records instead of text (same format as [`up --ci`](/cli/#up---ci-record-format)) |
+
+Use `--ci` for a pure NDJSON stream. Without a build name, `logs` follows the newest build; in a terminal with no build matched, it lets you pick one.
 
 ## Examples
 
 ```bash
+stackblaze builds logs -f              # follow the latest build live
+stackblaze builds logs web-x7k2 -f     # follow a named build
+stackblaze builds logs -f --ci         # NDJSON for CI
 stackblaze builds trigger --commit-sha "$GITHUB_SHA"
-stackblaze builds logs --ci
 stackblaze builds list -o json
 ```
 
-Deploy history including image deploys is in [`stackblaze deployments`](/cli/deployments/).
+## How it works
+
+With `-f`, the CLI joins the build's live log stream and the server pushes each line as the build writes it, in order: `fetch` → `build` → `push` → `deploy`. Lines from the `build` step are printed as-is; the others are prefixed with `[container]`.
+
+- Joining a build that is already running, or already finished, replays the earlier lines first, so nothing is missed.
+- A dropped connection reconnects on its own; replayed lines are not printed twice.
+- If the live stream is not available, the CLI notices within about 5 seconds, prints a note on stderr and polls the build log every 2 seconds instead. Set `STACKBLAZE_BUILD_STREAM=poll` to always poll.
+- Without `-f`, `logs` polls every 2 seconds.
+
+`logs` exits when the build finishes: `0` on success, `1` on failure (with the reason when one was recorded), when the build does not finish within 10 minutes, or when it reports an `Unknown` state for 30 seconds.
+
+[`stackblaze up`](/cli/up/) uses the same live stream after it starts a deploy. Deploy history including image deploys is in [`stackblaze deployments`](/cli/deployments/).

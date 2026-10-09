@@ -9,8 +9,8 @@ Add-ons are managed services (for example PostgreSQL or Redis) attached to an ap
 
 ```text
 stackblaze addons list [--attached]
-stackblaze addons add <kind> [--wait]
-stackblaze addons delete <kind> [--instance <name>] [-y]
+stackblaze addons add [kind] [--wait] [--timeout <seconds>]
+stackblaze addons delete [kind] [--instance <name>] [-y]
 ```
 
 | Subcommand | Description |
@@ -23,8 +23,9 @@ stackblaze addons delete <kind> [--instance <name>] [-y]
 | --- | --- | --- |
 | `--attached` | `list` | List the app's attached add-ons |
 | `--wait` | `add` | Wait until the app and the add-on are running |
+| `--timeout <seconds>` | `add` | Maximum `--wait` time (default `600`; a new database cluster can take several minutes) |
 | `--instance <name>` | `delete` | Which instance, when several match |
-| `--kind <name>` | `add`, `delete` | Same as the positional `<kind>` |
+| `--kind <name>` | `add`, `delete` | Same as the positional `[kind]`; passing both with different values is an error |
 | `-y, --yes` | `delete` | Skip the confirmation |
 
 Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
@@ -34,7 +35,10 @@ Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-fla
 ```bash
 stackblaze addons list
 stackblaze addons add <kind> --wait
+stackblaze addons add <kind> --wait --timeout 900 --json | jq .wait.ready
 stackblaze addons list --attached -o json
 ```
+
+With `--wait --json`, stdout carries one JSON document: the result with the readiness check under `wait`. A wait that ends without the app and add-on running exits `1`.
 
 Use `addons list` for the exact kind names. To open a database shell, see [`stackblaze connect`](/cli/connect/).

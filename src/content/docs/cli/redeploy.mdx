@@ -9,7 +9,7 @@ Starts a new deployment of the linked app:
 - **Image app:** re-pulls the configured image and tag (useful for moving tags such as `latest`).
 - **`--tag <tag>`:** deploys that image tag instead.
 
-To restart the running version without building or pulling, use [`stackblaze restart`](/cli/restart/). Same command as `stackblaze apps redeploy`.
+To restart the running version without building or pulling, use [`stackblaze restart`](/cli/restart/). Same command as `stackblaze apps redeploy`. To ship changes staged with `--skip-deploy` as well, use [`stackblaze deploy --apply-pending`](/cli/deploy/).
 
 ## Usage
 

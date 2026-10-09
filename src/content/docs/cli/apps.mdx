@@ -14,7 +14,7 @@ stackblaze apps create [name] --mode docker|git [options]
 stackblaze apps update [options]
 stackblaze apps restart
 stackblaze apps redeploy [--tag <tag>]
-stackblaze apps scale -r <n> [--process web|worker]
+stackblaze apps scale [web=N] [worker=N] [--autoscale <process=min:max>]
 stackblaze apps delete [-y]
 ```
 
@@ -26,7 +26,7 @@ stackblaze apps delete [-y]
 | `update` | Change an existing app's configuration |
 | `restart` | Rolling restart, same image (same as [`restart`](/cli/restart/)) |
 | `redeploy` | Rebuild (git) or re-pull (image), or deploy `--tag` (same as [`redeploy`](/cli/redeploy/)) |
-| `scale` | Set web or worker replicas, 0–50 (same as [`scale`](/cli/scale/)) |
+| `scale` | Set web and worker replicas or autoscaling in one release (same as [`scale`](/cli/scale/)) |
 | `delete` | Delete the app; asks you to type its name unless `-y` |
 
 Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
@@ -41,14 +41,15 @@ Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-fla
 | `--repository <url>`, `--branch <name>` | Git URL and branch (git mode; branch default `main`) |
 | `--buildstrategy <s>` | `buildpacks`, `dockerfile`, `nixpacks` or `plain` |
 | `--build-context <dir>`, `--dockerfile-path <path>` | Monorepo build context and Dockerfile path |
-| `--port <n>` | Container port |
+| `--port <n>` | Container port (docker mode: default is the image's `EXPOSE` port) |
+| `--worker` | Background worker: no port, no public URL |
 | `--replicas <n>` | Replicas (default `1`) |
 | `--domain <host>` | Custom domain |
 | `--addon <name>` | Attach an add-on by kind or name (repeatable) |
 | `--env <KEY=value>` | Variable (repeatable) |
 | `--wait` | Wait until the app is running |
 
-The pipeline is required; the phase defaults to `production`. As with `up`, an image app created without `--port` or `--domain` runs as a worker with no public URL.
+The pipeline is required; the phase defaults to `production`. As with [`up`](/cli/up/#ports), an image app created without `--port`, `--domain` or `--worker` uses the image's `EXPOSE` port, or a web service on `3000` with a warning when the image declares none.
 
 ## `apps update`
 
