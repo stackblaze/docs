@@ -1,14 +1,38 @@
 ---
-title: Volume
-description: stackblaze volume
+title: stackblaze volume
+description: "List, attach and detach persistent volumes on an app."
 ---
 
-List, add, and delete extra volumes on a service.
+Extra persistent volumes mounted into the app's container. Alias: `volumes`. `stackblaze volume` with no subcommand lists them.
 
-```bash
-stackblaze volume list
+## Usage
+
+```text
+stackblaze volume [list]
+stackblaze volume add <name> --mount <path> [--size <qty>]
+stackblaze volume delete <name> [-y]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+| Subcommand | Description |
+| --- | --- |
+| `list` | The app's extra volumes |
+| `add <name>` | Attach a new volume at an absolute mount path. Names are lowercase letters, digits and dashes |
+| `delete <name>` | Detach a volume; asks you to type its name unless `-y` |
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `--mount <path>` | `add` | Container mount path (required) |
+| `--size <qty>` | `add` | Size (default `5Gi`) |
+| `--name <name>` | `add` | Same as the positional name |
+| `-y, --yes` | `delete` | Skip the confirmation |
+
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+## Examples
+
+```bash
+stackblaze volume add data --mount /data --size 10Gi
+stackblaze volume delete data -y
+```
+
+Work with the files on a volume using [`stackblaze files`](/cli/files/); back it up with [`stackblaze snapshots`](/cli/snapshots/).

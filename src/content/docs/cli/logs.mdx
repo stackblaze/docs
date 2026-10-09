@@ -1,14 +1,48 @@
 ---
-title: Logs
-description: stackblaze logs
+title: stackblaze logs
+description: "Show recent app logs, follow them live, or search the log store."
 ---
 
-App logs. `-f` streams. `--search` queries the durable index.
+Prints the linked app's logs, oldest first.
 
-```bash
-stackblaze logs -f
+- **Default:** recent lines from the running containers. If there are none (for example after pods were replaced), it falls back to the log store for the last `--minutes` (60 by default).
+- **`-f, --follow`:** streams new lines until you press Ctrl+C. Reconnects after network drops.
+- **`--search`:** queries the durable log store, with `--query`, `--level` and `--minutes` filters.
+
+## Usage
+
+```text
+stackblaze logs [options]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+| Flag | Description |
+| --- | --- |
+| `-n, --limit <n>` | Show the newest `n` lines. With `--follow`, print the last `n` lines first. With `--search`, the default is 100 |
+| `-f, --follow` | Stream live logs |
+| `--search` | Search the log store instead of the live buffer |
+| `-q, --query <text>` | Full-text query (`--search`) |
+| `--level <level>` | Log level filter (`--search`) |
+| `--minutes <n>` | Look-back window in minutes (default `60`) |
+| `--container <name>` | Container (default `kuberoapp-web`) |
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+`--follow` and `--search` cannot be combined.
+
+## Examples
+
+```bash
+stackblaze logs -n 200
+stackblaze logs -f
+stackblaze logs -f -n 50 -a worker
+stackblaze logs --search -q "timeout" --level error --minutes 180
+stackblaze logs --search -q panic -o json | jq '.num_hits'
+```
+
+## JSON output
+
+- Default mode: one document, `{"container": …, "logs": [ … ]}`.
+- `--search`: one document, `{"hits": [ … ], "num_hits": n}`.
+- `--follow`: one JSON object per log line, written as each line arrives. Read it with a streaming parser such as `jq`.
+
+Build logs are separate: see [`stackblaze builds logs`](/cli/builds/).

@@ -1,14 +1,37 @@
 ---
-title: Deployments
-description: stackblaze deployments
+title: stackblaze deployments
+description: "Show deploy history and roll back to an earlier build."
 ---
 
-List revisions and `rollback`.
+Alias: `deployment`.
 
-```bash
-stackblaze deployments list
+## Usage
+
+```text
+stackblaze deployments list [-n <limit>]
+stackblaze deployments rollback [build] [--wait] [-y]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+| Subcommand | Description |
+| --- | --- |
+| `list` | Deploy history of the app: git builds and image deploys, with status, trigger and ref (commit or image tag) |
+| `rollback [build]` | Deploy the image of an earlier successful git build. Without a build name, the previous successful build. Asks for confirmation unless `-y` |
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `-n, --limit <n>` | `list` | Maximum entries (server default 100) |
+| `--build <name>` | `rollback` | Build to roll back to (same as the positional argument) |
+| `--wait` | `rollback` | Wait until the app is running again; exits `1` if it does not become ready |
+| `-y, --yes` | `rollback` | Skip the confirmation |
+
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+## Examples
+
+```bash
+stackblaze deployments list -n 20
+stackblaze deployments rollback -y --wait
+stackblaze deployments rollback web-1a2b3c -y
+```
+
+Rollback works from git build jobs (see [`stackblaze builds list`](/cli/builds/)). For an image app, deploy the earlier tag with [`stackblaze redeploy --tag`](/cli/redeploy/).

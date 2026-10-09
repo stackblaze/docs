@@ -1,14 +1,12 @@
 ---
-title: MCP
-description: stackblaze mcp
+title: stackblaze mcp
+description: "Alias of stackblaze setup mcp."
 ---
 
-Print MCP connection details. `stackblaze setup mcp` wires Cursor / Claude.
+`stackblaze mcp` is the same command as [`stackblaze setup mcp`](/cli/setup/): it adds a `stackblaze` MCP server to Cursor or Claude Code.
 
-```bash
-stackblaze setup mcp
+```text
+stackblaze mcp [--ide cursor|claude]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
-
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+The config file it writes contains your API token. See [setup](/cli/setup/) for details and [MCP server](/ai/mcp/) for the tools it exposes.

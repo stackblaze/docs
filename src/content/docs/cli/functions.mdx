@@ -1,14 +1,45 @@
 ---
-title: Functions
-description: stackblaze functions
+title: stackblaze functions
+description: "Create, update, invoke and delete serverless functions."
 ---
 
-List, get, new, push, invoke, delete Knative functions.
+Functions live in a pipeline phase (default `production`); `--app` is not used. Aliases: `function`, `func`, `fn`, `fns`.
 
-```bash
+## Usage
+
+```text
 stackblaze functions list
+stackblaze functions get <name>
+stackblaze functions new <name> --image <image> [--port <n>]
+stackblaze functions push <name> [--dir <path>] [--build]
+stackblaze functions invoke <name> [--method <http>] [--body <text>]
+stackblaze functions delete <name> [-y]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+| Subcommand | Description |
+| --- | --- |
+| `list` | Functions in the phase |
+| `get <name>` | Status and URL of a function |
+| `new <name>` | Create or update a function from a container image (`--image` required) |
+| `push <name>` | Upload source files from a directory (default: current directory; dotfiles and `node_modules` are skipped). With `--build`, also build and deploy |
+| `invoke <name>` | Call the function (default method `POST`) |
+| `delete <name>` | Delete; asks you to type its name unless `-y` |
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `--image <image>`, `--port <n>`, `--name <name>` | `new` | Container image (required), port, name (alternative to the positional) |
+| `--dir <path>`, `--build` | `push` | Source directory; build and deploy after upload |
+| `--method <http>`, `--body <text>` | `invoke` | HTTP method and request body |
+| `-y, --yes` | `delete` | Skip the confirmation |
+
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+## Examples
+
+```bash
+stackblaze functions new hello --image ghcr.io/acme/hello:1.0 --port 8080
+stackblaze fn invoke hello --body '{"name":"Ada"}'
+stackblaze functions push hello --dir ./fn --build
+```
+
+See [Functions](/functions/).

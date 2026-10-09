@@ -1,14 +1,26 @@
 ---
-title: Scale
-description: stackblaze scale
+title: stackblaze scale
+description: "Set the web or worker replica count of an app."
 ---
 
-Set replica count. `0` pauses.
+Sets the replica count of the linked app's web or worker process. `0` stops that process. Same command as `stackblaze apps scale`.
 
-```bash
-stackblaze scale --replicas 2
+## Usage
+
+```text
+stackblaze scale -r <n> [--process web|worker] [options]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+| Flag | Description |
+| --- | --- |
+| `-r, --replicas <n>` | Replica count, `0` to `50` (required) |
+| `--process <name>` | `web` (default) or `worker` |
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+## Examples
+
+```bash
+stackblaze scale -r 3
+stackblaze scale -r 1 --process worker -a jobs
+```

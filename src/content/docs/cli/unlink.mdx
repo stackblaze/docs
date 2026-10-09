@@ -1,14 +1,12 @@
 ---
-title: Unlink
-description: stackblaze unlink
+title: stackblaze unlink
+description: "Remove the project link from the current directory."
 ---
 
-Remove the directory link.
+Deletes `.stackblaze/project.json` in the current directory. A link in a parent directory is not touched.
 
-```bash
-stackblaze unlink
+## Usage
+
+```text
+stackblaze unlink [-o text|json]
 ```
-
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
-
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).

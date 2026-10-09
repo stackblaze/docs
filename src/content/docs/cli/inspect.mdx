@@ -1,14 +1,25 @@
 ---
-title: Inspect
-description: stackblaze inspect
+title: stackblaze inspect
+description: "Show how a directory or public git repository would be deployed."
 ---
 
-Deployment plan from cwd or a public git URL.
+Analyzes the current directory, a local path, or a public git URL and reports what `stackblaze up` would detect: repository type, deployable apps, build context, Dockerfile and port. Runs locally; no sign-in needed. Git URLs are shallow-cloned, so `git` must be installed.
+
+## Usage
+
+```text
+stackblaze inspect [path-or-git-url] [--branch <name>] [-o text|json]
+```
+
+| Flag | Description |
+| --- | --- |
+| `--branch <name>` | Branch to inspect (git URLs) |
+| `-o, --output <text\|json>`, `--json` | Output format |
+
+## Examples
 
 ```bash
 stackblaze inspect
+stackblaze inspect ./services/api
+stackblaze inspect https://github.com/acme/shop --branch develop -o json
 ```
-
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
-
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).

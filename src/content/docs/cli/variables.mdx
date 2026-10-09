@@ -1,14 +1,33 @@
 ---
-title: Variables
-description: stackblaze variables
+title: stackblaze variables
+description: "List, set and delete an app's environment variables."
 ---
 
-`list`, `set KEY=value`, `delete KEY` on the linked service.
+Manages the linked app's environment variables. Aliases: `vars`, `var`.
+
+## Usage
+
+```text
+stackblaze variables list
+stackblaze variables set <KEY=value>...
+stackblaze variables delete <KEY>... [-y]
+```
+
+| Subcommand | Description |
+| --- | --- |
+| `list` | Print all variables as `KEY=value` (values are shown in full) |
+| `set <KEY=value>...` | Add or update one or more variables |
+| `delete <KEY>...` | Remove variables; asks for confirmation unless `-y` |
+
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+## Examples
 
 ```bash
 stackblaze variables list
+stackblaze variables set NODE_ENV=production LOG_LEVEL=info
+stackblaze vars delete OLD_FLAG -y
+stackblaze variables list -o json | jq -r '.envVars[].name'
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
-
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+To write the variables to a local `.env` file, use [`stackblaze env pull`](/cli/env/).

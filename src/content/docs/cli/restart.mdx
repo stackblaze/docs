@@ -1,14 +1,16 @@
 ---
-title: Restart
-description: stackblaze restart
+title: stackblaze restart
+description: "Rolling restart of an app without rebuilding."
 ---
 
-Rolling restart without a new build.
+Restarts the linked app's pods with the same image. Nothing is built or pulled. Same command as `stackblaze apps restart`.
 
-```bash
-stackblaze restart
+## Usage
+
+```text
+stackblaze restart [options]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+To build or pull a new version, use [`stackblaze redeploy`](/cli/redeploy/).

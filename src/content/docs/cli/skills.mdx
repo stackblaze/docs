@@ -1,14 +1,16 @@
 ---
-title: Skills
-description: stackblaze skills
+title: stackblaze skills
+description: "Install the StackBlaze agent skill for Cursor, Claude Code and .agents."
 ---
 
-Install agent skills. Also `stackblaze setup skills`.
+`stackblaze skills` is the same command as [`stackblaze setup skills`](/cli/setup/). It writes the StackBlaze skill file (how to use the CLI and platform) where coding agents look for skills:
 
-```bash
-stackblaze setup skills
+- `~/.agents/skills/stackblaze/SKILL.md` (always)
+- `~/.cursor/skills-cursor/stackblaze/SKILL.md` (Cursor)
+- `~/.claude/skills/stackblaze/SKILL.md` (Claude Code)
+
+```text
+stackblaze skills [--agent cursor|claude|all]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
-
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+`--agent` defaults to `all`, which means every tool detected in your home directory. To install the skill and configure MCP in one step, run `stackblaze setup agent`.

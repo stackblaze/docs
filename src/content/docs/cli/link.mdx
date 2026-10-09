@@ -1,14 +1,25 @@
 ---
-title: Link
-description: stackblaze link
+title: stackblaze link
+description: "Link the current directory to an existing pipeline, phase and app."
 ---
 
-Point this directory at an existing project / environment / service (`.stackblaze/project.json`).
+Writes `.stackblaze/project.json` so later commands in this directory (and its subdirectories) default to that pipeline, phase and app.
 
-```bash
-stackblaze link
+## Usage
+
+```text
+stackblaze link [options]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+In a terminal, anything you do not pass is picked from a list: pipeline, then phase, then app. Without a terminal, pass at least `--pipeline`.
+
+## Examples
+
+```bash
+stackblaze link                                  # pick interactively
+stackblaze link -p shop --phase production -a web
+```
+
+See also: [unlink](/cli/unlink/), [context](/cli/context/), [phases use](/cli/phases/).

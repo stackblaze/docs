@@ -3,7 +3,7 @@ title: Automation
 description: Deploy from CI with the CLI, REST API, stackblaze.yaml, or MCP.
 ---
 
-Use the [CLI](/cli/) from GitHub Actions or GitLab CI:
+Use the [CLI](/cli/) from GitHub Actions or GitLab CI. Create the app once (with `stackblaze up` or in the dashboard), then rebuild it from CI and stream the build. The job fails if the build fails:
 
 ```yaml title=".github/workflows/deploy.yml"
 name: Deploy
@@ -13,16 +13,24 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      STACKBLAZE_API_URL: https://api.stackblaze.cloud
+      STACKBLAZE_TOKEN: ${{ secrets.STACKBLAZE_TOKEN }}
+      STACKBLAZE_PIPELINE: my-app
+      STACKBLAZE_PHASE: production
+      STACKBLAZE_APP: web
     steps:
-      - uses: actions/checkout@v4
       - name: Install StackBlaze CLI
-        run: curl -fsSL https://stackblaze.com/install.sh | sh
-      - name: Deploy
-        env:
-          STACKBLAZE_API_URL: https://api.stackblaze.cloud
-          STACKBLAZE_TOKEN: ${{ secrets.STACKBLAZE_TOKEN }}
-        run: stackblaze up --ci -y --pipeline my-app --phase production --app web
+        run: |
+          curl -fsSL https://stackblaze.com/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Rebuild
+        run: stackblaze redeploy
+      - name: Stream the build log
+        run: stackblaze builds logs --ci
 ```
+
+Details, output format and exit codes: [CLI → CI and GitHub Actions](/cli/#ci-and-github-actions).
 
 If the project already [auto-deploys](/cicd/auto-deploy/) on git push, you do not need this workflow.
 

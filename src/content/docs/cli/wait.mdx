@@ -1,14 +1,24 @@
 ---
-title: Wait
-description: stackblaze wait
+title: stackblaze wait
+description: "Wait until an app and its add-ons are running."
 ---
 
-Poll until the service and add-ons are running.
+Polls the app's status every 5 seconds until it and all its add-ons are running, the deploy fails, or the timeout passes.
 
-```bash
-stackblaze wait
+## Usage
+
+```text
+stackblaze wait [--timeout <seconds>] [options]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+| Flag | Description |
+| --- | --- |
+| `--timeout <seconds>` | Maximum wait (default `90`) |
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+Exit code `0` when ready; `1` when the deploy failed or the timeout passed. The JSON result has `ready`, `phaseStatus`, `url`, and `failed` or `timedOut` when relevant.
+
+```bash
+stackblaze wait --timeout 300 && curl -fsS "$(stackblaze apps get -o json | jq -r .url)"
+```

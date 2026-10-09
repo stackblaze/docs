@@ -1,14 +1,26 @@
 ---
-title: Down
-description: stackblaze down
+title: stackblaze down
+description: "Pause an app by scaling its web process to zero."
 ---
 
-Scale the service to zero (pause). Pass `--yes` in CI.
+Scales the linked app's web process to 0 replicas. Nothing is deleted; scale back up with [`stackblaze scale`](/cli/scale/). Asks for confirmation unless you pass `-y`.
+
+## Usage
+
+```text
+stackblaze down [options]
+```
+
+| Flag | Description |
+| --- | --- |
+| `-y, --yes` | Skip the confirmation |
+| `--build <name>` | Also delete this build (see `stackblaze builds list`) |
+
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+## Example
 
 ```bash
 stackblaze down -y
+stackblaze scale -r 1     # bring it back
 ```
-
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
-
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).

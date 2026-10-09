@@ -1,14 +1,14 @@
 ---
-title: Logout
-description: stackblaze logout
+title: stackblaze logout
+description: "Delete the saved CLI credentials from this machine."
 ---
 
-Removes the saved token from the local config file.
+Deletes the saved credentials file (`~/.config/stackblaze/config.json`, or `STACKBLAZE_CONFIG`). The token itself is not revoked; revoke it in the dashboard under **Settings → API tokens**.
 
-```bash
-stackblaze logout
+## Usage
+
+```text
+stackblaze logout [-o text|json]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
-
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+`STACKBLAZE_TOKEN` and `STACKBLAZE_API_URL` in your environment are not affected.

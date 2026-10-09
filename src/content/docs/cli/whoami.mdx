@@ -1,14 +1,24 @@
 ---
-title: Whoami
-description: stackblaze whoami
+title: stackblaze whoami
+description: "Show the signed-in user, API URL and pipeline count."
 ---
 
-Print the authenticated user and how many projects you can see.
+Shows which API you are talking to and who you are: email, username, the number of pipelines you can see, and whether Infrastructure as Code is enabled.
 
-```bash
-stackblaze whoami
+## Usage
+
+```text
+stackblaze whoami [options]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+With `--pipeline`, the Infrastructure as Code line reports that project.
+
+## Example
+
+```bash
+stackblaze whoami -o json | jq -r .user.email
+```
+
+Exit code `2` means no credentials or a rejected token.

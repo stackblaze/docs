@@ -1,14 +1,33 @@
 ---
-title: Connect
-description: stackblaze connect
+title: stackblaze connect
+description: "Open a database shell (psql, mysql or redis-cli) for an app's add-on."
 ---
 
-Open a database client in the service (for example `stackblaze connect postgres`).
+Opens an interactive database client for an add-on attached to the linked app. The client runs inside the app's container, using the connection details the app already has, so the client program (`psql`, `mysql` or `redis-cli`) must exist in the app's image. Uses the same console access as [`ssh`](/cli/ssh/).
+
+## Usage
+
+```text
+stackblaze connect <addon> [--instance <name>] [scope flags]
+```
+
+`<addon>` is the database type:
+
+| Argument | Client |
+| --- | --- |
+| `postgres`, `postgresql`, `pg`, `pgsql` | `psql` |
+| `mysql`, `mariadb` | `mysql` |
+| `redis`, `valkey` | `redis-cli` |
+
+| Flag | Description |
+| --- | --- |
+| `--instance <name>` | Which add-on instance, when the app has more than one of that type |
+
+Also accepts `-p, --pipeline`, `--phase`, `-a, --app`, `--token` and `--api-url` (see [scope](/cli/#scope-and-common-flags)). No JSON output.
+
+## Examples
 
 ```bash
 stackblaze connect postgres
+stackblaze connect redis --instance cache
 ```
-
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
-
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).

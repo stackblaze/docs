@@ -1,14 +1,22 @@
 ---
-title: Plan
-description: stackblaze plan
+title: stackblaze plan
+description: "Preview what apply would create or change. Makes no changes."
 ---
 
-Diff YAML against live state. No writes.
+Compares manifests with what is live and prints what [`apply`](/cli/apply/) would create or update, with a diff for updates. Nothing is changed.
 
-```bash
-stackblaze plan ./stackblaze.yaml
+## Usage
+
+```text
+stackblaze plan <path> [-o text|json]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+Also accepts `--token`, `--api-url`, `-o, --output` and `--json` (see [common flags](/cli/#scope-and-common-flags)).
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+The manifest format is the one [`stackblaze export`](/cli/export/) writes: YAML documents of `kind: KuberoPipeline` or `kind: KuberoApp`. App documents need `metadata.pipeline` and `metadata.phase`. A path can be a file or a directory (all `.yaml` / `.yml` files, recursively). This is separate from the `stackblaze.yaml` [config as code](/blueprint/) file.
+
+Infrastructure as Code must be enabled; check with [`stackblaze status`](/cli/status/).
+
+```bash
+stackblaze plan ./stackblaze
+```

@@ -1,14 +1,50 @@
 ---
-title: Builds
-description: stackblaze builds
+title: stackblaze builds
+description: "List, trigger and stream build jobs for a git app."
 ---
 
-List, trigger, and stream git build logs.
+Build jobs of a git-built app. Alias: `build`.
 
-```bash
+## Usage
+
+```text
 stackblaze builds list
+stackblaze builds trigger [options]
+stackblaze builds logs [build] [--ci]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+| Subcommand | Description |
+| --- | --- |
+| `list` | The app's build jobs, newest first |
+| `trigger` | Start a build with the app's settings, optionally overridden |
+| `logs [build]` | Follow a build's log until it finishes (default: the newest build) |
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+## `builds trigger`
+
+| Flag | Description |
+| --- | --- |
+| `--commit-sha <sha>` | Build this commit |
+| `--reference <ref>` | Branch or tag (default: the app's branch) |
+| `--repository <url>` | Repository URL override |
+| `--buildstrategy <s>` | `buildpacks`, `dockerfile`, `nixpacks` or `plain` |
+| `--dockerfile-path <path>` | Dockerfile path (dockerfile strategy) |
+
+## `builds logs`
+
+Prints the build log until the build succeeds or fails, then exits: `0` on success, `1` on failure or when the build does not finish within 10 minutes. Without a build name, it follows the newest build; in a terminal with no builds matched, it lets you pick one.
+
+| Flag | Description |
+| --- | --- |
+| `--ci` | Write NDJSON `build`, `log` and `error` records instead of text (same format as [`up --ci`](/cli/#up---ci-record-format)) |
+
+## Examples
+
+```bash
+stackblaze builds trigger --commit-sha "$GITHUB_SHA"
+stackblaze builds logs --ci
+stackblaze builds list -o json
+```
+
+Deploy history including image deploys is in [`stackblaze deployments`](/cli/deployments/).

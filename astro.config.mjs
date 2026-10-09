@@ -212,6 +212,7 @@ export default defineConfig({
 						{ slug: 'cli/open', label: 'open' },
 						{ slug: 'cli/logs', label: 'logs' },
 						{ slug: 'cli/metrics', label: 'metrics' },
+						{ slug: 'cli/events', label: 'events' },
 						{ slug: 'cli/run', label: 'run' },
 						{ slug: 'cli/shell', label: 'shell' },
 						{ slug: 'cli/ssh', label: 'ssh' },

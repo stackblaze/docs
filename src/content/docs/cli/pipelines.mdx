@@ -1,14 +1,39 @@
 ---
-title: Pipelines
-description: stackblaze pipelines
+title: stackblaze pipelines
+description: "List, create and delete pipelines (projects)."
 ---
 
-List, create, delete projects (API name: pipelines).
+A pipeline is a project; its phases are environments. Alias: `pipeline`.
 
-```bash
+## Usage
+
+```text
 stackblaze pipelines list
+stackblaze pipelines create -p <name> [--phases <names...>] [--domain <host>]
+stackblaze pipelines delete [-p <name>] [-y]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+| Subcommand | Description |
+| --- | --- |
+| `list` | Pipelines and their phases (also `stackblaze list`) |
+| `create` | Create a pipeline named by `--pipeline` |
+| `delete` | Delete a pipeline and all its apps; asks you to type its name unless `-y` |
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `--phases <names...>` | `create` | Phases to create (default `production`) |
+| `--domain <host>` | `create` | Wildcard domain for the pipeline's apps |
+| `-y, --yes` | `delete` | Skip the confirmation |
+
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+`delete` targets the linked pipeline when you do not pass `--pipeline`. Check with [`stackblaze context`](/cli/context/) first.
+
+## Examples
+
+```bash
+stackblaze pipelines create -p shop --phases staging production
+stackblaze pipelines delete -p shop-old -y
+```
+
+To create a pipeline and link the directory in one step, use [`stackblaze init`](/cli/init/).

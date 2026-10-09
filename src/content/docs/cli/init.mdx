@@ -1,14 +1,36 @@
 ---
-title: Init
-description: stackblaze init
+title: stackblaze init
+description: "Create a pipeline (project) and link the current directory to it."
 ---
 
-Create a project (pipeline) and link the current directory. Alias: `new`.
+Creates a pipeline and writes `.stackblaze/project.json` in the current directory, linking it to that pipeline and phase. If a pipeline with that name already exists, it is linked instead. Alias: `stackblaze new`.
 
-```bash
-stackblaze init -y --pipeline my-app --phase production --app web
+## Usage
+
+```text
+stackblaze init [options]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+## Options
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+| Flag | Description |
+| --- | --- |
+| `-p, --pipeline <name>` | Pipeline name (default: the directory name) |
+| `--phase <name>` | Phase to link (default: the first of `--phases`, else `production`) |
+| `--phases <names...>` | Phases to create on a new pipeline (default: `production`) |
+| `--domain <host>` | Wildcard domain for the new pipeline |
+| `-y, --yes` | Accept the defaults without prompting |
+
+Also accepts `--token`, `--api-url`, `-o, --output` and `--json`.
+
+In a terminal, `init` asks for the pipeline and phase names unless you pass `--pipeline` or `-y`.
+
+## Examples
+
+```bash
+stackblaze init
+stackblaze init -y
+stackblaze init --pipeline shop --phases staging production --phase staging
+```
+
+Next: [`stackblaze up`](/cli/up/). `init` does not link an app; `up` adds it.

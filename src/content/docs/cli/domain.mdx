@@ -1,14 +1,34 @@
 ---
-title: Domain
-description: stackblaze domain
+title: stackblaze domain
+description: "List, set, check and remove an app's custom domains."
 ---
 
-Add, remove, and check custom domains.
+Alias: `domains`. `stackblaze domain` with no subcommand lists the app's hosts.
+
+## Usage
+
+```text
+stackblaze domain
+stackblaze domain add <host>
+stackblaze domain status [host]
+stackblaze domain remove <host> [-y]
+```
+
+| Subcommand | Description |
+| --- | --- |
+| *(none)* | List the app's hosts |
+| `add <host>` | Make `host` the app's domain. This **replaces** the app's current hosts |
+| `status [host]` | Ingress state, hosts, whether each host has a TLS entry, and the pipeline's wildcard domain |
+| `remove <host>` | Remove a host. Removing the last host turns off the app's public ingress, so it asks for confirmation unless `-y` |
+
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+## Examples
 
 ```bash
 stackblaze domain add www.example.com
+stackblaze domain status www.example.com
+stackblaze domain remove old.example.com
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
-
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+DNS setup is covered in [Custom domains](/networking/custom-domains/).

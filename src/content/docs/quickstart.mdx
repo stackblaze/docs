@@ -34,13 +34,13 @@ stackblaze init
 stackblaze up
 ```
 
-`init` creates a project (or links this folder to one). `up` uploads the repo and starts a git build. Then:
+`init` creates a project (or links this folder to one). `up` creates the service from the repo's git remote and current branch (push your commits first) and streams the build. Then:
 
 ```bash
 stackblaze open
 ```
 
-That prints the canvas URL. CI: `stackblaze up --ci` streams NDJSON and exits when the build finishes. See [CLI](/cli/).
+That opens the service in the dashboard (`--app-url` opens the app itself). To ship later commits, run `stackblaze redeploy`. See [CLI](/cli/).
 
 ## Deploying your project — from a Docker image
 

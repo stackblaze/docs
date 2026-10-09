@@ -1,14 +1,35 @@
 ---
-title: Setup
-description: stackblaze setup
+title: stackblaze setup
+description: "Configure the StackBlaze MCP server and agent skills for Cursor and Claude Code."
 ---
 
-Wire MCP, skills, or agent into your editor.
+Sets up AI coding tools to work with StackBlaze.
 
-```bash
-stackblaze setup mcp
+## Usage
+
+```text
+stackblaze setup agent [--agent cursor|claude|all]
+stackblaze setup mcp [--ide cursor|claude]
+stackblaze setup skills [--agent cursor|claude|all]
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
+| Subcommand | Description |
+| --- | --- |
+| `agent` | Install the skills and configure MCP for each detected tool (Cursor, Claude Code). Non-interactive |
+| `mcp` | Add a `stackblaze` MCP server to Cursor (`~/.cursor/mcp.json`, the default) or Claude Code (`~/.claude.json`). Also available as `stackblaze mcp` |
+| `skills` | Write the StackBlaze skill file to `~/.agents/skills/stackblaze/SKILL.md`, and for Cursor and Claude Code to their skills folders. Also available as `stackblaze skills` |
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `--agent <name>` | `agent`, `skills` | `cursor`, `claude` or `all` (default: every tool detected in your home directory) |
+| `--ide <name>` | `mcp` | `cursor` (default) or `claude` |
+| `--token <token>`, `--api-url <url>` | `agent`, `mcp`, `skills` | Credentials to use (default: your saved login) |
+
+The MCP entry points at the hosted server (`https://mcp.stackblaze.cloud/mcp` for the default API) and **includes your API token in plain text** in the editor's config file. Restart the editor after setup.
+
+```bash
+stackblaze setup agent
+stackblaze setup mcp --ide claude
+```
+
+See [MCP server](/ai/mcp/).

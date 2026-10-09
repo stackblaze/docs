@@ -1,14 +1,40 @@
 ---
-title: Addons
-description: stackblaze addons
+title: stackblaze addons
+description: "List add-on types and attach or detach add-ons on an app."
 ---
 
-List, add, and delete managed databases and other add-ons.
+Add-ons are managed services (for example PostgreSQL or Redis) attached to an app. Alias: `addon`.
+
+## Usage
+
+```text
+stackblaze addons list [--attached]
+stackblaze addons add <kind> [--wait]
+stackblaze addons delete <kind> [--instance <name>] [-y]
+```
+
+| Subcommand | Description |
+| --- | --- |
+| `list` | Add-on types you can attach. With `--attached`, the add-ons on the app in scope and their state |
+| `add <kind>` | Attach an add-on of this kind to the app. Fails if one of that kind is already attached |
+| `delete <kind>` | Detach an add-on; asks for confirmation unless `-y` |
+
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `--attached` | `list` | List the app's attached add-ons |
+| `--wait` | `add` | Wait until the app and the add-on are running |
+| `--instance <name>` | `delete` | Which instance, when several match |
+| `--kind <name>` | `add`, `delete` | Same as the positional `<kind>` |
+| `-y, --yes` | `delete` | Skip the confirmation |
+
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+## Examples
 
 ```bash
 stackblaze addons list
+stackblaze addons add <kind> --wait
+stackblaze addons list --attached -o json
 ```
 
-Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
-
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+Use `addons list` for the exact kind names. To open a database shell, see [`stackblaze connect`](/cli/connect/).
