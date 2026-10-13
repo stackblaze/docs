@@ -21,6 +21,20 @@ Windows (PowerShell):
 irm https://stackblaze.com/install.ps1 | iex
 ```
 
+Homebrew (macOS and Linux):
+
+```bash
+brew install stackblaze/tap/stackblaze
+```
+
+Homebrew 7 and later only load formulae from third-party taps you have trusted. If the install stops with `Refusing to load formula ... from untrusted tap`, trust the tap once and install again:
+
+```bash
+brew tap stackblaze/tap
+brew trust --tap stackblaze/tap
+brew install stackblaze
+```
+
 The installers download a standalone binary (no Node.js needed). On Linux and macOS it goes to `~/.local/bin` (or `/usr/local/bin` when run as root); on Windows to `%LOCALAPPDATA%\StackBlaze\bin`, which is added to your user `PATH`.
 
 | Installer variable | Purpose |
@@ -30,7 +44,7 @@ The installers download a standalone binary (no Node.js needed). On Linux and ma
 | `INSTALL_DIR` | Install location (`install.sh`) |
 | `STACKBLAZE_INSTALL_DIR` | Install location (`install.ps1`) |
 
-Update an installed CLI in place with [`stackblaze upgrade`](/cli/upgrade/). There is no npm package; use the installers above.
+Update an installed CLI in place with [`stackblaze upgrade`](/cli/upgrade/). If you installed with Homebrew, update with `brew upgrade stackblaze` instead. There is no npm package; use the installers above.
 
 ## Authenticate
 
