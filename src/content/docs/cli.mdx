@@ -41,7 +41,7 @@ stackblaze login
 `login` starts a browser sign-in: it prints a one-click URL and a code, opens your browser, and waits until you approve. The token is saved to `~/.config/stackblaze/config.json` (file mode `600`; override the path with `STACKBLAZE_CONFIG`).
 
 - On a server or over SSH: `stackblaze login --browserless` prints the URL and code without opening a browser.
-- With an API token: `stackblaze login --token kbr_pat_…`
+- With an API token: `stackblaze login --token sb_pat_…`
 - With email and password (2FA supported, interactive terminal only): `stackblaze login --password`
 
 Create API tokens in the dashboard under **Settings → API tokens**.
@@ -50,7 +50,7 @@ In CI, skip `login` and set both environment variables. Commands read them on ev
 
 ```bash
 export STACKBLAZE_API_URL=https://api.stackblaze.cloud
-export STACKBLAZE_TOKEN=kbr_pat_…
+export STACKBLAZE_TOKEN=sb_pat_…
 stackblaze whoami
 ```
 

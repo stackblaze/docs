@@ -44,7 +44,7 @@ Save these codes now, they will not be shown again. If you lose your device and 
 
 ## SSH keys for git
 
-SSH keys on the account are for git fetch over `ssh.stackblaze.app:2222`, not for API login. API automation uses a `kbr_pat_` token from Settings → API tokens.
+SSH keys on the account are for git fetch over `ssh.stackblaze.app:2222`, not for API login. API automation uses an `sb_pat_` token from Settings → API tokens. Tokens created before the `sb_pat_` prefix (`kbr_pat_…`) keep working.
 
 ```bash title="terminal"
 # Generate an SSH key pair if you don't have one
@@ -54,7 +54,7 @@ $ ssh-keygen -t ed25519 -C "me@example.com"
 # Settings → SSH Keys → Add Key → paste ~/.ssh/id_ed25519.pub
 
 # API access is a Bearer token, not SSH
-export STACKBLAZE_TOKEN=kbr_pat_…
+export STACKBLAZE_TOKEN=sb_pat_…
 ```
 
 ## Step by step

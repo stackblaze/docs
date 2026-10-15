@@ -17,7 +17,7 @@ stackblaze login [options]
 | --- | --- |
 | `--browser` | Open the one-click sign-in page (the default in an interactive terminal) |
 | `--browserless` | Print the sign-in URL and code without opening a browser (SSH, headless machines) |
-| `--token <token>` | Sign in with an API token (`kbr_pat_…`) instead of the browser |
+| `--token <token>` | Sign in with an API token (`sb_pat_…`) instead of the browser |
 | `--password` | Sign in with email or username and password; prompts for a 2FA code when enabled. Needs an interactive terminal |
 | `--api-url <url>` | API to sign in to (default: `STACKBLAZE_API_URL`, then the saved URL, then `https://api.stackblaze.cloud`) |
 | `-o, --output <text\|json>`, `--json` | Output format |
@@ -29,13 +29,14 @@ Use only one of `--browser`, `--browserless` and `--password`.
 ```bash
 stackblaze login                          # browser sign-in
 stackblaze login --browserless            # print the URL and code, approve on another device
-stackblaze login --token kbr_pat_xxxxxxxx # API token
+stackblaze login --token sb_pat_xxxxxxxx # API token
 stackblaze login --password               # email/username + password (+ 2FA code)
 ```
 
 ## How it works
 
 - Browser sign-in prints a URL with the code filled in, plus the code on its own. Approve it in the dashboard; the CLI polls until you do.
+- API tokens start with `sb_pat_`. Tokens created before the `sb_pat_` prefix (`kbr_pat_…`) keep working.
 - If `STACKBLAZE_TOKEN` is set, `login` saves that token instead of starting the browser flow.
 - Without a terminal and without a token, `login` fails. In CI, do not run `login`; set `STACKBLAZE_API_URL` and `STACKBLAZE_TOKEN` instead.
 - Create API tokens in the dashboard under **Settings → API tokens**.

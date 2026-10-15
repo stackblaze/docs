@@ -1,6 +1,6 @@
 ---
 title: API Reference
-description: "REST API for StackBlaze: /api/pipelines, /api/apps, deployments, logs, add-ons, and stackblaze.yaml. Authenticate with kbr_pat_ tokens."
+description: "REST API for StackBlaze: /api/pipelines, /api/apps, deployments, logs, add-ons, and stackblaze.yaml. Authenticate with sb_pat_ tokens."
 ---
 
 The StackBlaze REST API is the same NestJS control plane the dashboard uses. Paths are under `/api`. Docs say project, environment, and service. The API still uses pipeline, phase, and app. OpenAPI: [api.stackblaze.cloud/api/docs](https://api.stackblaze.cloud/api/docs).
@@ -8,7 +8,7 @@ The StackBlaze REST API is the same NestJS control plane the dashboard uses. Pat
 | | |
 | --- | --- |
 | Base URL | `https://api.stackblaze.cloud` |
-| Auth | `Bearer kbr_pat_…` |
+| Auth | `Bearer sb_pat_…` |
 | OpenAPI | `/api/docs` |
 
 ## Vocabulary
@@ -26,11 +26,11 @@ Marketing copy says project and environment. The API and dashboard use the Kuber
 
 ## Authentication
 
-Create a personal access token in the dashboard under **Settings → API tokens**. The raw value is shown once and starts with `kbr_pat_`. The token inherits the creator's organization (`activeTenantId`) and RBAC. Send it as a Bearer token on every request.
+Create a personal access token in the dashboard under **Settings → API tokens**. The raw value is shown once and starts with `sb_pat_`. Tokens created before the `sb_pat_` prefix (`kbr_pat_…`) keep working. The token inherits the creator's organization (`activeTenantId`) and RBAC. Send it as a Bearer token on every request.
 
 ```bash title="Authentication header"
 # Include Authorization header on all requests
-Authorization: Bearer kbr_pat_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Authorization: Bearer sb_pat_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 # List projects
 curl https://api.stackblaze.cloud/api/pipelines \
@@ -68,7 +68,7 @@ This is the public automation surface. Addon browsers, WAF, Coroot handoff, bill
 | POST | `/api/iac/blueprint/plan` | Diff a stackblaze.yaml against live state |
 | POST | `/api/iac/blueprint/apply` | Apply a stackblaze.yaml (never deletes) |
 | GET | `/api/tokens/my` | List API tokens for the current user |
-| POST | `/api/tokens/my` | Create an API token (returns `kbr_pat_…` once) |
+| POST | `/api/tokens/my` | Create an API token (returns `sb_pat_…` once) |
 
 ## Example: list projects
 

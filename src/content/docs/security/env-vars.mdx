@@ -53,10 +53,10 @@ Variables are scoped to the **environment** you are viewing (production, a custo
 
 ## API
 
-Variables live on the service spec. Create a `kbr_pat_` token, then read or update the service:
+Variables live on the service spec. Create an `sb_pat_` token, then read or update the service:
 
 ```bash title="terminal"
-export STACKBLAZE_TOKEN=kbr_pat_…
+export STACKBLAZE_TOKEN=sb_pat_…
 
 curl -sS https://api.stackblaze.cloud/api/apps/acme-app/production/api \
   -H "Authorization: Bearer $STACKBLAZE_TOKEN"

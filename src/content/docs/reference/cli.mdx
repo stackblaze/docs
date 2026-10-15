@@ -1,14 +1,14 @@
 ---
 title: CLI
-description: REST, stackblaze.yaml, MCP, and the StackBlaze CLI. Tokens use the kbr_pat_ prefix.
+description: REST, stackblaze.yaml, MCP, and the StackBlaze CLI. Tokens use the sb_pat_ prefix.
 ---
 
-The [CLI](/cli/) (`stackblaze`) is the supported command-line client. It calls the same REST API as the dashboard. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+The [CLI](/cli/) (`stackblaze`) is the supported command-line client. It calls the same REST API as the dashboard. Tokens use the `sb_pat_` prefix (or the token `stackblaze login` stores).
 
 This page is the HTTP/API companion — useful in CI when you would rather `curl` than install a binary.
 
 ```bash title="terminal"
-export STACKBLAZE_TOKEN=kbr_pat_…
+export STACKBLAZE_TOKEN=sb_pat_…
 
 curl -sS https://api.stackblaze.cloud/api/pipelines \
   -H "Authorization: Bearer $STACKBLAZE_TOKEN"
