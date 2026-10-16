@@ -7,7 +7,7 @@ description: Point an MCP client at StackBlaze and operate the canvas with the s
 
 ## Stack MCP
 
-MCP is at `https://mcp.stackblaze.cloud`. Send a Bearer token from **Settings → API tokens**. The value starts with `kbr_pat_` and inherits your organization and permissions. Per-session `Authorization` is required so each user keeps their own RBAC — do not share a privileged fallback token.
+MCP is at `https://mcp.stackblaze.cloud`. Send a Bearer token from **Settings → API tokens**. The value starts with `sb_pat_` and inherits your organization and permissions. Per-session `Authorization` is required so each user keeps their own RBAC — do not share a privileged fallback token.
 
 :::note
 Tool names in code are unprefixed: `get_app`, `deploy_app`, `search_logs`. Some docs and prompts write `stackblaze_*` — use the unprefixed name when calling a tool.
@@ -23,7 +23,7 @@ In Cursor, Claude, or any MCP-compatible client, add a server pointing at the MC
     "stackblaze": {
       "url": "https://mcp.stackblaze.cloud",
       "headers": {
-        "Authorization": "Bearer kbr_pat_…"
+        "Authorization": "Bearer sb_pat_…"
       }
     }
   }

@@ -3,7 +3,7 @@ title: MCP server
 description: Point an MCP client at mcp.stackblaze.cloud.
 ---
 
-MCP is at `https://mcp.stackblaze.cloud`. Authenticate with `Authorization: Bearer kbr_pat_…` from **Settings → API tokens**. Per-session auth is required so each user keeps their own RBAC.
+MCP is at `https://mcp.stackblaze.cloud`. Authenticate with `Authorization: Bearer sb_pat_…` from **Settings → API tokens**. Per-session auth is required so each user keeps their own RBAC.
 
 Tool names in code are **unprefixed**: `get_app`, `deploy_app`, `search_logs`. Feature tools use prefixes (`pg__*`, `redis__*`, `waf__*`, `fn__*`).
 
@@ -13,7 +13,7 @@ Tool names in code are **unprefixed**: `get_app`, `deploy_app`, `search_logs`. F
     "stackblaze": {
       "url": "https://mcp.stackblaze.cloud",
       "headers": {
-        "Authorization": "Bearer kbr_pat_…"
+        "Authorization": "Bearer sb_pat_…"
       }
     }
   }

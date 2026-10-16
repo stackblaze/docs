@@ -419,7 +419,7 @@ description: stackblaze {slug}
 
 Global flags on most commands: `--pipeline`, `--phase`, `--app`, `--token`, `--api-url`, `--json`.
 
-See [CLI](/cli/) for install and login. Tokens use the `kbr_pat_` prefix (or the token `stackblaze login` stores).
+See [CLI](/cli/) for install and login. Tokens use the `sb_pat_` prefix (or the token `stackblaze login` stores).
 """,
     )
 

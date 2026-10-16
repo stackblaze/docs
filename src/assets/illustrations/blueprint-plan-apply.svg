@@ -40,5 +40,5 @@
   <text x="825" y="278" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.65" font-size="14" font-weight="600" text-anchor="middle">Not the canvas changeset</text>
   <text x="825" y="300" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-size="12" text-anchor="middle">IaC must be enabled · apply is upsert only</text>
 
-  <text x="70" y="368" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-family="ui-monospace, monospace" font-size="13">CLI, dashboard, or kbr_pat_ token · compile can still land tiles on the canvas</text>
+  <text x="70" y="368" fill="var(--diagram-ink, #ffffff)" fill-opacity="0.35" font-family="ui-monospace, monospace" font-size="13">CLI, dashboard, or sb_pat_ token · compile can still land tiles on the canvas</text>
 </svg>

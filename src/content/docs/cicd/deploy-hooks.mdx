@@ -3,7 +3,7 @@ title: Deploy Hooks
 description: Trigger StackBlaze deployments from any external system. POST to the deployments build API with a personal access token from CircleCI, Jenkins, GitHub Actions, or any custom script.
 ---
 
-Deploy hooks let you trigger a deployment from any external system, CircleCI, Jenkins, a shell script, or anything that can make an HTTP POST request. Authenticate with a personal access token (`kbr_pat_`). There is no unsigned deploy-hook URL.
+Deploy hooks let you trigger a deployment from any external system, CircleCI, Jenkins, a shell script, or anything that can make an HTTP POST request. Authenticate with a personal access token (`sb_pat_`). There is no unsigned deploy-hook URL.
 
 POST to the deployments build API for a specific project, environment, and service. Store the same token as a CI secret in each provider if you trigger from more than one system.
 
@@ -61,7 +61,7 @@ Prefer the project's git webhook for push-to-deploy. Use the deployments build A
 :::
 
 :::note[Under the hood]
-- **Personal access token**: `kbr_pat_` tokens inherit the creator's organization and RBAC. Revoke them from Settings → API tokens.
+- **Personal access token**: `sb_pat_` tokens inherit the creator's organization and RBAC. Revoke them from Settings → API tokens. Tokens created before the `sb_pat_` prefix (`kbr_pat_…`) keep working.
 - **Build queue**: `POST /api/deployments/build/{pipeline}/{phase}/{app}` starts a build. Those path segments are project, environment, and service.
 - **Environments**: production, review, and custom environments are separate. Put the environment name in the path.
 :::
@@ -70,7 +70,7 @@ Prefer the project's git webhook for push-to-deploy. Use the deployments build A
 
 1. **Create an API token**
 
-   Create a personal access token in Settings → API tokens (prefix `kbr_pat_`). Store it as a CI secret. The token is scoped to your organization and RBAC — there is no separate unsigned deploy-hook URL.
+   Create a personal access token in Settings → API tokens (prefix `sb_pat_`). Store it as a CI secret. The token is scoped to your organization and RBAC — there is no separate unsigned deploy-hook URL.
 
 2. **Store the token as a secret**
 
