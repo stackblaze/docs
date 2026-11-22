@@ -3,25 +3,25 @@ title: StackBlaze for Agents
 description: Point an MCP client at StackBlaze and operate the canvas with the same API the dashboard uses.
 ---
 
-**Stack MCP** is how agents and editors create projects, add services, deploy, and read logs. The [CLI](/cli/) (`stackblaze setup mcp`) can write the client config for you.
+The StackBlaze MCP server is how agents and editors create projects, add services, deploy, and read logs. The [CLI](/cli/) (`stackblaze setup mcp`) can write the client config for you.
 
-## Stack MCP
+## MCP server
 
-MCP is at `https://mcp.stackblaze.cloud`. Send a Bearer token from **Settings → API tokens**. The value starts with `sb_pat_` and inherits your organization and permissions. Per-session `Authorization` is required so each user keeps their own RBAC — do not share a privileged fallback token.
+The server is at `https://mcp.stackblaze.cloud`; clients connect to `https://mcp.stackblaze.cloud/mcp`. Send a Bearer token from **Personal settings → API tokens**. The value starts with `sb_pat_`. Each call runs with that user's organization and roles, so every person uses their own token. Requests without a token are refused.
 
 :::note
-Tool names in code are unprefixed: `get_app`, `deploy_app`, `search_logs`. Some docs and prompts write `stackblaze_*` — use the unprefixed name when calling a tool.
+Tool names are unprefixed: `get_app`, `deploy_app`, `search_logs`.
 :::
 
 ## Connect a client
 
-In Cursor, Claude, or any MCP-compatible client, add a server pointing at the MCP URL and pass the token in `Authorization`. Feature tools use prefixes such as `pg__*`, `redis__*`, `waf__*`, and `fn__*`.
+In Cursor, Claude Code, Codex, VS Code, Windsurf, OpenCode, or any MCP client, add a server with the MCP URL and pass the token in `Authorization`.
 
 ```json title="mcp.json"
 {
   "mcpServers": {
     "stackblaze": {
-      "url": "https://mcp.stackblaze.cloud",
+      "url": "https://mcp.stackblaze.cloud/mcp",
       "headers": {
         "Authorization": "Bearer sb_pat_…"
       }
@@ -30,8 +30,10 @@ In Cursor, Claude, or any MCP-compatible client, add a server pointing at the MC
 }
 ```
 
+Or run `stackblaze setup mcp --ide <name>`. See [Agent connectors](/ai/connectors/).
+
 ## What to use it for
 
-Read service specs, queue builds, search logs, and add databases without leaving the editor. Prefer log search (`search_logs`) over a raw tail — an empty live stream is not the same as “no logs.”
+Read service specs, deploy from a Git repo, image, or template, queue builds, search logs, and check health without leaving the editor. Prefer log search (`search_logs`) over the recent lines of one container (`get_logs`). An empty live stream is not the same as "no logs."
 
 For the CLI, curl, and `stackblaze.yaml` plan/apply, see the [CLI](/cli/) and the [REST API reference](/reference/api/). More MCP detail: [MCP server](/ai/mcp/).

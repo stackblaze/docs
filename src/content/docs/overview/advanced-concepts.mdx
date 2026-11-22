@@ -3,7 +3,7 @@ title: Advanced concepts
 description: Builds, deploys, networking, environments, and observability beyond the defaults.
 ---
 
-Most services run with Nixpacks (or a Dockerfile) and a single replica. These are the knobs you change when that is not enough.
+Most services build with Railpack (or a Dockerfile) and run a single instance. These are the knobs you change when that is not enough.
 
 ## Build and deploy
 
@@ -11,37 +11,37 @@ Open the service sheet → **Settings**.
 
 **Build**
 
-- If a `Dockerfile` is in the service root, it wins. Otherwise Nixpacks detects the runtime.
-- Override install / build / start when detection is wrong.
-- Monorepos set a **root directory** so one repo can back several services.
+- If a `Dockerfile` is in the service root, it wins. Otherwise Railpack detects the runtime.
+- Pick the **Build method**, or set a **Build command** and **Start command** when detection is wrong.
+- Monorepos set a **Build path** so one repo can back several services. In `stackblaze.yaml`, `buildFilter` limits which pushed paths trigger a rebuild.
 
 **Deploy**
 
-- [Replicas](/scaling/horizontal/) for more than one instance.
+- [Replicas](/scaling/horizontal/) for more than one instance (up to your plan's max instances per service).
 - [Autoscaling](/scaling/autoscaling/) from CPU or memory.
 - [Cron](/deploy/cron-jobs/) if the process should run on a schedule and exit.
 - [Health checks](/storage/health-checks/) so traffic waits for a ready revision.
 - [Staged changes](/deploy/staged-changes/) apply a batch of canvas edits at once.
 
-There is no serverless sleep product on this control plane. Services stay up unless you scale them to zero or delete them.
+Services stay up by default. **Sleep mode** (service **Settings → Scale**) scales a service to zero after it has been idle for the time you pick; it is not included on every plan. You can also pause a service and resume it later. [Functions](/functions/) scale to zero on their own.
 
 ## Networking
 
 - **Private** — service name DNS inside the environment. See [private networking](/networking/private-networking/).
-- **Public** — generate a `*.stackblaze.app` domain or attach your own. See [public networking](/networking/custom-domains/).
+- **Public** — a public service gets a `*.stackblaze.app` URL; attach your own domain too. See [custom domains](/networking/custom-domains/).
 - TLS is issued after DNS checks out. See [SSL](/networking/ssl/).
 
 ## Environments
 
-Production is created with the project. Add more environments for staging. Pull requests can get a [preview environment](/cicd/pr-previews/) that does not share production data.
+Production is created with the project. Add more environments for staging, up to your plan's limit per project. Pull requests can get a [preview environment](/cicd/pr-previews/) that does not share production data (Pro and Business plans).
 
 ## Observability
 
-Logs, metrics, and traces are [Coroot](/operations/observability/), opened from the service. Search logs from the dashboard or MCP (`search_logs`).
+Logs and metrics are in [Coroot](/operations/observability/), opened from the service. Tracing is a per-service switch on plans that include it (Business). Search logs from the dashboard or MCP (`search_logs`).
 
 ## Config as code
 
-`stackblaze.yaml` can describe the project. Plan and apply when IaC is enabled. See [config as code](/blueprint/).
+`stackblaze.yaml` can describe the project. Plan and apply when Infrastructure as Code is on for the project. See [config as code](/blueprint/).
 
 ## Automation
 

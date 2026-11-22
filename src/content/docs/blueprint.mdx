@@ -1,18 +1,18 @@
 ---
 title: Config as Code
-description: Describe a project as stackblaze.yaml. Export a live environment, plan, and apply when Infrastructure as Code is enabled.
+description: Describe a project as stackblaze.yaml. Export a live environment, then plan and apply when Infrastructure as Code is on for the project.
 ---
 
 import Diagram from '../../components/Diagram.astro';
 
-A **config as code** file is `stackblaze.yaml` at the repo root. It names a project and lists services and databases. Export a live environment from the dashboard or `GET /api/iac/blueprint/export?pipeline=…&phase=…`. Apply requires Infrastructure as Code on that project.
+A **config as code** file is `stackblaze.yaml` at the repo root. It names a project and lists services, databases, and shared variable groups. Export a live environment from the dashboard or `GET /api/iac/blueprint/export?pipeline=…&phase=…`. Export works on any project. Validate, plan, and apply need **Infrastructure as Code** turned on for that project (**Project settings → General**). It is off by default.
 
 <Diagram file="blueprint-plan-apply.svg" alt="stackblaze.yaml goes through validate (no live reads), plan (diff against live), and apply (upsert only, never deletes). Secrets marked sync false are answered at apply and not stored in the file." />
 
 You can also **import** Compose, `render.yaml`, or `fly.toml` from **+ Service → Import** on the canvas. That path compiles onto the canvas; it does not replace `stackblaze.yaml`.
 
 :::tip
-Config as code is optional. Most teams compose on the canvas and [deploy staged changes](/deploy/staged-changes/). Enable IaC when you want plan/apply and git-reviewed changes. Apply never deletes resources.
+Config as code is optional. Most teams compose on the canvas and [deploy staged changes](/deploy/staged-changes/). Turn on IaC when you want plan/apply and git-reviewed changes. Apply never deletes resources.
 :::
 
 ## File format
@@ -42,7 +42,7 @@ databases:
 ```yaml title="stackblaze.yaml"
 services:
   - name: api
-    type: web                 # web | worker | cron
+    type: web                 # web | worker | cron | job | function
     runtime: node             # node|python|go|ruby|rust|elixir|docker|image
     plan: small
     rootDir: packages/api
@@ -55,6 +55,7 @@ services:
       minInstances: 1
       maxInstances: 6
       targetCPUPercent: 70
+      targetMemoryPercent: 80
     disk:
       name: data
       mountPath: /data
@@ -71,14 +72,18 @@ services:
           property: connectionString
 ```
 
-`type: web` is public HTTP. `worker` is always-on with no public domain. `cron` needs `schedule`.
+`type: web` is public HTTP (set `internal: true` to keep it off the public internet). `worker` is always-on with no public domain. `cron` needs `schedule`. `job` runs to completion after every successful deploy. `function` is one TypeScript file run on Bun, given inline as `code`; the platform owns its image, start command, and scaling.
+
+With no `runtime`, the service builds with Railpack. `runtime: docker` builds your `Dockerfile`. `runtime: image` runs a prebuilt image from `image.url` (and optional `image.tag`) with no build.
+
+Other service fields: `preDeployCommand` (runs before each deploy, for example migrations; a failure stops the deploy), `buildFilter` (`includedPaths` / `ignoredPaths` globs for monorepos), `domains`, `autoDeployTrigger` (`off` \| `commit` \| `checksPass`), and `maintenanceMode`.
 
 ### Database
 
 ```yaml title="stackblaze.yaml"
 databases:
   - name: main-db
-    type: postgres            # postgres | valkey | redis | mariadb | mysql
+    type: postgres            # postgres (default) | valkey | redis | keyvalue | mariadb | mysql
                               # kafka | clickhouse | rabbitmq | documentdb
                               # mongodb | rustfs | s3 | …
     databaseName: acme
@@ -145,10 +150,10 @@ services:
 
 ## Plan and apply
 
-When IaC is enabled on the organization, plan and apply `stackblaze.yaml` from the dashboard or with an `sb_pat_` token against the API below. Apply never deletes. (The CLI's `stackblaze plan` / `apply` take a different, manifest-based format; see [stackblaze apply](/cli/apply/).)
+When IaC is on for the project, validate, plan, and apply `stackblaze.yaml` from the dashboard or with an `sb_pat_` token against the API below. Apply never deletes. (The CLI's `stackblaze plan` / `apply` take a different, manifest-based format; see [stackblaze apply](/cli/apply/).)
 
 ```bash title="terminal"
-# Validate (no live reads)
+# Validate (parses and compiles; no live reads)
 curl -sS -X POST https://api.stackblaze.cloud/api/iac/blueprint/validate \
   -H "Authorization: Bearer $STACKBLAZE_TOKEN" \
   -H "Content-Type: application/json" \
@@ -167,11 +172,28 @@ curl -sS -X POST https://api.stackblaze.cloud/api/iac/blueprint/apply \
   -d "{\"yaml\": $(jq -Rs . < stackblaze.yaml)}"
 ```
 
-You can compile a file onto the canvas (`POST /api/iac/blueprint/compile`) and commit staged services from the dashboard. Compile is not gated on IaC.
+The first apply of a file whose project does not exist yet creates the project with IaC turned on.
+
+You can also compile a file onto the canvas (`POST /api/iac/blueprint/compile`, which powers **+ Service → Import**) and deploy the staged services from the dashboard. Compile is not gated on IaC.
 
 ## Variable sync
 
-`sync: false` declares a key without storing its value. Apply returns `missingAnswers` until you pass `answers` or set them in the dashboard. `generateValue: true` mints a stable random secret at compile time. `fromGroup` attaches a shared variable group defined in the file.
+`sync: false` declares a key without storing its value. Apply returns `missingAnswers` until you pass `answers` or set them in the dashboard. `generateValue: true` mints a stable random secret at compile time. `fromGroup` attaches a shared variable group defined under `envVarGroups` in the file. `fromService` with `envVarKey` copies a variable from another service.
+
+```yaml title="stackblaze.yaml"
+envVarGroups:
+  - name: common
+    envVars:
+      - key: LOG_LEVEL
+        value: info
+
+services:
+  - name: api
+    envVars:
+      - fromGroup: common
+```
+
+`fromDatabase.property` is one of `connectionString`, `host`, `port`, `user`, `password`, or `database`.
 
 :::caution
 Never commit real secrets to `stackblaze.yaml`. Use `sync: false` or `fromDatabase`.
@@ -185,11 +207,13 @@ Never commit real secrets to `stackblaze.yaml`. Use `sync: false` or `fromDataba
 | `domain` | string | No | Default project domain |
 | `services` | array | Yes | Service definitions |
 | `databases` | array | No | Database definitions |
+| `envVarGroups` | array | No | Shared variable groups (`name`, `envVars`) |
+| `previews.generation` | string | No | automatic \| manual \| off |
 | `services[].name` | string | Yes | Service name in the environment |
-| `services[].type` | string | No | web (default) \| worker \| cron |
-| `services[].runtime` | string | No | Nixpacks language, docker, or image |
+| `services[].type` | string | No | web (default) \| worker \| cron \| job \| function |
+| `services[].runtime` | string | No | A language (built with Railpack), docker, or image. Default: Railpack |
 | `services[].plan` | string | No | Instance size name |
-| `services[].schedule` | string | Cron only | Standard cron expression |
+| `services[].schedule` | string | Cron (required), function (optional) | Standard cron expression |
 | `services[].port` | number | No | Container port (default 8080) |
 
 HTTP paths: [API reference](/reference/api/). OpenAPI: [`/api/docs`](https://api.stackblaze.cloud/api/docs).

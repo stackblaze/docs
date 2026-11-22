@@ -10,8 +10,8 @@ That is a deliberate product bet:
 - **One canvas per environment.** Git services, Docker images, databases, cron, functions, and WAF sit on the same board and share a private network.
 - **Staged changes.** Topology edits accumulate, then you deploy. Half-applied graphs are the failure mode we optimize against.
 - **Config as code is optional.** Most teams click. `stackblaze.yaml` is there when you want plan/apply and git review. Apply never deletes.
-- **Your token, your RBAC.** Dashboard, CLI, API, and MCP all use a PAT (`sb_pat_`). A privileged platform token is only a fallback.
+- **Your identity, your RBAC.** The dashboard uses your sign-in. The CLI, API, and MCP use your personal access token (`sb_pat_`). Each one sees only what your role allows.
 
-Compare that to operating a cluster: you would own upgrades, ingress, certificates, storage classes, and RBAC. Here those are settings on a service.
+Compare that to operating a cluster: you would own upgrades, ingress, certificates, storage classes, and RBAC. Here the platform runs those, and what you change is a setting on a service or project.
 
 See [The basics](/concepts/) for the object model and [Platform](/platform/) for how a deploy actually runs.

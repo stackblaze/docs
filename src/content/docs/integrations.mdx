@@ -1,15 +1,17 @@
 ---
 title: Integrations
-description: REST API, MCP, and GitHub. There is no public GraphQL API.
+description: REST API, MCP, CLI, and GitHub. There is no public GraphQL API.
 ---
 
 import { LinkCard, CardGrid } from '@astrojs/starlight/components';
 
 <CardGrid>
   <LinkCard title="REST API" href="/reference/api/" description="Pipelines, apps, deployments, stackblaze.yaml. Bearer sb_pat_ tokens." />
-  <LinkCard title="MCP" href="/ai/mcp/" description="Editor agents. Same RBAC as the dashboard." />
+  <LinkCard title="MCP" href="/ai/mcp/" description="Editor agents. Each call runs with your own roles." />
   <LinkCard title="CLI" href="/cli/" description="stackblaze login, up, logs, apply." />
-  <LinkCard title="GitHub" href="/deploy/github/" description="App install, autodeploy on push, PR previews." />
+  <LinkCard title="GitHub" href="/deploy/github/" description="GitHub App install, autodeploy on push, PR previews." />
 </CardGrid>
+
+Organization accounts on other services are under **Settings → Integrations**: the StackBlaze **GitHub** App, which deploys your repositories, and **Hugging Face**, which downloads gated AI models.
 
 There is no OAuth app platform for third-party StackBlaze apps, and no GraphQL endpoint. Use REST. Interactive OpenAPI lives at [api.stackblaze.cloud/api/docs](https://api.stackblaze.cloud/api/docs).

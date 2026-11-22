@@ -7,13 +7,13 @@ import Diagram from '../../../components/Diagram.astro';
 
 Variables are how you pass configuration and secrets into a service. They are available during the build and in the running container.
 
-Changing a variable stages a config update. [Deploy](/deploy/staged-changes/) (or the automatic rolling deploy when you save from the service sheet) applies it.
+In the dashboard, a variable edit is a staged change until you [deploy](/deploy/staged-changes/). From the CLI or API, a change is applied as one release: Git services rebuild, image services roll. Pass `--skip-deploy` (CLI) or `skipDeploy` (API) to stage it instead.
 
 ## Service variables
 
-Open a service on the canvas → **Variables**. Add a key and value, or paste a `.env` file.
+Open a service on the canvas → **Variables**. Add a key and value, drop in a `.env` file, or use the raw editor to edit every variable as `.env` or JSON text. An empty value can be filled with a random 32-character secret (**Generate**).
 
-Use plaintext for flags and URLs. Mark secrets (API keys, passwords) so they are encrypted at rest and redacted in the UI and build logs.
+Values are stored in the service's own secret, not in the image. Stored values are masked in the dashboard and the API. **Reveal values** shows them; a reveal is audited.
 
 ```text title="examples"
 NODE_ENV=production
@@ -25,7 +25,7 @@ In your app, read them as environment variables (`process.env.DATABASE_URL`, `os
 
 ## Variables from a database
 
-When you add a database on the same canvas, do not paste the URL by hand. In `stackblaze.yaml` use `fromDatabase`:
+When you add a database on the same canvas, do not paste the URL by hand. Attached databases provide their connection variables to the service (shown as **Provided by add-on**). If you type a database password inline, the dashboard warns that it will break when the credentials rotate. In `stackblaze.yaml` use `fromDatabase`:
 
 <Diagram file="env-from-database.svg" alt="A postgres canvas tile wires fromDatabase connectionString into a service DATABASE_URL. Production and preview each get their own string; preview values are not copied from production." />
 
@@ -45,24 +45,33 @@ The platform injects the live connection string for that environment. See [Confi
 
 ## Shared groups
 
-In config as code, `fromGroup` attaches a named group of variables to a service so you are not copying the same keys onto every tile. Prefer groups or `fromDatabase` over duplicating secrets.
+**Project settings → Shared variables** holds named groups of variables. Link a group to a service from its **Variables** tab (**Shared groups**). Editing a group updates every linked service on save. A service's own variable with the same key overrides the group's.
+
+In config as code, define groups under `envVarGroups` and attach one with `fromGroup`. Prefer groups or `fromDatabase` over copying the same secret onto every service.
 
 ## Per environment
 
-Variables are scoped to the **environment** you are viewing (production, a custom environment, or a PR preview). Production values are not automatically copied into previews — preview databases get their own connection strings.
+Variables are scoped to the **environment** you are viewing (production, a custom environment, or a PR preview). A PR preview copies the source service's ordinary variables. Secret-looking values are withheld by default, and database variables point at the preview's own databases.
 
 ## API
 
-Variables live on the service spec. Create an `sb_pat_` token, then read or update the service:
+Create an `sb_pat_` token, then list or change a service's variables:
 
 ```bash title="terminal"
 export STACKBLAZE_TOKEN=sb_pat_…
 
-curl -sS https://api.stackblaze.cloud/api/apps/acme-app/production/api \
+# List (values masked)
+curl -sS https://api.stackblaze.cloud/api/apps/acme-app/production/api/env \
   -H "Authorization: Bearer $STACKBLAZE_TOKEN"
+
+# Set and unset in one release
+curl -sS -X PATCH https://api.stackblaze.cloud/api/apps/acme-app/production/api/env \
+  -H "Authorization: Bearer $STACKBLAZE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"set": {"LOG_LEVEL": "debug"}, "unset": ["OLD_FLAG"]}'
 ```
 
-From the CLI: `stackblaze variables list` / `set` / `delete`. See the [CLI](/cli/) and the [API reference](/reference/api/).
+From the CLI: `stackblaze variables list` (`--reveal` shows values), `set`, `unset`, `import <file>`, and `edit`. See the [CLI](/cli/) and the [API reference](/reference/api/).
 
 ## Next steps
 

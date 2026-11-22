@@ -1,17 +1,11 @@
 ---
 title: Migrate from Heroku
-description: Move your Heroku app to StackBlaze in under an hour. StackBlaze supports Procfiles, Cloud Native Buildpacks, and has direct equivalents for every Heroku add-on.
+description: Move a Heroku app to StackBlaze. Procfile commands, config vars, Postgres, Redis, and Heroku Scheduler all have a place on the project canvas.
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 
-Most Heroku apps migrate to StackBlaze in under an hour. StackBlaze understands Procfiles, can build your app with Cloud Native Buildpacks (the same standard Heroku uses), and has direct equivalents for every common Heroku add-on — Postgres, Redis, and scheduled jobs included.
-
-Unlike Heroku, StackBlaze runs on dedicated compute. There are no dyno hour limits, no sleeping on inactivity, and no shared compute. Your app gets a fixed slice of CPU and memory that belongs to it alone.
-
-- **No dyno sleeping** — always-on dedicated instances
-- **No dyno hour caps** — unlimited runtime per month
-- **Dedicated resources** — CPU + RAM never shared with others
+A Heroku app maps onto a StackBlaze **project**. Each process type becomes a **service** on the project canvas, config vars become **variables**, and add-ons become databases on the same canvas. Services stay up; there is no sleeping on inactivity.
 
 ## Step by step
 
@@ -19,23 +13,25 @@ Unlike Heroku, StackBlaze runs on dedicated compute. There are no dyno hour limi
 
 1. **Export your Heroku config vars**
 
-   Run the Heroku CLI to export all environment variables as JSON, then paste them into the StackBlaze environment variables panel. StackBlaze imports them in bulk, no re-typing needed.
+   Print them in `KEY=value` form:
 
    ```bash
-   # Export config vars from Heroku
-   heroku config -a my-app --json > env.json
-
-   # Review the output
-   cat env.json
+   heroku config --shell -a my-app > heroku.env
    ```
 
-2. **Connect your GitHub repository**
+   Review the file. Drop values that point at Heroku add-ons (`DATABASE_URL`, `REDIS_URL`): the new databases provide their own.
 
-   StackBlaze deploys from the same GitHub repo Heroku does. Click "Add Service", choose GitHub, authorise StackBlaze, and select the repo. No changes to your repository are required.
+2. **Create the project from your GitHub repo**
 
-3. **Auto-detect your Procfile**
+   In the dashboard, create a project and choose your GitHub repository and branch. Install the StackBlaze GitHub App if prompted. No changes to your repository are required. See [GitHub](/deploy/github/).
 
-   StackBlaze reads your Procfile automatically. A `web:` process type becomes a Web Service (public HTTPS). A `worker:` process type becomes a Background Worker (no public ingress). Additional process types like `release:` run to completion before the new instances start.
+3. **Check what StackBlaze read from the Procfile**
+
+   StackBlaze reads the `Procfile` when it inspects the repo:
+
+   - `web:` becomes the service's start command, and the service takes public HTTP traffic.
+   - With no `web:` line, `worker:` becomes the start command of a service with no public domain.
+   - `release:` becomes the service's **Pre-deploy** command. It runs before the new version starts; if it fails, the current version stays live.
 
    ```text title="Procfile"
    web: node dist/server.js
@@ -43,44 +39,48 @@ Unlike Heroku, StackBlaze runs on dedicated compute. There are no dyno hour limi
    release: node dist/migrate.js
    ```
 
-4. **Provision add-on equivalents**
+   A service runs one process. If you have both `web:` and `worker:`, add a second service from the same repo with **+ Service** and set its start command to the worker command.
 
-   Create managed services directly from the StackBlaze dashboard: Heroku Postgres becomes StackBlaze PostgreSQL, Heroku Redis becomes StackBlaze Redis, and Heroku Scheduler becomes a StackBlaze Cron Job. Each service runs on your private network.
+4. **Pick the build method**
 
-5. **Wire up DATABASE_URL and REDIS_URL**
+   If the repo has a `Dockerfile`, it is used. Otherwise the default build method auto-detects the runtime. To build with Cloud Native Buildpacks, as Heroku does, choose **Buildpacks** as the build method in the service's build settings.
 
-   Attaching a managed add-on to your app injects its connection string automatically, so `DATABASE_URL` and `REDIS_URL` point at the new StackBlaze services with no manual editing. If you kept placeholder values from Heroku, remove them so the injected ones take over.
+5. **Add the databases**
 
-6. **Test with a staging deploy, then go live**
+   Add Postgres and Redis to the same canvas with **+ Service**. They run on the environment's private network. Attach each one to the services that use it, so the connection details are injected as variables. See [Databases](/databases/).
 
-   StackBlaze supports multiple environments. Deploy to a staging environment first, run your smoke tests, then promote to production. Attach your custom domain under Settings → Domains — StackBlaze provisions a TLS certificate automatically.
+6. **Paste your config vars**
+
+   Open the service → **Variables** → **Raw editor** and paste the contents of `heroku.env`. See [Variables](/security/env-vars/).
+
+7. **Move Heroku Scheduler jobs**
+
+   Each scheduled job becomes a [cron job](/deploy/cron-jobs/) service with the same command and schedule.
+
+8. **Deploy, test, then move the domain**
+
+   Commit the staged changes to deploy. Test on a staging [environment](/deploy/environments/) first if you have one. Then add your [custom domain](/networking/custom-domains/) under the service's **Settings → Domains**. TLS is issued automatically.
 
 </Steps>
 
-## Heroku → StackBlaze equivalents
+## Heroku → StackBlaze
 
 | Heroku | StackBlaze |
 | --- | --- |
-| `web` dyno | Web Service |
-| `worker` dyno | Background Worker |
-| one-off dyno | One-off job |
-| Heroku Postgres | StackBlaze PostgreSQL |
-| Heroku Redis | StackBlaze Redis |
-| Heroku Scheduler | Cron Job |
-| `heroku config:set` | Dashboard → Environment Variables |
-| `heroku ps:scale web=2` | Dashboard → Scale → 2 replicas |
-| `heroku releases` | Dashboard → Deployments |
-
-## Under the hood
-
-StackBlaze can build your app with Cloud Native Buildpacks (CNB), the same standard Heroku uses, so no Dockerfile is required — or from your own Dockerfile if you prefer. Either way, Procfile process types map directly:
-
-- **web:** becomes a long-running web process with a public URL and automatic TLS. Traffic is load-balanced across all replicas.
-- **worker:** becomes a background process without a public URL. It runs on the private network and processes jobs from a queue.
-- **release:** becomes a one-off job that runs to completion before new instances are created — the same guarantee Heroku release phase provides.
+| App | Project |
+| `web` process | Service with public HTTP |
+| `worker` process | Service with no public domain |
+| `release` phase | Pre-deploy command on the service |
+| Heroku Postgres | Postgres on the canvas |
+| Heroku Redis | Redis (Valkey) on the canvas |
+| Heroku Scheduler | Cron job service |
+| `heroku config:set` | Service → **Variables** |
+| `heroku ps:scale web=2` | [Horizontal scaling](/scaling/horizontal/) |
+| `heroku releases` | Service → **Deployment** (history and rollbacks) |
+| Pipelines and review apps | [Environments](/deploy/environments/) and [PR previews](/cicd/pr-previews/) |
 
 ## Next steps
 
 - [Connect a GitHub repository](/deploy/github/)
-- [Set up environment variables](/security/env-vars/)
+- [Set up variables](/security/env-vars/)
 - [Attach a custom domain](/networking/custom-domains/)

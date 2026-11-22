@@ -15,11 +15,11 @@ This guide covers two ways to get going:
 
 ## Deploying your project — from GitHub
 
-1. Open [the dashboard](https://dashboard.stackblaze.cloud) → **New project**.
-2. Choose **Git repository**. Link GitHub if prompted, then pick the repo and branch.
-3. The service is **staged** on the canvas. Review the changeset and click **Deploy** (or deploy immediately if the flow offers it).
+1. Open [the dashboard](https://dashboard.stackblaze.cloud) → **New project**. Give it a name (or leave it blank to auto-generate one), pick a region, and click **Create Project**.
+2. On the empty canvas, choose **GitHub repository** (or **+ Service → Git repository**). Link GitHub if prompted, then pick the repo and branch.
+3. The service is **staged** on the canvas. Click **Commit 1 change** in the toolbar, review the change, and click **Deploy 1 change**.
 
-You land on the **project canvas**. StackBlaze clones the commit, builds with Nixpacks (or your Dockerfile), and rolls the service out. When the deployment is healthy, generate a `*.stackblaze.app` domain from the service.
+StackBlaze clones the commit, builds it (your `Dockerfile` if there is one, otherwise Railpack), and rolls the service out. A public service gets a `*.stackblaze.app` URL; you can add a [custom domain](/networking/custom-domains/) later.
 
 If the build fails, open **Logs** on the service and scroll the full build log — the useful error is often not the last line.
 
@@ -34,7 +34,7 @@ stackblaze init
 stackblaze up
 ```
 
-`init` creates a project (or links this folder to one). `up` creates the service from the repo's git remote and current branch (push your commits first) and streams the build. Then:
+`init` creates a project and links this folder to it. `up` creates the service from the repo's git remote and current branch (push your commits first) and streams the build. A folder with no git remote (or `up --local`) is uploaded instead. Then:
 
 ```bash
 stackblaze open
@@ -44,10 +44,10 @@ That opens the service in the dashboard (`--app-url` opens the app itself). To s
 
 ## Deploying your project — from a Docker image
 
-1. **New project** (empty canvas).
-2. **+ Service → Docker images**.
-3. Paste an image such as `ghcr.io/org/app:tag` (Docker Hub, GHCR, GitLab, and Quay work). Use the full URL for anything that is not Docker Hub.
-4. **Deploy**.
+1. **New project**, then open the empty canvas.
+2. **+ Service → Docker images** (or **Docker image** on the empty canvas).
+3. Search for an image or paste one such as `ghcr.io/org/app:tag`. Use the full registry URL for anything that is not Docker Hub.
+4. **Commit** the staged change, review it, and **Deploy**.
 
 The process must listen on `PORT`. Private registries need credentials on the service.
 
@@ -55,14 +55,14 @@ The process must listen on `PORT`. Private registries need credentials on the se
 
 GitHub, CLI, Docker, and templates all end on the same **project canvas**. This is mission control: services, databases, environments, variables, and [staged changes](/deploy/staged-changes/).
 
-Click a tile for source, variables, networking, volumes, metrics, and logs. **+ Service** adds Git, Docker, templates, databases, or an import (Compose / `render.yaml` / `fly.toml`).
+Click a tile for its code, deployments, variables, logs, metrics, and settings. **+ Service** adds templates, a Git repository, Docker images, databases, add-ons, or an import (Compose / `render.yaml` / `fly.toml`).
 
 ## Deploying a template
 
-1. **New project** → **Templates**, or **+ Service → Templates** on an existing canvas.
+1. **+ Service → Templates** on a canvas (or **Template** on an empty canvas).
 2. Search the [catalog](https://stackblaze.com/templates).
 3. Fill in any prompted values.
-4. **Deploy**.
+4. **Commit** the staged changes, review them, and **Deploy**.
 
 The canvas provisions every service and database the template defines.
 

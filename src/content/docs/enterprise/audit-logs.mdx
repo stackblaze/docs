@@ -1,16 +1,21 @@
 ---
 title: Audit logs
-description: Who changed a project, when, and from where.
+description: Who changed what in your organization, and when.
 ---
 
-Enterprise organizations retain an audit log of admin actions: member invites, role changes, SSO, IP allowlist edits, and destructive canvas operations. Entries include timestamp, actor, and source IP.
+The audit log records changes across your organization: who made them, what changed, and when.
 
-In the dashboard, open organization settings → **Audit**.
+Open **Audit log** in the dashboard. You can search by user, action, resource, or service, filter by severity, and pick a time range. One query covers at most 90 days.
+
+Reading the audit log needs the **Audit** permission. All built-in roles (admin, member, guest) have it. See [Team & permissions](/security/team-permissions/).
 
 From the CLI:
 
 ```bash
 stackblaze audit
+stackblaze audit --actor alice --action delete --since-minutes 60
 ```
 
-Retention is 90 days on Enterprise. This is not a substitute for application logs — those live in [Observability](/operations/observability/).
+Revealing secret variable values on a service is also recorded.
+
+The audit log is not a substitute for application logs. Those live in [Observability](/operations/observability/).

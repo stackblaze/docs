@@ -3,13 +3,13 @@ title: Best practices
 description: How to compose projects, networks, and variables so a StackBlaze stack stays fast and cheap to run.
 ---
 
-These patterns match how the canvas actually works. They are the same ideas Railway documents for a project-and-service model.
+These patterns match how the canvas works.
 
 ## Use private networking when you can
 
 Services in the same [environment](/deploy/environments/) already share a private network. Talk to databases and internal APIs by **service name**, not a public `*.stackblaze.app` URL.
 
-When you set variables, prefer the injected connection string (`fromDatabase` in `stackblaze.yaml`, or Attach on the service) over a hardcoded public host.
+When you set variables, prefer the injected connection variables (connect the database on the service's **Add-ons** tab, or `fromDatabase` in `stackblaze.yaml`) over a hardcoded public host.
 
 Private traffic stays in the environment. It is faster and does not go out through the public edge.
 
@@ -27,7 +27,7 @@ Use **+ Service** on the canvas instead of **New project** every time you add a 
 
 ## Wire databases instead of pasting URLs
 
-Do not copy `DATABASE_URL` by hand. Attach the database from the service **Variables** tab, or in config as code:
+Do not copy `DATABASE_URL` by hand. Connect the database on the service's **Add-ons** tab (its variables then show as **Provided by add-on**), or in config as code:
 
 ```yaml
 envVars:
@@ -41,7 +41,7 @@ If the database credentials rotate, the service stays in sync.
 
 ## Stage, then deploy
 
-Canvas edits are a changeset. Review them, then **Deploy**. That is how you avoid half-applied topology.
+Canvas edits are staged changes. Click **Commit N changes**, review the list, then **Deploy**. That is how you avoid half-applied topology.
 
 ## Health-check public HTTP
 

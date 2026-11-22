@@ -1,123 +1,75 @@
 ---
 title: Pricing & Plans
-description: "StackBlaze pricing plans: Free, Starter ($7/service/month), Pro ($25/service/month), and Enterprise. Includes database pricing, bandwidth costs, and answers to common billing questions."
+description: "StackBlaze plans (Free Trial, Developer, Pro, Business), usage rates, and how the monthly bill is calculated."
 ---
+
+Every plan uses the same usage rates. You do not pick server sizes: resources are allocated automatically, and you pay for what services use. Current prices are on [stackblaze.com/pricing](https://stackblaze.com/pricing).
 
 ## Plans
 
-### Free — $0 forever
+| | Free Trial | Developer | Pro | Business |
+| --- | --- | --- | --- | --- |
+| Price | $0 for 7 days | $10 / month | $29 / month | $499 / month |
+| Included usage | $3, once | $10 / month | $29 / month | $499 / month |
+| Projects | 1 | 5 | 25 | 100 |
+| Services per project | 3 | 10 | 50 | 200 |
+| Environments per project | 1 | 2 | 5 | 10 |
+| Preview environments | – | – | ✓ | ✓ |
+| Regions | 1 | 1 | 3 | 3 |
+| Databases (Postgres, MariaDB, Redis) | 2 | 2 | 10 | 30 |
+| Database high availability | – | – | ✓ | ✓ |
+| Database backup retention | – | 7 days | 14 days | 30 days |
+| Team members | 1 | 1 | 5 | 20 |
+| Single sign-on (SSO) | – | – | – | ✓ |
+| Log retention | Not promised | 3 days | 14 days | 30 days |
+| Custom domains with automatic TLS | ✓ | ✓ | ✓ | ✓ |
+| Builds | Free, unlimited | Free, unlimited | Free, unlimited | Free, unlimited |
 
-For side projects and experimentation. [Get started free](https://stackblaze.com/signup).
+Per-service caps (instances, size, connections, builds) are on [Limits & quotas](/reference/limits/).
 
-- 1 web service
-- 1 database
-- 1 background worker
-- 500 build minutes/month
-- 100 GB bandwidth/month
-- 1 custom domain
-- 1 replica per service
-- Services spin down after 15 min inactivity
-- 7-day log retention
-- Community support
+The Free Trial lasts 7 days or until the $3 of trial usage is used. No credit card is needed. To keep running after that, choose a paid plan.
 
-### Starter — $7 per service/month
+## How the bill works
 
-For teams building production apps. [Start with Starter](https://stackblaze.com/signup).
+On a paid plan the price is a monthly minimum that counts toward usage. It is not a fee on top. You pay the greater of the plan price or your metered usage.
 
-- Up to 3 services
-- Up to 3 databases
-- 2,000 build minutes/month
-- 500 GB bandwidth/month
-- 5 custom domains
-- Up to 3 replicas per service
-- Always-on (no spin-down)
-- 14-day log retention
-- 3-day backup retention
-- Email support
+## Usage rates
 
-### Pro — $25 per service/month
+The same on every plan.
 
-Most popular. For serious production workloads. [Start with Pro](https://stackblaze.com/signup).
-
-- Unlimited services
-- Unlimited databases
-- Unlimited build minutes
-- Unlimited bandwidth
-- Unlimited custom domains
-- Up to 10 replicas per service
-- Autoscaling (CPU & memory triggers)
-- Point-in-time recovery (PITR)
-- 30-day log retention
-- 7-day backup retention
-- Priority support (4h response SLA)
-
-### Enterprise — Custom (contact sales)
-
-For large teams with compliance requirements. [Contact sales](https://stackblaze.com/contact).
-
-- Everything in Pro
-- Unlimited replicas per service
-- Dedicated infrastructure (single-tenant)
-- SAML 2.0 SSO (Okta, Azure AD, Google)
-- SCIM provisioning
-- IP allowlisting
-- Enforce 2FA for all members
-- Audit log (90-day retention)
-- 90-day backup retention
-- Dedicated SLA & support contact
-- Custom contract & invoicing
-
-## Database pricing
-
-Databases are billed separately from your service plan, based on instance size. Disk storage is billed at $0.20/GB-month. Backup storage for Point-in-Time Recovery (Pro+) is billed at $0.05/GB-month.
-
-| Size | RAM | vCPU | Price |
-| --- | --- | --- | --- |
-| Micro | 512 MB | 0.5 | $7/month |
-| Basic | 1 GB | 1 | $15/month |
-| Standard | 4 GB | 2 | $45/month |
-| Performance | 16 GB | 4 | $140/month |
-| Professional | 64 GB | 8 | $490/month |
-
-## Bandwidth pricing
-
-| | |
+| Resource | Rate |
 | --- | --- |
-| 100 GB | Free on all plans per month |
-| $0.10 | Per GB over the included amount |
-| Free | All inbound & internal traffic |
+| CPU | $14 per vCPU-month, metered on actual use |
+| Memory | $7 per GB-month, metered on actual use |
+| Persistent storage | $0.15 per provisioned GB-month |
+| Database backups | First 10 GB free, then $0.15 per GB-month stored |
+| Outbound traffic | $0.05 per GB (inbound is free) |
+| Email sent from your apps | $1 per 1,000 emails |
+| Builds | Free |
 
-## Frequently asked questions
+A month is 730 hours. Storage is billed on the provisioned size of a volume, not on what it holds.
 
-### What counts as a service?
+## Support plans
 
-A service is any web service, background worker, or cron job. Databases are billed separately. Each deployed unit, even if it runs 0 replicas, counts as one service against your plan quota.
+Community support comes with every plan. Standard and Premium are add-ons you can buy on any plan.
 
-### How is bandwidth measured?
+| Tier | Price | Response |
+| --- | --- | --- |
+| Community | Free | Best effort |
+| Standard | $19 / month | 24-hour first response on business days |
+| Premium | $149 / month | 8-hour first response, 1 hour for urgent issues |
+| Enterprise | Contact sales | 24/7 with an uptime SLA |
 
-Bandwidth is outbound data transfer from your services to the public internet. Inbound traffic (requests to your service) and internal traffic (service-to-service within your project) are always free.
+## Changing plans
 
-### What happens to Free plan services when they spin down?
+Change your plan from **Billing** in the dashboard. Usage for the current period is on **Usage**.
 
-Free plan web services spin down after 15 minutes of no incoming traffic. The next request wakes the service up in 5–10 seconds. This does not affect background workers or cron jobs, those don't receive HTTP traffic.
-
-### How does the Starter plan billing work?
-
-Starter is billed per service per month. A project with 2 web services costs $14/month. Databases are billed separately by instance size. You're only billed for active services, deleted services stop accruing charges immediately.
-
-### Can I mix plans across services?
-
-No, the plan applies to the entire project. All services in a project share the same plan tier. If you need different capabilities for different teams, create separate projects.
-
-## Ready to get started?
-
-No credit card required. Free plan available forever.
-
-- [Start for free](https://stackblaze.com/signup)
-- [Contact sales](https://stackblaze.com/contact)
+- **Upgrade** — the new limits apply at once. A running service keeps its size until its next save, deploy, or restart.
+- **Downgrade** — takes effect at the end of the billing period. Services above the new caps are scaled down then. Anything you have more of than the new plan includes (databases, environments, members, regions) keeps running, but you cannot add more until you are back under the limit.
+- **Cancel** — you keep the plan until the paid period ends and are not charged again.
 
 ## Next steps
 
-- [Limits & quotas by plan](/reference/limits/)
-- [API reference](/reference/api/)
+- [Limits & quotas](/reference/limits/)
 - [Team & permissions](/security/team-permissions/)
+- [Contact sales](https://stackblaze.com/contact)
