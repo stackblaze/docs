@@ -1,17 +1,17 @@
 ---
 title: WebSockets
-description: WebSockets and Server-Sent Events work out of the box on StackBlaze with no configuration. Long-lived connections supported with a 3600s proxy timeout.
+description: WebSockets and Server-Sent Events work on StackBlaze with no configuration. Send heartbeats to keep idle connections open.
 ---
 
 import Diagram from '../../../components/Diagram.astro';
 
-WebSockets work out of the box on StackBlaze. Long-lived connections are fully supported with no proxy timeout issues.
+WebSockets work out of the box on StackBlaze. Long-lived connections are supported; send heartbeats so idle connections stay open.
 
 ## No configuration needed
 
-WebSocket connections are supported on all StackBlaze web services without any configuration. The Ingress controller passes `Upgrade: websocket` headers through to your service, and long-lived connections are maintained with a 3600-second proxy read timeout, far longer than any typical idle connection.
+WebSocket connections work on every public StackBlaze service without any configuration. The `Upgrade: websocket` headers are passed through to your service.
 
-Server-Sent Events (SSE) are also fully supported with the same timeout settings.
+Server-Sent Events (SSE) work the same way.
 
 ## WebSocket libraries
 
@@ -166,7 +166,7 @@ export function broadcast(data: object) {
 
 ## Connection timeouts
 
-StackBlaze sets a proxy read timeout of 3600 seconds (1 hour) on the Ingress controller. Connections idle for more than 1 hour will be closed by the proxy. To keep long-lived connections open, implement a heartbeat/ping mechanism in your application:
+The proxies between the internet and your service close connections that stay idle too long. To keep long-lived connections open, send a heartbeat (ping) every 30 seconds or so:
 
 ```ts title="Client-side keep-alive"
 // Send a ping every 30 seconds from the client
@@ -181,6 +181,6 @@ const ping = setInterval(() => {
 ws.addEventListener('close', () => clearInterval(ping))
 ```
 
-:::note[Under the hood]
-WebSocket upgrade requests pass through the Kubernetes Ingress controller (nginx). The nginx configuration includes `proxy_read_timeout 3600s` and `proxy_send_timeout 3600s` to support long-lived connections. The `Upgrade` and `Connection` headers are forwarded to the upstream pod. Sticky sessions are not configured, a WebSocket connection is naturally sticky because it maintains a persistent TCP connection to the same pod.
+:::note
+There are no sticky sessions. A WebSocket stays on the instance it connected to for its whole life; a reconnect may land on another instance. With more than one instance, broadcast through Redis/Valkey pub/sub as shown above.
 :::

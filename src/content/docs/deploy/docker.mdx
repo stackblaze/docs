@@ -3,11 +3,11 @@ title: Docker
 description: Build from a Dockerfile, or run a registry image as a service.
 ---
 
-A service can build from a Dockerfile in the repo, or run an image you paste from a registry (**+ Service → Docker images**).
+A service can build from a Dockerfile in the repo, or run an image you paste from a registry (**+ Service → Docker image**).
 
 ## How it works
 
-If a `Dockerfile` is in the service root (or the configured root directory), StackBlaze uses it and skips Nixpacks. It builds in an ephemeral builder, pushes the image to a private registry, and deploys that image as the service.
+When you add a repo that has a `Dockerfile`, StackBlaze proposes the **Docker** build method; otherwise it proposes **Railpack**. You can switch the **Build method** in the service **Settings** at any time. A Docker build runs in an isolated builder (Buildah) with your build path as the context, pushes the image to a private registry, and deploys that image as the service.
 
 You get full control over:
 
@@ -18,12 +18,9 @@ You get full control over:
 
 ## Port configuration
 
-StackBlaze reads the port your container listens on from two sources, in priority order:
+Each service has one container port. When StackBlaze detects your Dockerfile, it pre-fills the port from its `EXPOSE` line (and a health check path from `HEALTHCHECK`, when it finds one). Change the port in the service **Settings**.
 
-1. The `PORT` environment variable injected at runtime (takes precedence).
-2. The `EXPOSE` directive in your Dockerfile.
-
-Always make the process read `$PORT` rather than hardcoding a port.
+StackBlaze sets the `PORT` variable to that port at runtime. Make the process listen on `$PORT` rather than a hardcoded port.
 
 ```dockerfile title="Dockerfile"
 FROM node:20-alpine
@@ -127,49 +124,44 @@ ENTRYPOINT ["/server"]
 Using `FROM scratch` for Go produces images under 10 MB. Make sure to copy SSL certificates if your app makes outbound HTTPS requests.
 :::
 
-## Base image layer caching
+## Layer caching
 
-StackBlaze caches Docker layer builds across deploys. To get the best cache hit rates:
+StackBlaze caches Docker build layers per project across deploys, so an unchanged step is reused. To get the best cache hit rates:
 
 - Copy and install dependencies *before* copying your source code
 - Separate dependency installation into its own layer (a lock file change invalidates the cache; source changes don't)
-- Use `--no-cache-dir` (pip) or `--no-cache` (npm) to avoid storing package manager caches inside the image layer
 
-## Build arguments
+## Build arguments and secrets
 
-Pass build-time arguments to your Dockerfile using `ARG`. Set them in Service Settings → Build → Build Arguments. Build args are *not* the same as environment variables — they are only available during the build, not at runtime.
+Docker builds do not pass `--build-arg` values, and `build.args` in an imported Compose file is ignored. Use defaults in your `ARG` lines, or read [variables](/security/env-vars/) at runtime. Never bake secrets into an image.
 
-```dockerfile title="Dockerfile"
-ARG NODE_ENV=production
-ARG APP_VERSION=unknown
+## Pre-deploy command
 
-RUN echo "Building version ${APP_VERSION} for env ${NODE_ENV}"
-```
-
-:::caution
-Build args are visible in the image's layer metadata (`docker history`). Never pass secrets as build args. Use runtime environment variables for secrets.
-:::
+Set **Pre-deploy** in **Settings → Deploy** (for example `npm run migrate`). It runs in the freshly built image before the new deploy goes live. If it fails, the deploy stops and the current version keeps running. The image needs a shell.
 
 ## Import from Docker Compose
 
 If you have a `docker-compose.yml` that defines multiple services, map each Compose service to a StackBlaze app or managed add-on. See [Docker Compose](/deploy/docker-compose/).
 
-StackBlaze reads the service definitions and creates corresponding StackBlaze services for each container. Services of type `db`, `redis`, or `postgres` are converted to managed database services.
+StackBlaze reads the service definitions and creates a service for each container. Containers running Postgres, MariaDB, MySQL, Redis/Valkey, or Kafka images become managed databases.
 
 ### Supported compose fields
 
 | Compose field | StackBlaze equivalent |
 | --- | --- |
-| `image` | Pre-built image (bypasses build step) |
-| `build` | Dockerfile + context path |
-| `ports` | Service port (first mapped port) |
-| `environment` | Environment variables |
-| `depends_on` | Service startup ordering |
-| `command` | Start command override |
+| `image` | Pre-built image (no build step) |
+| `build` (`context`, `dockerfile`) | Dockerfile build with that build path |
+| `ports` | Service port (first port only); no ports makes it a private worker |
+| `environment` | Variables |
+| `command` | Start command |
+| `volumes` | A volume |
+| `deploy.replicas` | Instance count |
+
+`depends_on`, `healthcheck`, and `build.args` are ignored, with a warning.
 
 ## Using a pre-built image
 
-If you already have a Docker image in a registry, you can deploy it directly without connecting a GitHub repository. Create or update the app with `deploymentstrategy: docker` and the image on the spec, or apply a `stackblaze.yaml` service with `runtime: image`.
+If you already have a Docker image in a registry, deploy it without connecting a GitHub repository: **+ Service → Docker image**, then search Docker Hub or paste an image reference. In `stackblaze.yaml`, use `runtime: image`.
 
 ```yaml title="stackblaze.yaml"
 services:
@@ -181,8 +173,7 @@ services:
       tag: latest
 ```
 
-For private registries, configure registry credentials in Project Settings → Integrations → Container Registries.
 
 ## Dockerfile location
 
-By default, StackBlaze looks for `Dockerfile` at the root of the repository (or the service's `rootDir` if set). You can specify a custom path in Service Settings → Build → Dockerfile Path.
+StackBlaze finds Dockerfiles anywhere in the repo and lists them in the **Dockerfile** picker under the service **Settings**. The path is relative to the repo root (for example `api/Dockerfile`). In `stackblaze.yaml`, set `dockerfilePath`.

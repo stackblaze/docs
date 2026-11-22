@@ -1,43 +1,59 @@
 ---
 title: Observability
-description: Coroot metrics, logs, and traces for StackBlaze apps, plus dashboard notifications.
+description: Metrics, logs, and traces for StackBlaze services, Coroot, log drains, and notifications.
 ---
 
 import Diagram from '../../../components/Diagram.astro';
 
-Built-in metrics and logs, plus how to forward telemetry to your existing stack.
+Every service has a **Metrics** tab and a **Logs** tab. For deeper analysis, open the service in **Coroot**. To keep logs in your own tools, add a log drain.
+
+## Metrics
+
+The service's **Metrics** tab shows **Resources** (CPU and memory) and **HTTP** (request rate and response time) over the last 2 hours, 24 hours, or 7 days.
+
+From the CLI, `stackblaze metrics` shows current CPU and memory; `stackblaze metrics --since 24h` shows history (up to 7 days).
 
 ## Coroot
 
-Observability is **Coroot** (eBPF metrics, logs, and traces). Open it from an app in the dashboard — StackBlaze mints a one-time handoff and opens Coroot in a new tab. Billing and in-dashboard charts query PromQL `query_range` with an API key; there is no instant `/query` endpoint.
+Click **Open in Coroot** on the Metrics tab. StackBlaze mints a one-time handoff and opens Coroot in a new tab, scoped to your service.
 
-<Diagram file="coroot-handoff.svg" alt="A service in the dashboard mints a one-time handoff that opens Coroot for metrics, logs, traces, and a service map. Billing and in-dashboard charts query PromQL query_range with an API key." />
+<Diagram file="coroot-handoff.svg" alt="A service in the dashboard mints a one-time handoff that opens Coroot for metrics, logs, traces, and a service map." />
 
 | Signal | Use it for |
 | --- | --- |
-| CPU and RSS memory | Right-sizing pod sizes and catching OOMs |
-| TCP egress (eBPF) | Unexpected outbound traffic |
+| CPU and memory | Right-sizing and catching OOMs |
+| TCP connections (eBPF) | Unexpected outbound traffic |
 | Golden signals / incidents | Error rate and latency regressions after a deploy |
-| Service map | Who talks to whom inside the phase |
+| Service map | Who talks to whom inside the environment |
 
 ## Logs
 
-Runtime stdout/stderr is in the app **Logs** tab and via `GET /api/logs/{pipeline}/{phase}/{app}/`. Search uses the durable log index (`search_logs` in MCP / chat). An empty live tail is not the same as "no logs" — search history when the pod has rotated.
+The **Logs** tab streams stdout/stderr of the running service, with a search box. It also links to the build logs and system events. Log history is kept for your plan's **log retention** (shown under **Settings → Logs**).
 
-:::note
-Chat and MCP should prefer log search over a raw tail. Retention follows the observability backend for the region, not a per-plan hobby/pro table.
-:::
+From the CLI:
+
+```bash
+stackblaze logs                      # recent lines
+stackblaze logs -f                   # follow live
+stackblaze logs --search -q error --minutes 60
+```
+
+Or `GET /api/logs/{pipeline}/{phase}/{app}/`. An empty live tail is not the same as "no logs": the instance may have restarted, so search history.
+
+## Log drains
+
+Forward logs to your own logging service under **Settings → Log drains**. Each drain picks apps, a minimum level, and a destination: an HTTP endpoint, syslog, Datadog, or Quickwit. Your plan must include log drains.
+
+## Tracing
+
+On plans with tracing (Business), turn on **Tracing** in a service's settings and pick its language. Java, Node.js, Python, and .NET are instrumented automatically on the next deploy. For other languages, your OpenTelemetry SDK gets `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_PROTOCOL`, and `OTEL_SERVICE_NAME`. Traces show in Coroot.
+
+You can also send OpenTelemetry from your app to Datadog, Honeycomb, or Grafana Cloud yourself; that is independent of StackBlaze.
 
 ## Notifications
 
-Configure Slack, Discord, or generic webhooks under **Settings → Notifications**. Pick pipelines and event names (deploys, failures). This is not a full PagerDuty product — use Coroot incidents for SLO-style alerts.
-
-## Your own exporters
-
-You can still emit OpenTelemetry from the app to Datadog, Honeycomb, or Grafana Cloud. That is in-process and independent of Coroot.
+Send project events (deploys, failures) to **Slack**, **Discord**, or any **webhook** under **Settings → Notifications**. Use Coroot incidents for SLO-style alerts.
 
 ## After a bad deploy
 
-Open Coroot from the app, then roll back from [Rollbacks](/cicd/rollbacks/) or `POST /api/deployments/rollback/{pipeline}/{phase}/{app}/{revisionId}`.
-
-Deep dive: [Observability beyond metrics](https://stackblaze.com/blog/observability-beyond-metrics)
+Open Coroot from the service, then roll back from the **Deployment** tab. See [Rollbacks](/cicd/rollbacks/).

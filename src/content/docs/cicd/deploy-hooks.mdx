@@ -10,19 +10,20 @@ POST to the deployments build API for a specific project, environment, and servi
 ## Triggering a deploy
 
 ```bash title="terminal"
-# Queue a build: project / environment / service
+# Start a build: project / environment / service
 curl -X POST "https://api.stackblaze.cloud/api/deployments/build/acme-app/production/api" \
-    -H "Authorization: Bearer $STACKBLAZE_TOKEN"
+    -H "Authorization: Bearer $STACKBLAZE_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{}'
 
 # Response
-{
-  "status": "queued",
-  "deployment_id": "dep_9f3k2m...",
-  "message": "Deploy queued successfully"
-}
-
-# HTTP Status: 202 Accepted
+{ "message": "Build started" }
 ```
+
+The service's own settings decide how it builds (repository, branch, build method, build path). Optional body fields:
+
+- `commitSha` — build this commit instead of the branch head.
+- `message` — a release message shown on the **Deployment** tab instead of the commit subject (500 characters at most).
 
 ## GitHub Actions example
 
@@ -39,8 +40,10 @@ jobs:
         run: npm test
       - name: Deploy to StackBlaze
         run: |
-          curl -X POST "https://api.stackblaze.cloud/api/deployments/build/acme-app/production/api" \
-            -H "Authorization: Bearer $STACKBLAZE_TOKEN"
+          curl -fsS -X POST "https://api.stackblaze.cloud/api/deployments/build/acme-app/production/api" \
+            -H "Authorization: Bearer $STACKBLAZE_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"commitSha\": \"$GITHUB_SHA\"}"
         env:
           STACKBLAZE_TOKEN: ${{ secrets.STACKBLAZE_TOKEN }}
 ```
@@ -54,23 +57,23 @@ jobs:
 | Custom scripts | Call the hook from any shell script, Makefile target, or deployment automation. |
 | Zapier / n8n | Wire up a Zapier webhook action or n8n HTTP Request node to deploy on any trigger. |
 | GitHub Actions | Use a curl step in a GitHub Actions workflow for fine-grained deploy control beyond auto-deploy. |
-| Scheduled deploys | Combine with a cron job (e.g. cron.org) to deploy your service on a schedule, refreshing data or config. |
 
-:::caution[Rate limit]
-Prefer the project's git webhook for push-to-deploy. Use the deployments build API when CI must run first. A second build for the same app waits until the current one finishes.
+:::caution[Concurrent builds]
+Prefer [auto-deploy](/cicd/auto-deploy/) for push-to-deploy. Use the build API when CI must run first. A new build for a service cancels that service's build that is still running. Your plan limits how many builds run at once in the workspace; a build over the limit is refused (HTTP 402), not queued.
 :::
 
 :::note[Under the hood]
-- **Personal access token**: `sb_pat_` tokens inherit the creator's organization and RBAC. Revoke them from Settings → API tokens. Tokens created before the `sb_pat_` prefix (`kbr_pat_…`) keep working.
-- **Build queue**: `POST /api/deployments/build/{pipeline}/{phase}/{app}` starts a build. Those path segments are project, environment, and service.
-- **Environments**: production, review, and custom environments are separate. Put the environment name in the path.
+- **Personal access token**: `sb_pat_` tokens inherit the creator's organization and RBAC. Revoke them from **Personal settings → API tokens** (account menu). Tokens created before the `sb_pat_` prefix (`kbr_pat_…`) keep working.
+- **Build API**: `POST /api/deployments/build/{pipeline}/{phase}/{app}` starts a build. Those path segments are project, environment, and service.
+- **Environments**: production, custom environments and PR previews (`pr-<number>`) are separate. Put the environment name in the path.
+- **Permission**: the token needs `app:write` on the project.
 :::
 
 ## Step by step
 
 1. **Create an API token**
 
-   Create a personal access token in Settings → API tokens (prefix `sb_pat_`). Store it as a CI secret. The token is scoped to your organization and RBAC — there is no separate unsigned deploy-hook URL.
+   Create a personal access token under **Personal settings → API tokens** (prefix `sb_pat_`). Store it as a CI secret. The token is scoped to your organization and RBAC — there is no separate unsigned deploy-hook URL.
 
 2. **Store the token as a secret**
 
@@ -78,11 +81,11 @@ Prefer the project's git webhook for push-to-deploy. Use the deployments build A
 
 3. **POST a build**
 
-   `POST https://api.stackblaze.cloud/api/deployments/build/{pipeline}/{phase}/{app}` with `Authorization: Bearer $STACKBLAZE_TOKEN`. That queues a build for the named app. If the project already auto-deploys on git push, you can skip this and rely on the GitHub webhook.
+   `POST https://api.stackblaze.cloud/api/deployments/build/{pipeline}/{phase}/{app}` with `Authorization: Bearer $STACKBLAZE_TOKEN`. That starts a build for the named service. If the project already auto-deploys on git push, you can skip this and rely on the GitHub webhook.
 
 4. **Monitor the deploy**
 
-   Watch the Deployments tab in the dashboard, or poll `GET /api/deployments/{pipeline}/{phase}/{app}` and `GET /api/apps/{pipeline}/{phase}/{app}/status`.
+   Watch the service's **Deployment** tab in the dashboard, or poll `GET /api/deployments/{pipeline}/{phase}/{app}`.
 
 ## Next steps
 

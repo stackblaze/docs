@@ -1,44 +1,62 @@
 ---
 title: Static sites
-description: Build a frontend and serve the output as a StackBlaze service.
+description: Build a frontend and serve the output from a StackBlaze service.
 ---
 
-A static site is still a **service**. StackBlaze runs the build, then serves the output over HTTP with TLS. If you need server-side rendering, API routes, or a database at request time, use [public HTTP](/deploy/web-services/) on a runtime service instead.
+There is no separate static-site type on StackBlaze. A static site is a **service** whose container serves your built files over HTTP. StackBlaze gives it a public URL with HTTPS like any other [public service](/deploy/web-services/).
 
-## What gets served
+Importing a `render.yaml` static site (`runtime: static`) is skipped for this reason; serve the files from an image instead.
 
-The build produces HTML, CSS, JavaScript, and assets. Those files are what the service returns. There is no separate CDN product — it is the same public-HTTP path as any other service.
+## Option 1: Dockerfile with nginx
 
-## Framework auto-detection
+Build the site in one stage and serve it with nginx in the next. Choose the **Docker** build method.
 
-StackBlaze automatically detects the framework and pre-configures the build command and output directory. You can always override these in Service Settings.
+```dockerfile title="Dockerfile"
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build          # writes dist/
 
-| Framework | Detected by | Build command | Output directory |
-| --- | --- | --- | --- |
-| Next.js (static export) | `next.config.*` | `next build` | `out` |
-| Vite | `vite.config.*` | `vite build` | `dist` |
-| Create React App | `react-scripts` | `npm run build` | `build` |
-| Gatsby | `gatsby-config.*` | `gatsby build` | `public` |
-| Hugo | `hugo.toml` / `hugo.yaml` | `hugo` | `public` |
-| Astro | `astro.config.*` | `astro build` | `dist` |
-| Eleventy | `.eleventy.js` | `eleventy` | `_site` |
-| SvelteKit (static) | `svelte.config.*` | `vite build` | `build` |
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 8080
+```
 
-:::note
-Next.js requires `output: 'export'` in your `next.config.js` to produce a static build. Without it, Next.js needs a Node.js server — use a Web Service for that.
-:::
+```nginx title="nginx.conf"
+server {
+  listen 8080;
+  root /usr/share/nginx/html;
 
-## Build output directory
+  # Single-page app: send unknown paths to index.html
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
 
-The build output directory is the folder StackBlaze uploads to the CDN after the build completes. If auto-detection picks the wrong directory, override it in Service Settings → Build → Publish Directory.
+  # Long cache for content-hashed assets
+  location /assets/ {
+    add_header Cache-Control "public, max-age=31536000, immutable";
+  }
+}
+```
 
-### Next.js static export example
+Set the service port to `8080`. Redirects, rewrites, a custom 404 page, and cache headers all go in `nginx.conf`.
+
+## Option 2: a small Node server
+
+With the **Railpack** build method, set a **Build command** (for example `npm run build`) and a **Start command** that serves the output folder on `$PORT`, for example `npx serve -s dist -l $PORT`.
+
+## Next.js static export
+
+Next.js needs `output: 'export'` in `next.config.js` to produce static files. Without it, Next.js needs a Node.js server: deploy it as a normal service.
 
 ```javascript title="next.config.js"
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',        // enables static export
-  trailingSlash: true,     // recommended for CDN compatibility
+  trailingSlash: true,
   images: {
     unoptimized: true,     // next/image requires a server; disable for static export
   },
@@ -47,94 +65,22 @@ const nextConfig = {
 module.exports = nextConfig
 ```
 
-## Custom 404 page
-
-Create a `404.html` file in your output directory. StackBlaze serves it automatically when a CDN edge node receives a request for a path that does not exist.
-
-Most frameworks generate `404.html` automatically:
-
-- **Next.js:** Create `app/not-found.tsx` or `pages/404.tsx`
-- **Gatsby:** Create `src/pages/404.jsx`
-- **Hugo:** Create `layouts/404.html`
-- **Vite / CRA:** Copy `index.html` to `404.html` in your build script
-
-## Redirects and rewrites
-
-Create a `_redirects` file in your publish directory (not your project root) to define URL redirects and rewrites. This is the same format used by Netlify.
-
-```text title="public/_redirects"
-# Single page app (SPA), send all routes to index.html
-/*    /index.html   200
-
-# 301 redirect
-/old-page   /new-page   301
-
-# Redirect with query strings
-/blog/:slug   /posts/:slug   301
-
-# Proxy to an API (rewrite, keeps original URL)
-/api/*   https://api.acme.com/:splat   200
-```
-
-:::tip
-The SPA rule (`/* /index.html 200`) is essential for client-side routing frameworks (React Router, Vue Router, etc.) that manage routes in the browser. Without it, refreshing on any non-root URL returns a 404.
-:::
-
-### `_redirects` rule syntax
-
-| Format | Status | Behaviour |
-| --- | --- | --- |
-| `/from /to 301` | 301 | Permanent redirect |
-| `/from /to 302` | 302 | Temporary redirect |
-| `/from /to 200` | 200 | Rewrite (URL stays the same, content from `/to` is served) |
-| `/from/* /to/:splat 301` | 301 | Wildcard redirect with splat capture |
-
 ## Environment variables in static builds
 
-Environment variables are available to your build command but not at runtime (there is no server). Any variables you need in the client-side bundle must be embedded at build time.
+The service's [variables](/security/env-vars/) are available to the build. A static bundle has no server, so any value the browser needs must be embedded at build time:
 
-### Vite
-
-Prefix variables with `VITE_`. Access them with `import.meta.env.VITE_API_URL`.
-
-### Create React App
-
-Prefix variables with `REACT_APP_`. Access them with `process.env.REACT_APP_API_URL`.
-
-### Next.js
-
-Prefix variables with `NEXT_PUBLIC_`. Access them with `process.env.NEXT_PUBLIC_API_URL`.
+- **Vite**: prefix with `VITE_`, read `import.meta.env.VITE_API_URL`.
+- **Create React App**: prefix with `REACT_APP_`, read `process.env.REACT_APP_API_URL`.
+- **Next.js**: prefix with `NEXT_PUBLIC_`, read `process.env.NEXT_PUBLIC_API_URL`.
 
 :::caution
-Never embed private API keys or secrets into static site environment variables — they become part of the public JavaScript bundle and are visible to anyone.
+Never embed private API keys or secrets in a static build. They become part of the public JavaScript bundle and anyone can read them.
 :::
 
 ## Custom domains
 
-Attach a custom domain to your static site the same way as any other service. StackBlaze provisions a TLS certificate via Let's Encrypt automatically. See [Custom Domains](/networking/custom-domains/) for step-by-step instructions.
+Attach a custom domain the same way as for any other service. See [Public networking](/networking/custom-domains/).
 
-## CDN caching
+## CDN cache
 
-StackBlaze CDN nodes cache your assets at the edge. Cache headers are set based on file type:
-
-| File type | Cache-Control header |
-| --- | --- |
-| HTML files | `no-cache, must-revalidate` |
-| JS / CSS with content hash | `max-age=31536000, immutable` |
-| Images and fonts | `max-age=86400` |
-| `_redirects` file | (not cached, always fresh) |
-
-Content-hashed assets (e.g., `main.a3f2bc.js`) are cached indefinitely at the edge. HTML is always revalidated so users immediately see new deploys.
-
-## Build constraints
-
-Static site builds run with these resource limits:
-
-| Resource | Limit |
-| --- | --- |
-| Build timeout | 20 minutes |
-| Build memory | 4 GB |
-| Output directory size | 500 MB |
-| Individual file size | 25 MB |
-
-If your build exceeds these limits, contact support to discuss a custom build plan.
+When a service is served through the StackBlaze edge, the service's actions menu offers **Clear CDN cache**. To drop the cached copies of a service's pages after a change, use it or `stackblaze cdn purge`. It purges only that service's own hostnames.
