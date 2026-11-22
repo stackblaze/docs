@@ -3,10 +3,14 @@ title: Create a template
 description: Save a live environment as a reusable stack.
 ---
 
-You can save a live environment as a template from the canvas when you want to reuse a stack (services, databases, and the variables the template should prompt for).
+Right-click the canvas and choose **Save as stack…** to save the environment's services and databases. To save only one group, use **Save as stack…** from that group's menu.
+
+Give the stack a name, and optionally a description and category. Choose who sees it: **My organisation** or **Just me**. The dialog previews what will be saved. Values that look like credentials are saved as prompts, not values, and are asked for on each deploy.
+
+Saved stacks are listed under **Saved stacks** in the sidebar. Deploy one into any project; it lands on the canvas as staged changes for you to review.
 
 Publishing to the public [catalog](https://stackblaze.com/templates) is a separate review path — contact support if you want a template listed.
 
-For git-reviewed topology, prefer [config as code](/blueprint/) (`stackblaze.yaml`) over a dashboard template.
+For git-reviewed topology, prefer [config as code](/blueprint/) (`stackblaze.yaml`) over a saved stack.
 
 See [Templates](/templates/).
