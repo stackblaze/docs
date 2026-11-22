@@ -21,9 +21,9 @@ stackblaze down [-y] [-m <text>] [options]
 | --- | --- |
 | `-y, --yes` | Skip the confirmation |
 | `-m, --message <text>` | Reason, recorded in the deployment history |
-| `--build <name>` | Also delete this build (see `stackblaze builds list`) |
+| `--build <name>` | Also delete this git build or deployment by name (see `stackblaze builds list`) |
 
-Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
 ## Examples
 
@@ -36,7 +36,7 @@ stackblaze resume                            # bring it back
 ## How it works
 
 - Web, worker and cron jobs all stop. Autoscaling is switched off while the app is paused.
-- The replica count, autoscaling settings, volumes, add-ons, variables and domains are kept, so `resume` brings the app back as it was.
+- The instance count, autoscaling settings, volumes, add-ons, variables and domains are kept, so `resume` brings the app back as it was.
 - Compute stops billing. Volumes and add-ons keep running, and billing.
 - Builds still run while the app is paused: a git push builds a new image, but no pods start until you resume.
 - Visitors to the app's URL see a "paused by its owner" page.

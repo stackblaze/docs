@@ -13,9 +13,9 @@ stackblaze plan <path> [-o text|json]
 
 Also accepts `--token`, `--api-url`, `-o, --output` and `--json` (see [common flags](/cli/#scope-and-common-flags)).
 
-The manifest format is the one [`stackblaze export`](/cli/export/) writes: YAML documents of `kind: KuberoPipeline` or `kind: KuberoApp`. App documents need `metadata.pipeline` and `metadata.phase`. A path can be a file or a directory (all `.yaml` / `.yml` files, recursively). This is separate from the `stackblaze.yaml` [config as code](/blueprint/) file.
+The manifest format is the one [`stackblaze export`](/cli/export/) writes: YAML documents with `apiVersion: stackblaze.com/v1` and `kind: StackBlazeProject` or `kind: StackBlazeApp` (older `KuberoPipeline` and `KuberoApp` documents are still read). App documents need `metadata.pipeline` (the project) and `metadata.phase` (the environment). A path can be a file or a directory (all `.yaml` / `.yml` files, recursively). This is separate from the `stackblaze.yaml` [config as code](/blueprint/) file.
 
-Infrastructure as Code must be enabled; check with [`stackblaze status`](/cli/status/).
+Infrastructure as Code must be on for the project; check with [`stackblaze status`](/cli/status/) and turn it on with [`stackblaze projects iac on`](/cli/projects/). Your platform admin may turn `plan` off.
 
 ```bash
 stackblaze plan ./stackblaze

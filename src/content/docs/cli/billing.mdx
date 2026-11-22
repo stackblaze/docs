@@ -1,6 +1,6 @@
 ---
 title: stackblaze billing
-description: "Show your plan, usage credit and resource usage."
+description: "Show your plan, usage credit and resource usage; set the on-demand spending limit; buy GPU credit."
 ---
 
 Prints your plan, usage credit and current resource usage (CPU, memory and more).
@@ -9,12 +9,42 @@ Prints your plan, usage credit and current resource usage (CPU, memory and more)
 
 ```text
 stackblaze billing [options]
+stackblaze billing limit [amount]
+stackblaze billing gpu-credit
+stackblaze billing gpu-credit add <amount> [--no-browser]
 ```
 
-Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+| Subcommand | Description |
+| --- | --- |
+| `limit [amount]` | Show or set the on-demand (overage) spending limit: a USD amount per month, `unlimited`, or `off` |
+| `gpu-credit` | Show the prepaid GPU credit that pays for [AI model](/cli/models/) GPU time, and recent top-ups |
+| `gpu-credit add <amount>` | Buy GPU credit: prints the payment page for a one-time payment of `<amount>` USD and opens it in the browser |
+
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
 ```bash
 stackblaze billing -o json
+```
+
+## On-demand spending limit
+
+On-demand spending lets usage beyond the plan's credit keep running and be billed. `off` stops it at the plan, so nothing extra is billed. An amount caps the extra monthly spend; `unlimited` removes the cap. Turning it on needs a payment method on file (the server answers `402` otherwise).
+
+```bash
+stackblaze billing limit             # show the current setting
+stackblaze billing limit 25          # on, up to $25.00 a month
+stackblaze billing limit unlimited
+stackblaze billing limit off
+```
+
+## GPU credit
+
+`<amount>` is in USD (`25`, `$25` or `12.50`) and must be within the smallest and largest top-up the server allows (exit `1` otherwise). The credit is added once the payment completes. You need a role that may change billing (exit `3` otherwise). The browser opens only from a terminal, never with `--json` or `--no-browser`.
+
+```bash
+stackblaze billing gpu-credit                 # balance and recent top-ups
+stackblaze billing gpu-credit add 25
+stackblaze billing gpu-credit add 100 --no-browser --json | jq -r .url
 ```
 
 Manage payment and plans in the dashboard.

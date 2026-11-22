@@ -1,0 +1,43 @@
+---
+title: stackblaze import
+description: "Create the services and databases a docker-compose.yml, render.yaml, fly.toml or stackblaze.yaml describes."
+---
+
+Reads a stack file and creates its services and databases in a project environment. It uses the same importers as **+ Service → Import** on the project canvas, so the result matches an import of the same file in the dashboard.
+
+## Usage
+
+```text
+stackblaze import <file> [--format <name>] [--answer <KEY=value>]... [--dry-run]
+```
+
+| Flag | Description |
+| --- | --- |
+| `--format <name>` | Importer to use: `auto` (default), `compose`, `render`, `fly` or `stackblaze` |
+| `--answer <KEY=value>` | Value for a variable the file leaves to you (`sync: false`). Repeatable |
+| `--dry-run` | Show what would be created; create nothing |
+
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+## How it works
+
+1. The platform compiles the file. Nothing is created yet.
+2. Each database is declared on the environment, then each service is created.
+
+- **Formats.** `docker-compose.yml` / `compose.yaml` (services; images such as postgres or redis become databases), `render.yaml`, `fly.toml` (one app) and `stackblaze.yaml`. With `--format auto` the format comes from the filename, else from the content.
+- **Names.** A name already used in the environment gets a suffix. The result table lists every rename.
+- **Warnings.** Anything the importer cannot carry over (build commands, per-service preview settings and similar) is printed as a warning.
+- **Variables to fill in.** Variables the file marks `sync: false` are asked for on a terminal (input hidden), or passed with `--answer`. A script that leaves one out exits `1` and names the key.
+- **Builds** start right away. Follow one with [`stackblaze wait -a <app>`](/cli/wait/).
+
+Exit codes: `1` when the file is invalid (the compiler's findings are listed) or when some resources could not be created (the rest are; the table says which), `3` when Infrastructure as Code is switched off on the platform. With `--json` it prints one document with `apps`, `databases`, `renames` and `warnings`.
+
+## Examples
+
+```bash
+stackblaze import docker-compose.yml -p shop
+stackblaze import render.yaml -p shop -e staging --dry-run
+stackblaze import fly.toml -p shop --answer SESSION_SECRET=… --json
+```
+
+To keep a stack in sync with a `stackblaze.yaml` over time, use [`stackblaze plan`](/cli/plan/) and [`stackblaze apply`](/cli/apply/).

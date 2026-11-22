@@ -1,0 +1,52 @@
+---
+title: stackblaze notifications
+description: "Send Slack, Discord and webhook notifications for your organization's events."
+---
+
+Manages your organization's notifications: where to post (Slack, Discord or your own webhook) and which events to send. Notifications belong to the organization, not to one app. Alias: `notification`.
+
+## Usage
+
+```text
+stackblaze notifications list [--reveal]
+stackblaze notifications events
+stackblaze notifications add <name> --type <kind> --url <url> --event <name>... [options]
+stackblaze notifications enable <ref>
+stackblaze notifications disable <ref>
+stackblaze notifications remove <ref> [-y]
+```
+
+| Subcommand | Description |
+| --- | --- |
+| `list` (`ls`) | Your notifications. Webhook URLs and secrets are not shown |
+| `events` | The event names a notification can subscribe to |
+| `add <name>` | Add a notification |
+| `enable <ref>` | Switch a notification on |
+| `disable <ref>` | Switch a notification off without deleting it |
+| `remove <ref>` (`rm`) | Delete a notification. Asks you to type `yes` unless `-y` |
+
+`<ref>` is the notification's id or name.
+
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `--type <kind>` | `add` | `slack`, `discord` or `webhook` |
+| `--url <url>` | `add` | Incoming webhook URL (Slack, Discord) or your endpoint (webhook). Must be `http(s)://` |
+| `--channel <name>` | `add` | Slack channel to post in |
+| `--secret <value>` | `add` | Signing secret (webhook type) |
+| `--event <name>` | `add` | Event to send, repeatable. At least one is required (see `notifications events`) |
+| `--projects <name>` | `add` | Only events of these projects, repeatable or comma-separated (default: all projects) |
+| `--disabled` | `add` | Create it switched off |
+| `--reveal` | `list`, `add` | Include webhook URLs and secrets in `--json` output (otherwise masked as `********`) |
+| `-y, --yes` | `remove` | Skip the confirmation |
+
+Also accepts `--token`, `--api-url`, `-o, --output` and `--json` ([common flags](/cli/#scope-and-common-flags)).
+
+## Examples
+
+```bash
+stackblaze notifications events
+stackblaze notifications add deploys --type slack --url https://hooks.slack.com/services/… --channel '#deploys' --event deployApp --event rebuildApp
+stackblaze notifications add audit --type webhook --url https://ops.example.com/hook --secret "$HOOK_SECRET" --event deleteApp --projects shop
+stackblaze notifications disable deploys
+stackblaze notifications remove audit -y
+```

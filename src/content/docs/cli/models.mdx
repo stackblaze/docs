@@ -1,0 +1,93 @@
+---
+title: stackblaze models
+description: "Deploy and manage AI models: open models served on GPUs behind an OpenAI-compatible URL."
+---
+
+An AI model is an open model from Hugging Face served on rented GPUs behind an OpenAI-compatible URL with its own API key. It belongs to a project environment, like an app. Aliases: `model`, `ai-models`.
+
+## Usage
+
+```text
+stackblaze models sizes
+stackblaze models search <query>
+stackblaze models check <model> [--region <id>] [--gpu-type <name>]
+stackblaze models deploy <model> [--name <name>] [--region <id>] [--copies <n>] [--gpu-type <name>] [--always-on | --sleep-after <seconds>] [--wait] [--timeout <seconds>]
+stackblaze models list
+stackblaze models get <name>
+stackblaze models logs <name> [--source events|model]
+stackblaze models metrics <name> [--since <window>]
+stackblaze models scale <name> --copies <n>
+stackblaze models set <name> --sleep-after <seconds> | --always-on
+stackblaze models sleep <name>
+stackblaze models wake <name>
+stackblaze models replace-gpu <name> [-y]
+stackblaze models rename <name> <new-name>
+stackblaze models delete <name> [-y]
+stackblaze models url <name>
+stackblaze models key <name>
+```
+
+| Subcommand | Description |
+| --- | --- |
+| `sizes` (alias `options`) | GPU classes and price ranges, regions, GPU types you can pin, catalog models and your plan's limits |
+| `search <query>` | Search Hugging Face for chat models to deploy, most downloaded first |
+| `check <model>` | Look a model up without deploying: the machine it needs, whether it is gated, or why it cannot run (exit `1`) |
+| `deploy <model>` (alias `create`) | Deploy a catalog model or any Hugging Face model (`owner/name`) |
+| `list` (alias `ls`) | The environment's models: model, machine, region, status, copies ready and asked for |
+| `get <name>` | URL, status, machine, copies and sleep policy; while it starts, the step, percent and download speed |
+| `logs <name>` | Lifecycle events (`--source events`, the default) or the model server's own output (`--source model`) |
+| `metrics <name>` | Requests, response time, tokens, errors and GPU load over a window |
+| `scale <name>` | Change how many copies (machines) run the model; limited by your plan |
+| `set <name>` | Change when the model sleeps |
+| `sleep <name>` | Put the model to sleep now; no GPU runs and the model stays on disk |
+| `wake <name>` | Wake a sleeping model (about a minute) |
+| `replace-gpu <name>` | Release the model's GPU and rent a fresh one; same URL and key, a cold start follows. Asks you to type its name unless `-y` |
+| `rename <name> <new-name>` | Rename the model; its URL and API key do not change |
+| `delete <name>` (alias `rm`) | Delete the model and release its GPU. Asks you to type its name unless `-y` |
+| `url <name>` | Print the OpenAI-compatible base URL (append `/chat/completions`) |
+| `key <name>` | Print the model's API key |
+
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `--name <name>` | `deploy` | Name of the model in the environment (default: a generated one) |
+| `--region <id>` | `deploy`, `check` | Where the GPUs are rented, from `models sizes` (default: the default region) |
+| `--copies <n>` | `deploy`, `scale` | Machines that each run the model and share the requests (plan-limited; default `1` on `deploy`) |
+| `--gpu-type <name>` | `deploy`, `check` | Pin every machine to one GPU type from `models sizes` (default: any GPU of the class it needs) |
+| `--always-on` | `deploy`, `set` | Never sleep; billed while it runs |
+| `--sleep-after <seconds>` | `deploy`, `set` | On demand: sleep after this many seconds without requests (`300`, `900` or `3600`) |
+| `--wait` | `deploy` | Poll until the model is running |
+| `--timeout <seconds>` | `deploy` | Maximum `--wait` time (default `1800`) |
+| `--source <source>` | `logs` | `events` (default) or `model` |
+| `--since <window>` | `metrics` | Window from `5m` to `7d`, such as `1h`, `24h` or `7d` (default `1h`) |
+| `-y, --yes` | `delete`, `replace-gpu` | Skip the confirmation |
+
+Commands that act on a model in an environment accept `-p, --project` and `-e, --env` (default `production`). All subcommands accept `--token`, `--api-url`, `-o, --output` and `--json` (see [scope and output flags](/cli/#scope-and-common-flags)).
+
+## How it works
+
+- **Machine.** The model decides its machine: one GPU of the class it needs, or one machine with 2, 4 or 8 GPUs when no single GPU holds it. Before creating anything, `deploy` prints (on stderr) what the model will run on, the price range of one copy per hour, and your GPU credit. A model that cannot run exits `1` with the reason.
+- **Prices are ranges** per hour per copy: from the cheapest machine for rent now up to the most a machine of that class can cost.
+- **On demand or always on.** On demand (the default), the model sleeps after `--sleep-after` seconds without requests and wakes on the next request in about a minute. Asleep, it is billed for its disk only. `--always-on` keeps it up, billed while it runs.
+- **GPU credit.** GPU time is paid from prepaid GPU credit. A deploy is refused (exit `3`) when the credit does not cover one hour at the model's highest price. Add credit with [`stackblaze billing gpu-credit add <amount>`](/cli/billing/). Models are paused when the credit runs out.
+- **`deploy --wait`** prints the step, percent and download speed on stderr as they change. It exits `1` when the model failed or is not running within `--timeout`. With `--json` the result is one document, with the wait under `wait`.
+- **The API key** is printed only by `models key` (stdout; with `--json`, the `key` field). The server records who read it.
+- **Gated models** (such as Llama or Gemma) need your workspace signed in with Hugging Face on the dashboard, with the licence accepted.
+
+AI models may be switched off on your platform or not be part of your plan. The command then exits `3` and says which.
+
+## Examples
+
+```bash
+stackblaze models sizes
+stackblaze models search qwen
+stackblaze models check Qwen/Qwen3-8B
+stackblaze models deploy Qwen/Qwen3-8B --name chat --wait
+stackblaze models get chat
+stackblaze models set chat --sleep-after 900
+stackblaze models metrics chat --since 24h
+curl "$(stackblaze models url chat)/chat/completions" \
+  -H "Authorization: Bearer $(stackblaze models key chat)" \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"Qwen/Qwen3-8B","messages":[{"role":"user","content":"Hello"}]}'
+stackblaze models delete chat -y
+```

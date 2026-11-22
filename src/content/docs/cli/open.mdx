@@ -1,9 +1,9 @@
 ---
 title: stackblaze open
-description: "Open the dashboard page for an app or pipeline, or the app itself."
+description: "Open the dashboard page for an app or project, or the app itself."
 ---
 
-Prints the URL of the linked app's dashboard page and opens it in your browser. With no app in scope, it opens the pipeline page.
+Prints the URL of the linked app's dashboard page and opens it in your browser. With no app in scope, it opens the project page.
 
 ## Usage
 
@@ -16,7 +16,7 @@ stackblaze open [options]
 | `--app-url` | Open the app's public URL instead of the dashboard (needs an app with a domain) |
 | `--no-browser` | Only print the URL |
 
-Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
 The browser opens only when stdout is a terminal and JSON output is off. Set `STACKBLAZE_DASHBOARD_URL` if your dashboard is not at the default address.
 

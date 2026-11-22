@@ -3,7 +3,7 @@ title: stackblaze inspect
 description: "Show how a directory or public git repository would be deployed."
 ---
 
-Analyzes the current directory, a local path, or a public git URL and reports what `stackblaze up` would detect: repository type, deployable apps, build context, Dockerfile and port. Runs locally; no sign-in needed. Git URLs are shallow-cloned, so `git` must be installed.
+Analyzes the current directory, a local path, or a public git URL and reports what `stackblaze up` would detect: repository type, deployable apps, build context, Dockerfile and port. It also warns when `package.json`'s `start` script runs a dev server or compiles on boot (for example `next dev`, `nest start`, `ts-node`, `nodemon`, `vite`), and suggests a production start command; the JSON result carries these under `warnings`. Runs locally; no sign-in needed. Git URLs are shallow-cloned, so `git` must be installed.
 
 ## Usage
 

@@ -1,0 +1,50 @@
+---
+title: stackblaze members
+description: "List organization members, invite people, change roles and revoke invitations."
+---
+
+Manages the members, invitations and roles of the current organization. Alias: `member`. To act on another organization for one command, add `--org <slug>` (see [orgs](/cli/orgs/)).
+
+## Usage
+
+```text
+stackblaze members list
+stackblaze members roles
+stackblaze members invite <email> --role <role>
+stackblaze members role <user> <role>
+stackblaze members remove <user> [-y]
+stackblaze members invites list [--all]
+stackblaze members invites revoke <invite> [-y]
+```
+
+| Subcommand | Description |
+| --- | --- |
+| `list` (`ls`) | Members of the current organization and their roles |
+| `roles` | The roles you can assign |
+| `invite <email>` | Invite someone by email. The invitation link is emailed, never printed |
+| `role <user> <role>` | Change a member's organization-wide role |
+| `remove <user>` (`rm`) | Remove a member. Their account is kept. Asks for confirmation unless `-y` |
+| `invites` | Pending invitations (same as `invites list`) |
+| `invites list` (`ls`) | Pending invitations. `--all` adds accepted, revoked and expired ones |
+| `invites revoke <invite>` | Revoke a pending invitation, by id or email. Asks for confirmation unless `-y` |
+
+`<user>` is a member's id, email or username. `<role>` is a role name or id from `members roles`.
+
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `--role <role>` | `invite` | Role for the new member (required) |
+| `--all` | `invites list` | Include invitations that are no longer pending |
+| `-y, --yes` | `remove`, `invites revoke` | Skip the confirmation |
+
+Also accepts `--token`, `--api-url`, `-o, --output` and `--json` ([common flags](/cli/#scope-and-common-flags)).
+
+## Examples
+
+```bash
+stackblaze members list
+stackblaze members roles
+stackblaze members invite ana@example.com --role member
+stackblaze members role ana@example.com admin
+stackblaze members remove ana@example.com -y
+stackblaze members invites revoke ana@example.com -y
+```

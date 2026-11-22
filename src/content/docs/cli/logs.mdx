@@ -23,9 +23,9 @@ stackblaze logs [options]
 | `-q, --query <text>` | Full-text query (`--search`) |
 | `--level <level>` | Log level filter (`--search`) |
 | `--minutes <n>` | Look-back window in minutes (default `60`) |
-| `--container <name>` | Container (default `kuberoapp-web`) |
+| `--container <name>` | Container: `web` or `worker` (default `web`) |
 
-Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
 `--follow` and `--search` cannot be combined.
 

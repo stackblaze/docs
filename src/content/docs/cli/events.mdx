@@ -8,7 +8,12 @@ Prints the linked app's recent events (reason and message). Useful when an app d
 ## Usage
 
 ```text
-stackblaze events [options]
+stackblaze events [-n <limit>] [--all] [options]
 ```
 
-Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+| Flag | Description |
+| --- | --- |
+| `-n, --limit <n>` | Show the newest `n` events (text default `20`; `-o json` returns every event unless you pass `-n`) |
+| `--all` | Include events of the deploy placeholder pod (hidden by default) |
+
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.

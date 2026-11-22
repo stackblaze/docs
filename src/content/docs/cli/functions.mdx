@@ -1,43 +1,61 @@
 ---
 title: stackblaze functions
-description: "Create, update, invoke and delete serverless functions."
+description: "Create, build, redeploy, invoke and delete serverless functions."
 ---
 
-Functions live in a pipeline phase (default `production`); `--app` is not used. Aliases: `function`, `func`, `fn`, `fns`.
+Functions live in a project environment (default `production`); `--app` is not used. Aliases: `function`, `func`, `fn`, `fns`. The command is listed in `stackblaze --help` only when Functions is on for your platform; otherwise it fails with `Functions is not available on this platform yet.` (exit `3`).
 
 ## Usage
 
 ```text
 stackblaze functions list
 stackblaze functions get <name>
-stackblaze functions new <name> --image <image> [--port <n>]
-stackblaze functions push <name> [--dir <path>] [--build]
+stackblaze functions new [name] --source <dir> [--strategy railpack|dockerfile] [--wait | -d]
+stackblaze functions new [name] --image <image> [--port <n>]
+stackblaze functions push <name> [--dir <path>] [--build [--wait]]
 stackblaze functions invoke <name> [--method <http>] [--body <text>]
 stackblaze functions delete <name> [-y]
 ```
 
 | Subcommand | Description |
 | --- | --- |
-| `list` | Functions in the phase |
+| `list` | Functions in the environment |
 | `get <name>` | Status and URL of a function |
-| `new <name>` | Create or update a function from a container image (`--image` required) |
-| `push <name>` | Upload source files from a directory (default: current directory; dotfiles and `node_modules` are skipped). With `--build`, also build and deploy |
+| `new [name]` | Create or redeploy a function: build it from a local folder (`--source`) or run an image (`--image`). Alias: `deploy` |
+| `push <name>` | Upload source files from a directory (default: current directory) without building. With `--build`, same as `new --source` |
 | `invoke <name>` | Call the function (default method `POST`) |
 | `delete <name>` | Delete; asks you to type its name unless `-y` |
 
 | Flag | Applies to | Description |
 | --- | --- | --- |
-| `--image <image>`, `--port <n>`, `--name <name>` | `new` | Container image (required), port, name (alternative to the positional) |
-| `--dir <path>`, `--build` | `push` | Source directory; build and deploy after upload |
+| `--name <name>` | `new` | Function name (alternative to the positional) |
+| `--source <dir>` | `new` | Build from this local folder |
+| `--image <image>` | `new` | Container image to run instead of building |
+| `--strategy <name>` | `new` | Build strategy for `--source`: `railpack` (default) or `dockerfile` |
+| `--port <n>` | `new` | Container port |
+| `--wait` | `new`, `push --build` | After the build, wait until the new revision is ready |
+| `-d, --detach` | `new` | Start the build and return (no log, no wait) |
+| `--timeout <seconds>` | `new` | Maximum time for the build and `--wait` (default `1800`) |
+| `--dir <path>`, `--build` | `push` | Source directory; build and deploy after upload (follows the build log) |
 | `--method <http>`, `--body <text>` | `invoke` | HTTP method and request body |
 | `-y, --yes` | `delete` | Skip the confirmation |
 
-Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+## Build from source
+
+`--source` packs the folder (`.gitignore` and `.stackblazeignore` are honoured; `.git`, `node_modules` and `.env*` are left out) and builds it on the platform. Railpack detects the language; `--strategy dockerfile` uses `./Dockerfile`. The image is pushed to your region's registry and the function is deployed pinned to it. The build log is printed as it runs, and the command exits `1` when the build fails. The first build of a function can take about 10 minutes; later ones reuse the build cache.
+
+Source limits: top-level text files only (no subfolders or binary files), 1000 KB in total. For anything bigger, build an image and use `--image`.
+
+Redeploying an existing function keeps its port, variables and scale settings; only the image changes.
 
 ## Examples
 
 ```bash
-stackblaze functions new hello --image ghcr.io/acme/hello:1.0 --port 8080
+stackblaze functions new hello --source ./hello --wait
+stackblaze functions deploy hello --source ./hello      # redeploy from source
+stackblaze functions new hello --image ghcr.io/acme/hello:1.2 --port 8080
 stackblaze fn invoke hello --body '{"name":"Ada"}'
 stackblaze functions push hello --dir ./fn --build
 ```

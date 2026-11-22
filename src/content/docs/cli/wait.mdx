@@ -3,7 +3,7 @@ title: stackblaze wait
 description: "Wait until an app and its add-ons are running."
 ---
 
-Polls the app's status every 5 seconds until it and all its add-ons are running, the deploy fails, or the timeout passes.
+Polls the app's status every 5 seconds until it and all its add-ons are running, the deploy fails, or the timeout passes. A build or rollout still in progress is waited for. A paused app fails at once: run [`stackblaze resume`](/cli/resume/) first.
 
 ## Usage
 
@@ -13,9 +13,9 @@ stackblaze wait [--timeout <seconds>] [options]
 
 | Flag | Description |
 | --- | --- |
-| `--timeout <seconds>` | Maximum wait (default `90`) |
+| `--timeout <seconds>` | Maximum wait (default `600`) |
 
-Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
 Exit code `0` when ready; `1` when the deploy failed or the timeout passed. The JSON result has `ready`, `phaseStatus`, `url`, and `failed` or `timedOut` when relevant.
 

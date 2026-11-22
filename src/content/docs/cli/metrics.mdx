@@ -1,16 +1,33 @@
 ---
 title: stackblaze metrics
-description: "Show current CPU and memory usage per pod."
+description: "Show current CPU and memory usage per pod, or history over a time window."
 ---
 
-Prints current CPU (millicores) and memory (MiB) for each of the linked app's pods.
+Without `--since`, prints current CPU (millicores) and memory (MiB) for each of the linked app's pods. With `--since`, prints history over the window for all pods combined: a sparkline with now, average and max for CPU, memory, requests and latency.
 
 ## Usage
 
 ```text
-stackblaze metrics [options]
+stackblaze metrics [--since <window>] [--watch] [--interval <seconds>] [options]
 ```
 
-Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+| Flag | Description |
+| --- | --- |
+| `--since <window>` | History window: `30m`, `1h`, `24h`, `7d` (max `7d`) |
+| `-w, --watch` | Refresh the history until Ctrl-C (default window `1h`) |
+| `--interval <seconds>` | Seconds between `--watch` refreshes (default `30`) |
 
-For history and analysis, use [`stackblaze diagnose`](/cli/diagnose/) or the dashboard.
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+`--json` prints the raw series (timestamps in milliseconds). `--watch --json` prints one JSON document per refresh (NDJSON).
+
+## Examples
+
+```bash
+stackblaze metrics
+stackblaze metrics --since 24h
+stackblaze metrics --since 1h --watch
+stackblaze metrics --since 7d --json
+```
+
+For analysis, use [`stackblaze diagnose`](/cli/diagnose/).

@@ -1,0 +1,41 @@
+---
+title: stackblaze api
+description: "Call any StackBlaze API endpoint with your stored login and print the JSON response."
+---
+
+Sends one request to the StackBlaze API with your saved login (or `--token`) and prints the response body. Use it for endpoints that have no dedicated command.
+
+## Usage
+
+```text
+stackblaze api <method> <path> [-d <json>] [-q <key=value>]...
+```
+
+`<method>` is one of `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS` (any case). `<path>` is an API path such as `/api/pipelines`. A path without a leading slash gets `/api/` in front, so `audit` means `/api/audit`. Pass a path, not a full URL: the API URL comes from your login or `--api-url`.
+
+| Flag | Description |
+| --- | --- |
+| `-d, --data <json>` | Request body: inline JSON, `@file`, or `@-` to read stdin. Not allowed with `GET` or `HEAD` |
+| `-q, --query <key=value>` | Query parameter (repeatable) |
+
+Also accepts `--token`, `--api-url`, `-o, --output` and `--json` ([common flags](/cli/#scope-and-common-flags)).
+
+The response body goes to stdout whatever the status, so a script can read the server's error document too. On an error status the CLI also prints `HTTP <status>` and the server's message on stderr.
+
+| Exit code | When |
+| --- | --- |
+| `0` | 2xx response |
+| `2` | 401 |
+| `3` | 402 or 403 (refused by your plan or role) |
+| `1` | Any other status |
+
+## Examples
+
+```bash
+stackblaze api GET /api/pipelines
+stackblaze api GET audit -q limit=5
+stackblaze api POST /api/pipelines/demo/phases --data '{"name":"staging"}'
+stackblaze api PATCH /api/tenants/<id> --data @org.json
+```
+
+The endpoints are listed in the [API reference](/reference/api/).

@@ -3,7 +3,7 @@ title: stackblaze resume
 description: "Resume an app paused with stackblaze down."
 ---
 
-Resumes an app paused with [`stackblaze down`](/cli/down/). It starts again with its saved replica count or autoscaling settings and its cron jobs re-enabled, running the latest built image. `stackblaze up --resume` does the same.
+Resumes an app paused with [`stackblaze down`](/cli/down/). It starts again with its saved instance count or autoscaling settings and its cron jobs re-enabled, running the latest built image. `stackblaze up --resume` does the same.
 
 ## Usage
 
@@ -17,14 +17,15 @@ stackblaze up --resume
 | Flag | Description |
 | --- | --- |
 | `-m, --message <text>` | Reason, recorded in the deployment history |
+| `--replicas <n>` | Older servers without a pause endpoint only: web instances to restore (default `1`) |
 
-Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
 ## Examples
 
 ```bash
 stackblaze resume
-stackblaze resume -p shop --phase production -a web
+stackblaze resume -p shop -e production -a web
 stackblaze up --resume
 ```
 

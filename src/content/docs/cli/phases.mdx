@@ -1,32 +1,46 @@
 ---
 title: stackblaze phases
-description: "List, create, delete and switch phases (environments) of a pipeline."
+description: "List, create, delete and switch the environments of a project."
 ---
 
-Phases are a pipeline's environments, such as `staging` and `production`. Alias: `phase`.
+Manage a project's environments, such as `staging` and `production`. The API calls them phases. Aliases: `phase`, `environments`.
 
 ## Usage
 
 ```text
 stackblaze phases list
-stackblaze phases create <name>
+stackblaze phases create <name> [--from <env>]
 stackblaze phases delete <name> [-y]
 stackblaze phases use [name]
 ```
 
 | Subcommand | Description |
 | --- | --- |
-| `list` | Phases of the pipeline |
-| `create <name>` | Add a phase |
-| `delete <name>` | Remove a phase; asks you to type its name unless `-y`. Apps in the phase are not deleted. You cannot delete a pipeline's only phase |
-| `use [name]` | Switch the phase in this directory's link (`.stackblaze/project.json`); without a name, pick from a list |
+| `list` | Environments of the project |
+| `create <name>` | Add an environment. With `--from <env>`, duplicate an existing one with its apps |
+| `delete <name>` | Remove an environment; asks you to type its name unless `-y`. You cannot delete a project's only environment |
+| `use [name]` | Switch the environment in this directory's link (`.stackblaze/project.json`); without a name, pick from a list |
 
-Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `--from <env>` | `create` | Duplicate this environment: same placement and settings, every app cloned |
+| `-y, --yes` | `delete` | Skip the confirmation |
+
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
 ## Examples
 
 ```bash
 stackblaze phases create staging
+stackblaze phases create qa --from staging
 stackblaze phase use staging
 stackblaze phases delete preview -y
 ```
+
+## Duplicating an environment
+
+`phases create <name> --from <env>` clones every app of the source environment under its own name: same spec, variables and add-ons, but empty data, a fresh URL each, and auto-deploy off. Pull request preview apps are not copied. It needs the Preview environments platform switch, the same as [`previews`](/cli/previews/).
+
+## Deleting an environment
+
+`delete` always asks you to type the environment name unless `-y`, and lists the apps in it. On a dedicated cluster the environment is deleted with everything in it. On the shared tier, apps can be left behind: check [`stackblaze apps list`](/cli/apps/) and delete any that are left. When the deleted environment is the linked one, `.stackblaze/project.json` is removed.

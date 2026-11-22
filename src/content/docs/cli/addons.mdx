@@ -1,6 +1,6 @@
 ---
 title: stackblaze addons
-description: "List add-on types and attach or detach add-ons on an app."
+description: "List add-on types, attach, share, rename, expose and back up add-ons on an app."
 ---
 
 Add-ons are managed services (for example PostgreSQL or Redis) attached to an app. Alias: `addon`.
@@ -10,25 +10,48 @@ Add-ons are managed services (for example PostgreSQL or Redis) attached to an ap
 ```text
 stackblaze addons list [--attached]
 stackblaze addons add [kind] [--wait] [--timeout <seconds>]
-stackblaze addons delete [kind] [--instance <name>] [-y]
+stackblaze addons share <instance> [--with <app>] [--wait] [--timeout <seconds>]
+stackblaze addons delete [kind] [--instance <name>] [--destroy] [-y]
+stackblaze addons rename <addon> <new-name>
+stackblaze addons info [addon] [--reveal]
+stackblaze addons expose [addon] [--allow <ip/cidr>]... [--allow-all] [-y]
+stackblaze addons unexpose [addon]
+stackblaze addons import <file> [addon] [--instance <name>] [--clean] [--stop-on-error] [-y]
+stackblaze addons backups list|status|create|restore [addon]
 ```
 
 | Subcommand | Description |
 | --- | --- |
 | `list` | Add-on types you can attach. With `--attached`, the add-ons on the app in scope and their state |
 | `add <kind>` | Attach an add-on of this kind to the app. Fails if one of that kind is already attached |
-| `delete <kind>` | Detach an add-on; asks for confirmation unless `-y` |
+| `share <instance>` | Attach an add-on that already runs in the environment to another app (default: `-a` or the linked app) |
+| `delete <kind>` | Detach an add-on; asks for confirmation unless `-y`. With `--destroy`, also delete the add-on and all its data |
+| `rename <addon> <new-name>` | Change the name people see. Its resource name, data and connection details stay the same |
+| `info [addon]` | Connection details: host, port, user, public address. `--reveal` adds passwords and connection strings |
+| `expose [addon]` | Make an add-on reachable from outside: databases through the edge with an IP allow-list, S3, ClickHouse and RabbitMQ over HTTPS |
+| `unexpose [addon]` | Turn public access off (reachable from inside the platform only) |
+| `import <file> [addon]` | Load a dump made elsewhere into a PostgreSQL or MariaDB add-on, through a private tunnel |
+| `backups` | Dumps of one PostgreSQL or MariaDB database (alias `backup`). See [below](#database-dumps) |
+
+`[addon]` is the add-on's instance name, or its type (for example `postgres`) when the app has only one of that type. Without it, the command uses the app's only matching add-on.
 
 | Flag | Applies to | Description |
 | --- | --- | --- |
 | `--attached` | `list` | List the app's attached add-ons |
-| `--wait` | `add` | Wait until the app and the add-on are running |
-| `--timeout <seconds>` | `add` | Maximum `--wait` time (default `600`; a new database cluster can take several minutes) |
-| `--instance <name>` | `delete` | Which instance, when several match |
+| `--wait` | `add`, `share` | Wait until the app (and, for `add`, the add-on) is running |
+| `--timeout <seconds>` | `add`, `share` | Maximum `--wait` time (default `600`; a new database cluster can take several minutes) |
+| `--with <app>` | `share` | App to attach the add-on to (default: `-a` or the linked app) |
+| `--instance <name>` | `delete`, `import` | Which instance, when several match |
 | `--kind <name>` | `add`, `delete` | Same as the positional `[kind]`; passing both with different values is an error |
-| `-y, --yes` | `delete` | Skip the confirmation |
+| `--destroy` | `delete` | Also delete the add-on and ALL its data. Refused while another app uses it. With `--instance`, deletes an add-on no app uses any more (no `--app` needed) |
+| `--reveal` | `info` | Show passwords and connection strings |
+| `--allow <ip/cidr>` | `expose` | Address allowed to connect (repeat the flag, or comma-separate). Databases only |
+| `--allow-all` | `expose` | Allow any address; only the database password protects it. Asks you to type `yes` unless `-y` |
+| `--clean` | `import` | PostgreSQL archives: drop the objects the dump recreates first (`pg_restore --clean --if-exists`) |
+| `--stop-on-error` | `import` | Stop at the first error instead of carrying on |
+| `-y, --yes` | `delete`, `import`, `expose` | Skip the confirmation |
 
-Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
 ## Examples
 
@@ -37,8 +60,59 @@ stackblaze addons list
 stackblaze addons add <kind> --wait
 stackblaze addons add <kind> --wait --timeout 900 --json | jq .wait.ready
 stackblaze addons list --attached -o json
+stackblaze addons share web-postgresql --with worker --wait
+stackblaze addons info postgres --reveal
+stackblaze addons expose postgres --allow 203.0.113.7,198.51.100.0/24
 ```
 
 With `--wait --json`, stdout carries one JSON document: the result with the readiness check under `wait`. A wait that ends without the app and add-on running exits `1`.
 
 Use `addons list` for the exact kind names. To open a database shell, see [`stackblaze connect`](/cli/connect/).
+
+## Public access
+
+`expose` with a different `--allow` list changes who may connect. The server decides which engines can be exposed and says why when it cannot (exit `3`). `--allow` and `--allow-all` apply to databases only; add-ons exposed over HTTPS are protected by their own credentials. Get the credentials with `stackblaze addons info <addon> --reveal`.
+
+## Import a dump
+
+`addons import` reads the file's kind from its content:
+
+| File | Loaded with |
+| --- | --- |
+| Plain SQL (`.sql`, also `.sql.gz`) | `psql`, or `mysql` for MariaDB / MySQL |
+| `pg_dump -Fc` / `-Ft` archive (also gzipped) | `pg_restore --no-owner --no-acl` |
+| `pg_dump -Fd` directory | `pg_restore --no-owner --no-acl` |
+
+The client runs on your machine, so `psql`, `pg_restore` or `mysql` must be installed. It uses the same private tunnel as [`stackblaze connect --local`](/cli/connect/); the database is never exposed. The dump is loaded into the add-on's existing database: use an empty one, or `--clean` with an archive. Make plain SQL dumps with `pg_dump --no-owner --no-acl` so they do not name roles that do not exist here. Any error makes the command exit `1`. Import needs write access to the app, and your platform admin may turn it off.
+
+```bash
+stackblaze addons import dump.sql
+stackblaze addons import backup.dump postgres -a web --clean -y
+stackblaze addons import shop.sql.gz --instance orders-mariadb
+```
+
+## Database dumps
+
+`addons backups` works on one PostgreSQL or MariaDB database. For whole-environment recovery points, use [`stackblaze backups`](/cli/backups/).
+
+| Subcommand | Description |
+| --- | --- |
+| `list [addon]` | Dumps and running dump or restore jobs of the database |
+| `status [addon]` | Whether the environment's scheduled backups cover the database |
+| `create [addon]` | Dump the database now (no schedule needed) |
+| `restore [addon]` | Create a NEW database named `<database>-restored` from a dump. The existing database is never touched |
+
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `--backup <name>` | `restore` | Dump to restore (from `backups list`; default the newest) |
+| `--wait` | `create`, `restore` | Wait until the dump completes or the new database is ready; exit `1` if it fails |
+| `--timeout <seconds>` | `create`, `restore` | Maximum `--wait` time (default `1800`) |
+| `--ci` | `create`, `restore` | Output NDJSON events |
+
+After a restore, connect your app to the new database when you are ready, and delete the old one yourself. Both are billed until then. Valkey has no dumps. These commands never turn on scheduled backups. `restore --to` and `--time` are no longer supported and fail with a clear error.
+
+```bash
+stackblaze addons backups status web-postgresql
+stackblaze addons backups create --wait
+stackblaze addons backups restore web-postgresql --backup <name> --wait
+```

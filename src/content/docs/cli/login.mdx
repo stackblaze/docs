@@ -3,7 +3,7 @@ title: stackblaze login
 description: "Sign in with the browser, an API token, or email and password."
 ---
 
-Signs the CLI in and saves the credentials to `~/.config/stackblaze/config.json` (mode `600`; override with `STACKBLAZE_CONFIG`). The credentials are checked against the API before they are saved.
+Signs the CLI in and saves the credentials to the CLI config directory: `~/.config/stackblaze/config.json` (or `$XDG_CONFIG_HOME/stackblaze/config.json`; `%APPDATA%\StackBlaze\config.json` on Windows), with file mode `600`. Override the path with `STACKBLAZE_CONFIG`. A login saved by an older CLI in `~/.config/stackblaze/` is still read. The credentials are checked against the API before they are saved.
 
 ## Usage
 
@@ -37,9 +37,10 @@ stackblaze login --password               # email/username + password (+ 2FA cod
 
 - Browser sign-in prints a URL with the code filled in, plus the code on its own. Approve it in the dashboard; the CLI polls until you do.
 - API tokens start with `sb_pat_`. Tokens created before the `sb_pat_` prefix (`kbr_pat_…`) keep working.
+- A `--token` value that does not look like an API token or a session token (for example a broken paste with spaces or line breaks) is rejected before anything is sent or saved, with exit code `2`. A token the API rejects also exits `2`.
 - If `STACKBLAZE_TOKEN` is set, `login` saves that token instead of starting the browser flow.
 - Without a terminal and without a token, `login` fails. In CI, do not run `login`; set `STACKBLAZE_API_URL` and `STACKBLAZE_TOKEN` instead.
-- Create API tokens in the dashboard under **Settings → API tokens**.
+- Create API tokens in the dashboard under **Personal settings → API tokens**, or with [`stackblaze tokens create`](/cli/tokens/).
 
 `stackblaze up` starts this sign-in automatically when you run it in a terminal without credentials.
 

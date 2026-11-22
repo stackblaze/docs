@@ -1,0 +1,44 @@
+---
+title: stackblaze previews
+description: "List and delete preview apps, and turn preview environments on or off for a project."
+---
+
+A preview is a copy of an app built from a pull request's branch, with its own URL and empty copies of the app's add-ons. Once previews are on for a project, the platform creates one per pull request. The CLI lists, deletes and turns them on or off. Alias: `preview`.
+
+## Usage
+
+```text
+stackblaze previews list [-p <project>] [-e <env>]
+stackblaze previews enable [--source-app <app>]
+stackblaze previews disable
+stackblaze previews delete <name> [-y]
+```
+
+| Subcommand | Description |
+| --- | --- |
+| `list` | The project's preview apps; `-e` narrows to one environment |
+| `enable` | Turn preview environments on for the project (pull requests create previews) |
+| `disable` | Turn preview environments off for the project; existing previews keep running |
+| `delete <name>` (alias `rm`) | Delete a preview app and its cloned add-ons; asks you to type its name unless `-y`. Pass `-e` when the name exists in several environments |
+
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `--source-app <app>` | `enable` | Preview only this app (default: every app that deploys from the pull request's repository) |
+| `-y, --yes` | `delete` | Skip the confirmation |
+
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+A preview app is an ordinary app with the variable `STACKBLAZE_PREVIEW=true`. The server names it `pr-<n>-<source>` (or `<branch>-<source>`) and puts it in the project's `review` environment when there is one, else next to the source app. `previews delete` refuses to delete an app that is not a preview.
+
+Previews are governed by the **Preview environments** platform switch. When it is off, `previews enable` exits `3` with "Preview environments are turned off on this platform." `previews list` and `previews delete` always work.
+
+To copy a whole environment with all its apps, use [`stackblaze phases create <name> --from <env>`](/cli/phases/).
+
+## Examples
+
+```bash
+stackblaze previews enable -p demo
+stackblaze previews list -p demo
+stackblaze previews delete pr-42-web -y
+stackblaze previews disable -p demo
+```

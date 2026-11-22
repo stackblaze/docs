@@ -1,29 +1,42 @@
 ---
 title: stackblaze ssh
-description: "Open an interactive shell inside a running app container."
+description: "Open an interactive shell inside a running app container, over the API or with your own ssh client."
 ---
 
-Opens an interactive terminal in one of the linked app's pods over the API (no SSH keys or open ports). Remote console access must be enabled on the platform; if it is not, the command reports a console error.
+Opens an interactive terminal in one of the linked app's pods. By default it goes over the StackBlaze API (no SSH keys or open ports). With `--native`, it runs your system `ssh` client through the SSH gateway. Console must be enabled for your organization (**Platform → Console & SSH**); if it is not, the command reports a console error.
 
 ## Usage
 
 ```text
 stackblaze ssh [options]
+stackblaze ssh --native [--print] [-i <file>] [-- <ssh args...>]
 ```
 
 | Flag | Description |
 | --- | --- |
-| `--pod <name>` | Pod to connect to (default: the app's first pod) |
-| `--container <name>` | Container (default: `kuberoapp-web`, else the first container) |
-| `--command <shell>` | Command to start (default `sh`) |
+| `--pod <name>` | Pod to connect to (default: the app's first web pod) |
+| `--container <name>` | Container: `web`, `worker`, … (default: `web`, else the first container). Ignored with `--native` |
+| `--command <shell>` | Run this command instead of an interactive `sh`; exits with its exit code |
+| `--timeout <seconds>` | Give up on `--command` after this many seconds (default: no limit). A session that sends nothing at all fails after 20 seconds |
+| `--native` | Use your system `ssh` client through the SSH gateway. Needs an SSH key on your account: [`stackblaze ssh-keys add`](/cli/ssh-keys/) |
+| `--print` | With `--native`: print the `ssh` command instead of running it (for scripts, `~/.ssh/config` and IDEs) |
+| `-i, --identity <file>` | With `--native`: private key file for `ssh` (`ssh -i`) |
 
-Also accepts `-p, --pipeline`, `--phase`, `-a, --app`, `--token` and `--api-url` (see [scope](/cli/#scope-and-common-flags)). No JSON output.
+Also accepts `-p, --project`, `-e, --env`, `-a, --app`, `--token` and `--api-url` (see [scope](/cli/#scope-and-common-flags)). No JSON output.
+
+## Native ssh
+
+`--native` runs `ssh -p <port> project/env/app@<gateway>`. Put extra `ssh` arguments after `--`, for example a port forward. `scp`, `sftp` and `rsync` work with the same user and host. Set `STACKBLAZE_SSH_BIN` to use another `ssh` binary.
 
 ## Examples
 
 ```bash
 stackblaze ssh
-stackblaze ssh --command bash -a worker
+stackblaze ssh --command "ls -la /app" -a worker
+stackblaze ssh --native
+stackblaze ssh --native -- -L 8080:localhost:8080
+stackblaze ssh --native --print
+scp -P <port> ./dump.sql 'project/production/web'@<gateway>:/tmp/
 ```
 
 The CLI exits with the remote session's exit code.
