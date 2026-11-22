@@ -1,86 +1,71 @@
 ---
 title: MongoDB
-description: Managed MongoDB 7.x with replica sets, automated backups, point-in-time recovery, and private cluster networking.
+description: MongoDB-protocol databases on StackBlaze. The official MongoDB image (8.0, 7.0), FerretDB with optional high availability, or DocumentDB. Standard MongoDB drivers, opt-in backups, and private networking.
 ---
 
-Managed MongoDB with replica sets, automated backups, and private cluster networking.
+Three catalog entries speak the MongoDB wire protocol:
 
-:::note[Powered by DocumentDB]
-MongoDB on StackBlaze is served by **DocumentDB**, a MongoDB wire-protocol–compatible engine built on PostgreSQL. You connect with the standard MongoDB drivers, connection strings, and tools (mongosh, Compass, Mongoose, Prisma, Motor), and everything in this guide applies as written. We use DocumentDB so we can ship a MongoDB-compatible database under a permissive license.
-:::
+| Entry | Engine | Versions | Topology |
+| --- | --- | --- | --- |
+| **MongoDB** | Official `mongo` image | 8.0 (default), 7.0 | One instance |
+| **FerretDB** | FerretDB on PostgreSQL with the DocumentDB extension | FerretDB 2.7 | Two FerretDB proxies, HA available for the PostgreSQL backend |
+| **Document DB** | Microsoft DocumentDB on PostgreSQL | Preview | One instance |
 
-## Creating a MongoDB instance
+You connect to all three with the standard MongoDB drivers and tools (mongosh, Compass, Mongoose, Prisma, Motor). FerretDB and DocumentDB are MongoDB-compatible, not MongoDB itself: check that the features your app uses are supported before you move to them.
 
-From the dashboard, click **New service → Database → MongoDB**. Choose MongoDB 7.x, a storage size (1 GB to 500 GB), and a plan. StackBlaze provisions a StatefulSet and initializes the replica set automatically.
+## Creating a database
 
-Attach MongoDB to your service from the **Environment** tab. StackBlaze injects `MONGODB_URL` automatically.
+From **+ Service → Databases**, add **MongoDB**, **FerretDB**, or **Document DB**. It appears on the canvas as a staged change. Apply your staged changes and StackBlaze creates it with the catalog defaults.
 
-## Connection strings
+To connect a service, open the database, go to **Settings → Connection**, and switch the service on.
 
-### Internal (recommended)
+## Connection variables
 
-```text title="Connection string (internal, single-node)"
-mongodb://user:password@[service-name]:27017/dbname
+| Variable | MongoDB | FerretDB | Document DB |
+| --- | --- | --- | --- |
+| `MONGO_HOST` | Internal hostname | Internal hostname | Internal gateway hostname |
+| `MONGO_PORT` | `27017` | `27017` | `10260` |
+| `MONGO_USERNAME` | `mongoadmin` | `ferretdb` | `mongoadmin` |
+| `MONGO_PASSWORD` | From a secret | From a secret | From a secret |
+| `MONGO_DATABASE` | `app` | `app` | Not set |
+| `MONGODB_URI`, `MONGO_URL`, `DATABASE_URL` | From a secret | From a secret | Only when the password is part of the definition |
+
+Read the URI from `MONGODB_URI` (or `MONGO_URL`) rather than hardcoding a host and port. Document DB requires TLS and SCRAM-SHA-256 on port `10260`, so a hardcoded `mongodb://host:27017` does not work there.
+
+```text title="MongoDB (internal)"
+mongodb://mongoadmin:password@[service-name]:27017/?authSource=admin
 ```
 
-### Replica set connection (Pro+)
+### From your machine
 
-On Pro and Enterprise plans, MongoDB runs as a 3-node replica set. Use the replica set connection string to enable automatic failover and read preference configuration.
+**Settings → Access** shows the connection details and an environment snippet. **Public access** makes the database reachable from outside the platform, only from the IP addresses you allow, with TLS. The CLI equivalent is `stackblaze addons expose <addon> --allow <ip/cidr>`; `stackblaze addons info <addon> --reveal` prints the URI.
 
-```text title="Connection string (replica set)"
-mongodb://user:password@[service-name]-0:27017,[service-name]-1:27017,[service-name]-2:27017/dbname?replicaSet=rs0&authSource=admin
-```
+## High availability (FerretDB)
 
-### External (for Compass / mongosh)
+Open the FerretDB database, go to **Settings → HA**, and click **Enable HA**. Its PostgreSQL backend grows to 3 instances with streaming replication. HA needs a plan with database high availability (Pro or Business) and is one-way. A FerretDB created on the older single-server backend cannot turn HA on: restore a backup of it as a new FerretDB first.
 
-Use the external connection string for MongoDB Compass or `mongosh` from your local machine. Find it in **Settings → Connection**.
+The official MongoDB image and Document DB have no HA.
 
-```bash title="mongosh (external)"
-mongosh "mongodb+srv://user:password@cluster.stackblaze.cloud/dbname"
-```
-
-:::tip
-The `mongodb+srv` URI format uses DNS SRV records and automatically discovers all replica set members. Prefer it over manually listing hostnames when connecting external tools.
-:::
-
-## Replica sets
-
-| Plan | Topology | Failover |
-| --- | --- | --- |
-| Free | Single node (no replica set) | None |
-| Starter | Single node (no replica set) | None |
-| Pro | 3-node replica set | Automatic (under 30s) |
-| Enterprise | 3-node replica set + hidden secondary | Automatic (under 30s) |
-
-With a 3-node replica set, MongoDB automatically elects a new primary if the current primary becomes unavailable. Your application should use the replica set connection string and enable retryable writes for seamless failover.
+Enable retryable writes in your client so it rides through a failover:
 
 ```ts title="Mongoose connection (with retryable writes)"
 import mongoose from 'mongoose'
 
-await mongoose.connect(process.env.MONGODB_URL, {
+await mongoose.connect(process.env.MONGODB_URI!, {
   retryWrites: true,
   w: 'majority',
-  readPreference: 'primaryPreferred',
 })
 ```
 
-## Automated backups
+## Backups
 
-All plans include daily automated snapshots, and you can take an on-demand snapshot at any time before a risky change. Backups are encrypted at rest and stored separately from your primary data. Restore to a new instance without interrupting your live database from **Backups → Restore**.
-
-| Plan | Snapshot retention |
-| --- | --- |
-| Free | 1 day |
-| Starter | 3 days |
-| Pro | 7 days |
-| Enterprise | 30 days |
+Backups are off until you turn on a schedule for the environment. Recovery points hold a dump of each MongoDB and FerretDB database and a copy of a Document DB volume. A restore always creates a new database next to the running one. See [Backups & recovery](/databases/backups/).
 
 ## Indexes
 
-Create indexes in your application startup code or migration scripts. For production deployments, always create indexes with `{ background: true }` (MongoDB before 4.2) or as a rolling build to avoid blocking reads and writes on large collections.
+Create indexes in your application startup code or migration scripts.
 
 ```ts title="Create indexes (Mongoose)"
-// In your model definition
 const userSchema = new mongoose.Schema({
   email: { type: String, unique: true, index: true },
   createdAt: { type: Date, index: true },
@@ -89,9 +74,6 @@ const userSchema = new mongoose.Schema({
 
 // Compound index
 userSchema.index({ 'profile.city': 1, createdAt: -1 })
-
-// Text search index
-userSchema.index({ name: 'text', bio: 'text' })
 ```
 
 ## Connecting with common ODMs
@@ -102,7 +84,7 @@ userSchema.index({ name: 'text', bio: 'text' })
 import mongoose from 'mongoose'
 
 if (mongoose.connection.readyState === 0) {
-  await mongoose.connect(process.env.MONGODB_URL!, {
+  await mongoose.connect(process.env.MONGODB_URI!, {
     serverSelectionTimeoutMS: 5000,
     socketTimeoutMS: 45000,
   })
@@ -114,7 +96,7 @@ if (mongoose.connection.readyState === 0) {
 ```prisma title="prisma/schema.prisma"
 datasource db {
   provider = "mongodb"
-  url      = env("MONGODB_URL")
+  url      = env("MONGODB_URI")
 }
 
 model User {
@@ -130,10 +112,6 @@ model User {
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 
-client = AsyncIOMotorClient(os.environ["MONGODB_URL"])
-db = client.get_default_database()
+client = AsyncIOMotorClient(os.environ["MONGODB_URI"])
+db = client["app"]
 ```
-
-:::note[Under the hood]
-MongoDB runs as a Kubernetes **StatefulSet**. Each node gets its own **PersistentVolumeClaim** for data and journal files. On Pro+, a 3-node replica set is initialized automatically at provision time using `rs.initiate()`. Stable per-pod DNS names (`[service-name]-0`, `[service-name]-1`, etc.) are provided by a Kubernetes **Headless Service**, which is required for replica set member addressing.
-:::

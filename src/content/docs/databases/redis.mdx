@@ -1,45 +1,48 @@
 ---
 title: Redis
-description: Managed Redis 7.x for caching, sessions, pub/sub, and job queues. Optional persistence with RDB snapshots and AOF on paid plans.
+description: Redis-compatible key-value stores on StackBlaze for caching, sessions, pub/sub, and job queues. Valkey (8.0, 7.2) with master/replica HA, or the official Redis image as a single instance with a password.
 ---
 
-Managed Redis for caching, session storage, pub/sub messaging, and job queues, with optional persistence and cluster mode.
+Two catalog entries speak the Redis protocol:
 
-:::note[Powered by Valkey]
-Redis on StackBlaze is served by **Valkey**, the open-source, Redis-compatible fork backed by the Linux Foundation. Your Redis clients, commands, and connection strings work unchanged. We use Valkey to keep a Redis-compatible cache available under a permissive license, with replica, sentinel, and cluster modes.
-:::
+| Entry | Engine | Versions | Topology | Auth |
+| --- | --- | --- | --- | --- |
+| **Valkey** | Valkey operator | 8.0 (default), 7.2 | One instance, master/replica HA available | None (private network only) |
+| **Redis** | Official `redis` image | 8.10 (default), 8.8, 8.6, 8.4, 8.2 | One instance | Password |
 
-## Creating a Redis instance
+Valkey is the open-source, Redis-compatible fork. Redis clients and commands work unchanged. The official Redis entry is off until a platform admin turns it on, so you may only see Valkey.
 
-From **+ Service → Databases**, add **Redis**. Pick a plan and whether you need persistence.
+## Creating an instance
 
-Attach it from another service's **Variables**. `REDIS_URL` is injected.
+From **+ Service → Databases**, add **Valkey** (or **Redis**). It appears on the canvas as a staged change. Apply your staged changes and StackBlaze creates it with the catalog defaults.
 
-## Connection strings
+To connect a service, open the instance, go to **Settings → Connection**, and switch the service on.
 
-### Without authentication (Free plan)
+## Connection variables
 
-```text title="Connection string"
+| Variable | Valkey | Redis |
+| --- | --- | --- |
+| `REDISHOST`, `REDISPORT` | Internal hostname, `6379` | Internal hostname, `6379` |
+| `REDIS_URL` | `redis://[service-name]:6379` | Full URL with the password, from a secret |
+| `REDIS_HOST`, `REDIS_PORT` | Not set | Set |
+| `REDISUSER` | Not set | `default` |
+| `REDISPASSWORD`, `REDIS_PASSWORD` | Not set | From a secret |
+
+```text title="Valkey (internal)"
 redis://[service-name]:6379
 ```
 
-### With authentication (Starter, Pro, Enterprise)
-
-All paid plans require authentication. The password is generated at provision time and available in the dashboard under **Settings → Connection**.
-
-```text title="Connection string (with auth)"
-redis://:password@[service-name]:6379
+```text title="Redis (internal)"
+redis://default:password@[service-name]:6379
 ```
 
-### TLS (external connections)
+Valkey runs without a password and is reachable only from the environment's private network. Because it has no password, it cannot be given public access. The official Redis image has a password and can be exposed under **Settings → Access → Public access**, only from the IP addresses you allow.
 
-```text title="Connection string (external, TLS)"
-rediss://:password@redis.stackblaze.cloud:6380
-```
+From your machine, `stackblaze connect redis` opens `redis-cli`. Add `--tunnel` to keep a local port open for GUI tools.
 
-:::tip
-Use the `rediss://` scheme (double-s) to enable TLS. This is required for external connections but not needed for internal cluster traffic.
-:::
+## Memory and connections
+
+Your plan sets the memory limit and the maximum number of clients. See **Settings → Plan limits**. The official Redis image runs with `noeviction`: when memory is full, writes fail and nothing is dropped. Set TTLs on cache keys so the data set does not grow without bound.
 
 ## Common use cases
 
@@ -103,9 +106,9 @@ const worker = new Worker('emails', async (job) => {
 }, { connection })
 ```
 
-### Pub/Sub (broadcasting across pods)
+### Pub/Sub (broadcasting across instances)
 
-When you scale your web service horizontally, use Redis pub/sub to broadcast events across all running instances. This is especially useful for WebSocket servers that need to push to all connected clients.
+When a service runs several instances, use pub/sub to broadcast events to all of them, for example from WebSocket servers.
 
 ```ts title="pubsub.ts"
 import { createClient } from 'redis'
@@ -116,52 +119,20 @@ const subscriber = publisher.duplicate()
 await publisher.connect()
 await subscriber.connect()
 
-// Publish from any pod
+// Publish from any instance
 await publisher.publish('notifications', JSON.stringify({ userId, message }))
 
-// Subscribe on all pods
+// Subscribe on every instance
 await subscriber.subscribe('notifications', (message) => {
   const { userId, message: msg } = JSON.parse(message)
   io.to(userId).emit('notification', msg) // Socket.IO broadcast
 })
 ```
 
-## Persistence modes
+## High availability (Valkey)
 
-By default, Redis is an in-memory store. StackBlaze offers two persistence modes to survive restarts:
+Open the Valkey instance, go to **Settings → HA**, and click **Enable HA**. StackBlaze adds a replica (master / replica). HA needs a plan with database high availability (Pro or Business) and is one-way. The official Redis image has no HA.
 
-| Mode | Description | Plans |
-| --- | --- | --- |
-| None | In-memory only. Data lost on restart. | Free |
-| RDB snapshots | Point-in-time snapshots every 15 minutes. | Starter+ |
-| RDB + AOF | Snapshots plus Append Only File for near-zero data loss. | Pro+ |
+## Backups
 
-:::caution[Free plan warning]
-Free-plan Redis instances have no persistence. A pod restart (e.g. after a node drain or OOM event) will clear all data. Do not use a free Redis instance as your only session store in production.
-:::
-
-## Eviction policy
-
-When Redis reaches its memory limit, it uses an eviction policy to decide which keys to remove. The default policy is `allkeys-lru` (evict least recently used keys first), which is appropriate for cache workloads.
-
-For session storage or job queues where data loss is unacceptable, change the eviction policy to `noeviction` from **Settings → Configuration**. With `noeviction`, Redis returns errors when memory is full rather than silently dropping keys.
-
-## Cluster mode
-
-Redis Cluster shards data across multiple nodes and supports horizontal scaling beyond a single instance's memory capacity. Cluster mode is available on Enterprise plans and requires a minimum of 3 primary nodes.
-
-```ts title="ioredis cluster connection"
-import Redis from 'ioredis'
-
-const cluster = new Redis.Cluster([
-  { host: '[service-name]-0', port: 6379 },
-  { host: '[service-name]-1', port: 6379 },
-  { host: '[service-name]-2', port: 6379 },
-], {
-  redisOptions: { password: process.env.REDIS_PASSWORD },
-})
-```
-
-:::note[Under the hood]
-Redis runs as a Kubernetes **StatefulSet** (single pod for standalone, 3+ pods for cluster). Each pod has its own **PersistentVolumeClaim** for AOF and RDB files. A **ClusterIP Service** provides the stable DNS name. Resource limits are enforced via container `resources.limits.memory`; when Redis approaches this limit, it begins evicting keys per the configured policy.
-:::
+Backups are off until you turn on a schedule for the environment. Recovery points hold a dump of an official Redis instance and a copy of a Valkey instance's volume. A restore always creates a new instance next to the running one. See [Backups & recovery](/databases/backups/).

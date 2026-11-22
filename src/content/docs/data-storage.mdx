@@ -1,22 +1,22 @@
 ---
 title: Databases
-description: Managed databases, volumes, backups, and messaging on the private network.
+description: Managed databases, volumes, object storage, backups, and messaging on the private network.
 ---
 
 import { LinkCard, CardGrid } from '@astrojs/starlight/components';
 
-Add a database from **+ Service → Databases**. It lands on the canvas, joins the environment's private network, and can inject connection strings via [variables](/security/env-vars/).
+Add a database from **+ Service → Databases**. Kafka, RabbitMQ, Memcached, and object storage are under **+ Service → Add-ons**. Each lands on the canvas as a staged change, joins the environment's private network, and gives the services you connect it to their connection [variables](/security/env-vars/).
 
 ## Databases
 
-Every managed database runs as Standard or high-availability. Pick a topology when you create it.
+Every database starts as a single instance. PostgreSQL, MariaDB, Valkey, FerretDB, and OpenSearch can switch to high availability later from **Settings → HA**.
 
 <CardGrid>
-  <LinkCard title="PostgreSQL" href="/databases/postgresql/" description="Managed Postgres with Standard and HA topologies." />
-  <LinkCard title="MySQL" href="/databases/mysql/" description="Managed MySQL for apps that expect the MySQL protocol." />
-  <LinkCard title="Redis" href="/databases/redis/" description="Valkey-compatible cache and queue." />
-  <LinkCard title="MongoDB" href="/databases/mongodb/" description="Document store with a MongoDB-compatible API." />
-  <LinkCard title="CockroachDB" href="/databases/cockroachdb/" description="Distributed SQL with Postgres compatibility." />
+  <LinkCard title="PostgreSQL" href="/databases/postgresql/" description="CloudNativePG Postgres with HA and point-in-time recovery." />
+  <LinkCard title="MySQL" href="/databases/mysql/" description="MariaDB with Galera HA, or the official MySQL image." />
+  <LinkCard title="Redis" href="/databases/redis/" description="Valkey, or the official Redis image." />
+  <LinkCard title="MongoDB" href="/databases/mongodb/" description="Official MongoDB, FerretDB, or DocumentDB." />
+  <LinkCard title="CockroachDB" href="/databases/cockroachdb/" description="Distributed SQL on the PostgreSQL wire protocol." />
   <LinkCard title="ClickHouse" href="/databases/clickhouse/" description="Columnar analytics database." />
   <LinkCard title="OpenSearch" href="/databases/opensearch/" description="Full-text search and log analytics." />
   <LinkCard title="Milvus" href="/databases/milvus/" description="Vector database for embeddings and similarity search." />
@@ -24,14 +24,15 @@ Every managed database runs as Standard or high-availability. Pick a topology wh
   <LinkCard title="ScyllaDB" href="/databases/scylladb/" description="Cassandra-compatible low-latency store." />
   <LinkCard title="CouchDB" href="/databases/couchdb/" description="HTTP document database with replication." />
   <LinkCard title="Memcached" href="/databases/memcached/" description="In-memory cache for simple key-value workloads." />
-  <LinkCard title="Backups & recovery" href="/databases/backups/" description="Scheduled backups and restore workflows." />
-  <LinkCard title="Point-in-time recovery" href="/databases/pitr/" description="Restore Postgres to any moment inside the retention window." />
+  <LinkCard title="Backups & recovery" href="/databases/backups/" description="Opt-in recovery points for the environment, restored as new databases." />
+  <LinkCard title="Point-in-time recovery" href="/databases/pitr/" description="Restore PostgreSQL to a chosen time, into a new database." />
 </CardGrid>
 
-## Volumes
+## Volumes and object storage
 
 <CardGrid>
-  <LinkCard title="Volumes" href="/storage/persistent-disks/" description="Disk attached to a service; survives restarts and redeploys." />
+  <LinkCard title="Volumes" href="/storage/persistent-disks/" description="Disk mounted into a service; survives restarts and redeploys." />
+  <LinkCard title="Object storage" href="/storage/object-storage/" description="S3-compatible buckets for files and media." />
 </CardGrid>
 
 ## Messaging

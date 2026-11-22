@@ -1,0 +1,65 @@
+---
+title: Object storage
+description: S3-compatible object storage on the project canvas. Add a bucket, connect services to get S3 and AWS variables, browse objects in the dashboard, and get notified when objects change.
+---
+
+Object storage gives your services an S3-compatible bucket for uploads, media, exports, and other files. Use it for data that every instance of a service must see. For a disk mounted into one service, use a [volume](/storage/persistent-disks/).
+
+## Adding object storage
+
+From **+ Service → Add-ons**, add **Object storage**. It appears on the canvas as a staged change. Apply your staged changes to create it.
+
+On regions with a shared bucket store, the add-on is one bucket on that store, with its own keys that reach only that bucket. Elsewhere it runs its own S3 server with its own volumes, and you can create several buckets in it.
+
+To connect a service, open the object storage, go to **Settings → Connection**, and switch the service on.
+
+## Connection variables
+
+A connected service gets both generic S3 names and the AWS names most SDKs read by default:
+
+| Variable | Value |
+| --- | --- |
+| `S3_ENDPOINT`, `AWS_ENDPOINT_URL`, `AWS_ENDPOINT_URL_S3` | `http://[service-name]:9000` (in-cluster, plain HTTP) |
+| `S3_HOST`, `S3_PORT` | Internal hostname, `9000` |
+| `S3_ACCESS_KEY`, `AWS_ACCESS_KEY_ID` | Access key, from a secret |
+| `S3_SECRET_KEY`, `AWS_SECRET_ACCESS_KEY` | Secret key, from a secret |
+| `S3_BUCKET`, `AWS_S3_BUCKET` | The bucket, when the add-on owns one |
+| `AWS_REGION`, `AWS_DEFAULT_REGION` | `us-east-1` |
+| `AWS_S3_FORCE_PATH_STYLE` | `true` |
+| `S3_PUBLIC_ENDPOINT` | Public HTTPS endpoint, where the region has one (for presigned links) |
+
+Use path-style addressing. Virtual-host buckets (`bucket.host`) are not supported.
+
+```ts title="upload.ts (AWS SDK v3)"
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+
+const s3 = new S3Client({
+  endpoint: process.env.S3_ENDPOINT,
+  region: process.env.AWS_REGION,
+  forcePathStyle: true,
+})
+
+await s3.send(new PutObjectCommand({
+  Bucket: process.env.S3_BUCKET,
+  Key: 'uploads/hello.txt',
+  Body: 'Hello',
+}))
+```
+
+## Browsing buckets
+
+The object storage sheet has these tabs:
+
+- **Buckets** lists buckets and their objects. On an add-on with its own S3 server, **Create bucket** adds one.
+- **Access** shows the in-cluster endpoint, the bucket, the keys, and the public endpoint. **Browse files** opens the objects in the file manager.
+- **Settings** holds **Events**, **Connection**, **Storage**, and **Delete**.
+
+On regions with a shared bucket store, the public endpoint is always on, and each bucket is reachable only with its own keys. An add-on with its own S3 server has a public switch instead. From the CLI, `stackblaze addons expose <addon>` gives it a public HTTPS address.
+
+## Object events
+
+Under **Settings → Events**, turn on **Notify platform** and pick a bucket. StackBlaze then receives an event when an object is created or deleted in that bucket, and delivers it to your notifications.
+
+## Backups
+
+Backups are off until you turn on a schedule for the environment. See [Backups & recovery](/databases/backups/).

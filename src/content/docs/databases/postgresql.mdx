@@ -1,39 +1,59 @@
 ---
 title: PostgreSQL
-description: Managed PostgreSQL 15 and 16 with automated backups, point-in-time recovery, extensions like pgvector and PostGIS, and zero-config internal connectivity.
+description: Managed PostgreSQL on CloudNativePG (15, 16, 17) with high availability, per-database extensions, opt-in backups, point-in-time recovery, and private connectivity. TimescaleDB is available as its own catalog entry.
 ---
 
-Managed PostgreSQL 15, 16, and 17 with automated backups, point-in-time recovery, and zero-config internal connectivity.
+Managed PostgreSQL, run by the CloudNativePG operator. Versions 15, 16, and 17 are offered; new databases get PostgreSQL 17.
 
-## Creating a PostgreSQL instance
+## Creating a PostgreSQL database
 
-From **+ Service → Databases**, add **PostgreSQL**. Pick version (15, 16, or 17), disk size, and plan. It appears on the canvas in seconds.
+From **+ Service → Databases**, add **PostgreSQL**. It appears on the canvas as a staged change. Apply your staged changes and StackBlaze creates it with the catalog defaults: one instance and a 1 GB volume.
 
-Open another service, go to **Variables**, and attach the database. `DATABASE_URL` is injected as a secret. You can also wire it in `stackblaze.yaml` with `fromDatabase`.
+To connect a service, open the database, go to **Settings → Connection**, and switch the service on. You can also declare it in `stackblaze.yaml` under `databases` and reference it from a service with `fromDatabase`.
 
-## Connection strings
+### TimescaleDB
 
-StackBlaze exposes two connection strings per database: an internal one for services in the same project, and an external one for local tooling like Postico or TablePlus.
+**TimescaleDB** is a separate entry in the catalog. It is a PostgreSQL database on a TimescaleDB image, with the `timescaledb` extension created in the app database. Everything on this page applies to it. It is the Apache-2.0 edition, so compression, continuous aggregates, and hyperfunctions are not available. An existing database cannot be switched to or from TimescaleDB.
 
-### Internal (recommended)
+## Connection variables
 
-Services in the same environment talk over the private network using the database service name. Traffic stays inside the environment.
+A connected service gets these variables:
+
+| Variable | Value |
+| --- | --- |
+| `PGHOST` | Internal hostname of the primary |
+| `PGPORT` | `5432` |
+| `PGUSER` | `postgres` |
+| `PGPASSWORD` | Password, from a secret |
+| `PGDATABASE` | `app` by default |
+| `PGHOST_RO`, `PGPORT_RO` | Read-only endpoint (the replicas once HA is on) |
+| `DATABASE_URL` | Only when the password is part of the database's definition, for example from a template or `stackblaze.yaml` |
+| `PGHOST_POOLER`, `PGPORT_POOLER` | Only when the database includes a PgBouncer pooler (some templates add one) |
+
+libpq-based clients (`psql`, `pg`, `psycopg`) read the `PG*` variables directly. If your app needs a URL and has no `DATABASE_URL`, compose one in its variables:
+
+```text title="Variable"
+DATABASE_URL=postgres://$(PGUSER):$(PGPASSWORD)@$(PGHOST):$(PGPORT)/$(PGDATABASE)
+```
+
+Build steps and the pre-deploy command get a `DATABASE_URL` built this way automatically when the service has the `PG*` variables but no usable `DATABASE_URL`.
+
+### Internal
+
+Services in the same environment talk over the private network. **Settings → Access** shows the host, user, password, database, connection URL (and JDBC URL), and an environment snippet you can paste into a service's variables.
 
 ```text title="Connection string (internal)"
-postgresql://user:password@[service-name]:5432/dbname
+postgres://postgres:password@[service-name]:5432/app
 ```
 
-### External (for local tools)
+### From your machine
 
-The external connection string is available in the dashboard under **Settings → Connection**. It uses SSL and routes traffic through our secure proxy. Use this for GUI clients like TablePlus, Postico, or DBeaver, not for production app connections.
-
-```text title="Connection string (external, SSL required)"
-postgresql://user:password@db.stackblaze.cloud:5432/dbname?sslmode=require
-```
+- `stackblaze connect postgres` opens `psql`. Add `--local` to run `psql` on your machine through a private tunnel, or `--tunnel` to keep a local port open for GUI tools such as TablePlus or DBeaver. The tunnel listens on `127.0.0.1` only.
+- **Settings → Access → Public access** makes the database reachable from outside the platform, only from the IP addresses you allow. TLS is required. The CLI equivalent is `stackblaze addons expose <addon> --allow <ip/cidr>`.
 
 ## Running migrations
 
-The safest pattern is to run migrations as a pre-deploy command so they complete before new traffic reaches your updated service. Configure this under **Settings → Deploy → Pre-deploy command**.
+Run migrations as a pre-deploy command so they finish before the new version starts. Set it under **Settings → Deploy → Pre-deploy**. If the command fails, the current version stays live.
 
 ### Prisma
 
@@ -53,66 +73,29 @@ npm run migrate
 python manage.py migrate
 ```
 
-### One-off from CI
+There is no `stackblaze run` CLI. To load an existing dump, use `stackblaze addons import <file> [addon]` (plain SQL or `pg_dump` archives). It runs `psql` or `pg_restore` on your machine through a private tunnel.
 
-Queue a build after your own migrate job, or set a **pre-deploy command** on the app so StackBlaze runs it with the same env as the workload (including `DATABASE_URL`). There is no `stackblaze run` CLI.
+## Backups and point-in-time recovery
 
-:::tip
-Always run migrations before the new version of your code starts serving traffic. StackBlaze's pre-deploy command runs inside an ephemeral container with the same environment variables as your service, including `DATABASE_URL`.
-:::
+Backups are off until you turn on a schedule for the environment. A recovery point holds a dump of each PostgreSQL database, and a restore always creates a new database next to the running one. See [Backups & recovery](/databases/backups/).
 
-## Point-in-time recovery (PITR)
+[Point-in-time recovery](/databases/pitr/) is available for PostgreSQL. You turn it on per database. It archives the write-ahead log, so you can restore the database as it was at a chosen time, into a new database.
 
-On Pro and Enterprise plans, StackBlaze continuously archives WAL (Write-Ahead Log) segments to object storage alongside periodic base backups. This lets you restore your database to any moment within your plan's retention window, not just the last daily snapshot.
+## Extensions
 
-To initiate a PITR restore, navigate to your database in the dashboard, click **Backups → Restore to point in time**, select a timestamp, and choose whether to restore in-place or to a new instance.
+**Settings → Extensions** lists the extensions available on the database's image and lets you enable them per database. Extensions marked **needs restart** load a library into `shared_preload_libraries`, which restarts the cluster.
 
-| Plan | PITR | Retention window |
-| --- | --- | --- |
-| Free | No | — |
-| Starter | No | 3 days (snapshots) |
-| Pro | Yes | 7 days |
-| Enterprise | Yes | 30 days |
-
-## Automated backups
-
-All plans include automated daily snapshots taken during off-peak hours (typically 02:00–04:00 UTC). Backups are encrypted at rest and stored separately from your primary data.
-
-To restore from a snapshot, go to **Backups** in the database dashboard, select the snapshot, and click **Restore**. You can restore to a new instance without affecting the running database.
-
-## Supported extensions
-
-The following popular extensions are available on all plans and can be enabled without any configuration:
-
-| Extension | Use case |
-| --- | --- |
-| `postgis` | Geospatial data and queries |
-| `pgvector` | Vector similarity search for AI/ML workloads |
-| `pg_trgm` | Fuzzy text search using trigrams |
-| `uuid-ossp` | UUID generation functions |
-| `pg_stat_statements` | Query performance tracking |
-| `btree_gin` | GIN indexes for B-tree operators |
-| `hstore` | Key-value store within a column |
-| `citext` | Case-insensitive text type |
+You can also enable an extension in SQL:
 
 ```sql title="Enable an extension"
-CREATE EXTENSION IF NOT EXISTS pgvector;
-CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 ```
 
-## Scaling
+## High availability
 
-### Vertical scaling
+Open the database, go to **Settings → HA**, and click **Enable HA**. The cluster grows to 3 instances with streaming replication and automatic failover. HA needs a plan with database high availability (Pro or Business). It is one-way: there is no in-place downgrade.
 
-To increase CPU or memory, upgrade the database plan from the dashboard under **Settings → Plan**. StackBlaze performs a rolling StatefulSet update with a brief connection interruption (typically under 30 seconds). Schedule vertical scaling during off-peak hours.
-
-### Read replicas
-
-Read replicas are available on Enterprise plans. They use PostgreSQL streaming replication and are typically under 1 second behind the primary. Connect read-heavy workloads (analytics queries, reporting) to the replica connection string to reduce load on the primary.
-
-:::note[Under the hood]
-PostgreSQL runs as a Kubernetes **StatefulSet** with a dedicated **PersistentVolumeClaim** backed by SSD storage. A **ClusterIP Service** provides a stable internal DNS name (`[service-name]`) that survives pod restarts and rescheduling. Connection pooling via PgBouncer is available as an add-on on Pro and Enterprise plans.
-:::
+Send read-only traffic to `PGHOST_RO` to use the replicas. While the cluster has one instance, the read-only endpoint has no members.
 
 ## Connecting with common ORMs
 
@@ -138,10 +121,11 @@ export const db = drizzle(client)
 ### SQLAlchemy (Python)
 
 ```python title="database.py"
+import os
 from sqlalchemy import create_engine
 
 engine = create_engine(
-    os.environ["DATABASE_URL"],
+    os.environ["DATABASE_URL"].replace("postgres://", "postgresql://", 1),
     pool_size=5,
     max_overflow=10,
     pool_pre_ping=True,

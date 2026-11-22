@@ -1,50 +1,60 @@
 ---
 title: MySQL
-description: Managed MySQL 8.0 and 8.4 with automated backups, point-in-time recovery, and private cluster networking for web services and workers.
+description: MySQL-compatible databases on StackBlaze. MariaDB (11.4, 11.2, 10.11) with Galera high availability, or the official MySQL image (8.4, 9.7) as a single instance. Opt-in backups and private networking.
 ---
 
-Managed MySQL with automated backups and private internal networking.
+Two catalog entries speak the MySQL protocol:
 
-:::note[Powered by MariaDB]
-MySQL on StackBlaze is **MariaDB**, a MySQL-compatible engine. Drivers, connection strings, and SQL stay the same.
-:::
+| Entry | Engine | Versions | Topology |
+| --- | --- | --- | --- |
+| **MariaDB** | MariaDB operator | 11.4 (default), 11.2, 10.11 | One instance, Galera HA available |
+| **MySQL** | Official `mysql` image | 8.4 (default), 9.7 | One instance |
 
-## Supported versions
+MySQL drivers, ORMs, and SQL work against both. The official MySQL entry is off until a platform admin turns it on, so you may only see MariaDB.
 
-StackBlaze supports MySQL 8.0 and MySQL 8.4. MySQL 8.4 is the current LTS release and is recommended for new projects. Both versions include full InnoDB support, JSON functions, window functions, and CTEs.
+## Creating a database
 
-| Version | Status | Notes |
+From **+ Service → Databases**, add **MariaDB** (or **MySQL**). It appears on the canvas as a staged change. Apply your staged changes and StackBlaze creates it with the catalog defaults: a database named `app` on a 1 GB volume.
+
+To connect a service, open the database, go to **Settings → Connection**, and switch the service on.
+
+## Connection variables
+
+| Variable | MariaDB | MySQL |
 | --- | --- | --- |
-| MySQL 8.4 | Recommended | LTS release, default for new instances |
-| MySQL 8.0 | Supported | EOL January 2026, consider migrating |
+| `MYSQL_HOST` | Internal hostname | Internal hostname |
+| `MYSQL_PORT` | `3306` | `3306` |
+| `MYSQL_USER` | The database user | `app` |
+| `MYSQL_PASSWORD` | From a secret | From a secret |
+| `MYSQL_DATABASE` | `app` | `app` |
+| `MYSQL_URL`, `DATABASE_URL` | Not set | `mysql://…` from a secret |
 
-## Creating a MySQL instance
+For MariaDB, compose a URL in the service's variables if your app needs one:
 
-From **+ Service → Databases**, add **MySQL**. Pick version, disk size, and plan.
+```text title="Variable"
+DATABASE_URL=mysql://$(MYSQL_USER):$(MYSQL_PASSWORD)@$(MYSQL_HOST):$(MYSQL_PORT)/$(MYSQL_DATABASE)
+```
 
-Attach it from another service's **Variables**. `DATABASE_URL` is injected.
+### Internal
 
-## Connection strings
-
-### Internal (recommended for production)
-
-Services in the same environment reach MySQL by service name on the private network. No public exposure.
+Services in the same environment reach the database over the private network. **Settings → Access** shows the host, user, password, connection URL, JDBC URL, and an environment snippet.
 
 ```text title="Connection string (internal)"
-mysql://user:password@[service-name]:3306/dbname
+mysql://user:password@[service-name]:3306/app
 ```
 
-### External (for local development tools)
+### From your machine
 
-Use the external connection string for GUI clients like TablePlus, MySQL Workbench, or DBeaver. Connections are secured via SSL. Find the external URL in **Settings → Connection**.
+- `stackblaze connect mysql` opens a `mysql` shell. Add `--local` or `--tunnel` to go through a private tunnel to your machine for MySQL Workbench, TablePlus, or DBeaver.
+- **Settings → Access → Public access** makes the database reachable from outside the platform, only from the IP addresses you allow. TLS is required. The CLI equivalent is `stackblaze addons expose <addon> --allow <ip/cidr>`.
 
-```text title="Connection string (external)"
-mysql://user:password@db.stackblaze.cloud:3306/dbname?ssl=true
-```
+## ProxySQL
+
+**ProxySQL** (under **+ Service → Add-ons**) adds connection pooling and read/write splitting in front of MariaDB. Point it at your MariaDB service and connect your app to ProxySQL instead. Connected services get `MYSQL_HOST`, `MYSQL_PORT` (`6033`), `MYSQL_USER`, `MYSQL_PASSWORD`, the same values as `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USER`, `DATABASE_PASSWORD`, and `PROXYSQL_HOST` / `PROXYSQL_PORT`. Its **Settings** show **Backends** and **Read/Write Split**.
 
 ## Running migrations
 
-Configure a pre-deploy command under **Settings → Deploy → Pre-deploy command** to ensure migrations run before new traffic is routed to your service.
+Set a pre-deploy command under **Settings → Deploy → Pre-deploy** so migrations finish before the new version starts. If it fails, the current version stays live.
 
 ### Prisma
 
@@ -55,21 +65,10 @@ npx prisma migrate deploy
 ### Flyway
 
 ```bash title="Pre-deploy command"
-flyway -url=jdbc:mysql://[service-name]:3306/dbname \
-        -user=$DB_USER \
-        -password=$DB_PASSWORD \
+flyway -url=jdbc:mysql://$MYSQL_HOST:$MYSQL_PORT/$MYSQL_DATABASE \
+        -user=$MYSQL_USER \
+        -password=$MYSQL_PASSWORD \
         migrate
-```
-
-### Liquibase
-
-```bash title="Pre-deploy command"
-liquibase \
-  --url=jdbc:mysql://[service-name]:3306/dbname \
-  --username=$DB_USER \
-  --password=$DB_PASSWORD \
-  --changeLogFile=db/changelog/changelog.xml \
-  update
 ```
 
 ### Node.js / Knex
@@ -78,28 +77,25 @@ liquibase \
 npx knex migrate:latest
 ```
 
-:::tip
-The `DATABASE_URL` environment variable is available in your pre-deploy container. Most ORMs and migration tools pick it up automatically. For JDBC-based tools (Flyway, Liquibase), parse the URL components into separate variables in your CI/CD configuration.
-:::
+To load an existing dump, use `stackblaze addons import <file> [addon]` (plain SQL from `mysqldump` or `mariadb-dump`, also gzipped).
 
-## Automated backups
+## High availability (MariaDB)
 
-All plans include daily automated snapshots, plus on-demand snapshots you can take before a risky change. Backups are encrypted at rest and stored separately from your data.
+Open the MariaDB database, go to **Settings → HA**, and click **Enable HA**. StackBlaze creates a new 3-node Galera cluster from a backup, moves your services to it, and keeps the old instance for rollback. When it finishes, open the new cluster from the HA section. HA needs a plan with database high availability (Pro or Business) and is one-way.
 
-To restore from a snapshot: navigate to your database → **Backups** → select a snapshot → **Restore**. You can restore to a new instance without interrupting your live database.
+The official MySQL entry has no HA.
 
-| Plan | Snapshot retention |
-| --- | --- |
-| Free | 1 day |
-| Starter | 3 days |
-| Pro | 7 days |
-| Enterprise | 30 days |
+## Backups
 
-## Character sets and collations
+Backups are off until you turn on a schedule for the environment. Recovery points hold a dump of each MariaDB and MySQL database, and a restore always creates a new database next to the running one. See [Backups & recovery](/databases/backups/).
 
-New MySQL instances default to `utf8mb4` charset with `utf8mb4_unicode_ci` collation, the correct choice for modern applications that need full Unicode support including emoji.
+MariaDB runs with row-based binary logging, so the Kafka MySQL/MariaDB CDC connector works against it without extra setup.
 
-```sql title="Verify charset"
+## Character sets
+
+Check the server's character set and collation before you create tables, and set `utf8mb4` explicitly if your app needs full Unicode:
+
+```sql title="Check charset"
 SHOW VARIABLES LIKE 'character_set%';
 SHOW VARIABLES LIKE 'collation%';
 ```
@@ -122,7 +118,11 @@ import { DataSource } from 'typeorm'
 
 export const AppDataSource = new DataSource({
   type: 'mysql',
-  url: process.env.DATABASE_URL,
+  host: process.env.MYSQL_HOST,
+  port: Number(process.env.MYSQL_PORT),
+  username: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE,
   entities: ['src/entities/**/*.ts'],
   migrations: ['src/migrations/**/*.ts'],
 })
@@ -131,13 +131,17 @@ export const AppDataSource = new DataSource({
 ### SQLAlchemy (Python)
 
 ```python title="database.py"
+import os
 from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
 
-# Replace mysql:// with mysql+pymysql:// for PyMySQL driver
-url = os.environ["DATABASE_URL"].replace("mysql://", "mysql+pymysql://", 1)
+url = URL.create(
+    "mysql+pymysql",
+    username=os.environ["MYSQL_USER"],
+    password=os.environ["MYSQL_PASSWORD"],
+    host=os.environ["MYSQL_HOST"],
+    port=int(os.environ["MYSQL_PORT"]),
+    database=os.environ["MYSQL_DATABASE"],
+)
 engine = create_engine(url, pool_pre_ping=True)
 ```
-
-:::note[Under the hood]
-MySQL runs as a Kubernetes **StatefulSet** with a dedicated **PersistentVolumeClaim** backed by SSD storage. A **ClusterIP Service** provides the stable DNS name `[service-name]`. The StatefulSet uses `podManagementPolicy: OrderedReady` to ensure clean startup and shutdown ordering.
-:::
