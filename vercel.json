@@ -261,7 +261,7 @@
     },
     {
       "source": "/cli/functions",
-      "destination": "https://www.stackblaze.com/docs/reference/cli",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/functions",
       "permanent": true
     },
     {
