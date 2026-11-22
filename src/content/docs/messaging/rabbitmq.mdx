@@ -1,45 +1,65 @@
 ---
 title: RabbitMQ
-description: "Managed RabbitMQ on StackBlaze: an AMQP message broker with single-node or clustered high-availability deployments using quorum queues."
+description: "Managed RabbitMQ on StackBlaze: an AMQP message broker as a single node or a three-node high-availability cluster, with a management UI."
 ---
 
 import Diagram from '../../../components/Diagram.astro';
 
-Managed RabbitMQ: an AMQP message broker with single-node or clustered high-availability deployments using quorum queues.
+Managed RabbitMQ: an AMQP message broker as a single node or a three-node high-availability cluster, with a management UI.
 
 ## Creating a RabbitMQ instance
 
-From the StackBlaze dashboard, click **New service**, then **Database**, then **RabbitMQ**. Pick a plan and storage size, and StackBlaze provisions the instance for you.
+On the project canvas, open **+ Service → Add-ons** and pick **RabbitMQ**. RabbitMQ sits under Add-ons, not Databases. A new instance runs one node with a 1 GiB volume.
 
 RabbitMQ is a message broker rather than a traditional database. Instead of storing rows you query, it moves messages between producers and consumers through **queues** and **exchanges** over the AMQP protocol. This makes it a good fit for background jobs, work distribution, and service-to-service messaging where you want to decouple the sender from the receiver.
 
-Attach RabbitMQ to your service from the **Environment** tab. Connecting injects `RABBITMQ_URL` automatically, so your app can read it from the environment without hardcoding credentials. A management UI is also available on port `15672` for inspecting queues, exchanges, connections, and message rates.
+Connect RabbitMQ to a service and these variables are injected, so your app reads them from the environment instead of hardcoding credentials:
+
+| Variable | Value |
+| --- | --- |
+| `RABBITMQ_HOST` | `[service-name]` |
+| `RABBITMQ_PORT` | `5672` |
+| `RABBITMQ_USERNAME` | The default user (`guest` unless you changed it) |
+| `RABBITMQ_PASSWORD` | The default user's password, from a secret |
+| `RABBITMQ_URL`, `AMQP_URL` | `amqp://user:password@[service-name]:5672/`, set when the password is known at creation |
+
+If `RABBITMQ_URL` is not set on your service, build the URL from the four variables above.
 
 ## Connecting
 
-RabbitMQ speaks **AMQP 0-9-1** on port `5672`. The injected `RABBITMQ_URL` contains the username, password, internal hostname, and port your client needs.
+RabbitMQ speaks **AMQP 0-9-1** on port `5672`. The URL contains the username, password, internal hostname, and port your client needs.
 
 ```text title="RABBITMQ_URL"
-amqp://user:password@[service-name]:5672
+amqp://user:password@[service-name]:5672/
 ```
 
-Most AMQP client libraries accept this URL directly. The internal hostname resolves only inside the StackBlaze private network, so traffic between your service and the broker never leaves the cluster.
+Most AMQP client libraries accept this URL directly. The internal hostname resolves only inside the environment's private network. AMQP is not reachable from outside.
+
+## Management UI
+
+The RabbitMQ management UI (port `15672`) shows queues, exchanges, connections, and message rates. Open the RabbitMQ service and go to **Settings → Access** for its in-cluster URL and the default user's credentials. You can also turn on a **Public** HTTPS address for the management UI there, or with `stackblaze addons expose`. Only the management UI is exposed, not AMQP.
+
+In the chat assistant, RabbitMQ admin tools appear with the `rmq__` prefix.
 
 ## Standard vs high availability
 
 <Diagram file="rabbitmq-standard-vs-ha.svg" alt="Standard RabbitMQ is a single node. High availability is a multi-node cluster that replicates messages with quorum queues." />
 
-You choose between Standard and high availability (HA) when you create the instance.
+Every instance starts as Standard. To move to high availability, open the RabbitMQ service, go to **Settings → HA**, and click **Enable HA**.
 
 **Standard** runs a single node. It is simple and a good fit for development, staging, and workloads that can tolerate a brief interruption. If that node is lost, the broker is unavailable until it restarts.
 
-**High availability** runs a multi-node cluster using **quorum queues**. Quorum queues replicate each message across multiple nodes, so messages survive the loss of a node and the cluster keeps serving producers and consumers.
+**High availability** runs a three-node cluster. To keep messages when a node is lost, declare your queues as **quorum queues** (`x-queue-type: quorum`), which replicate each message across nodes. Classic queues live on one node.
 
 | | Standard | High availability |
 | --- | --- | --- |
-| Nodes | Single node | Multi-node cluster |
+| Nodes | 1 | 3 |
 | Queue replication | None | Quorum queues replicate across nodes |
-| Tolerates node loss | No | Yes |
+| Tolerates node loss | No | Yes, for quorum queues |
+
+:::caution[One-way change]
+Enabling HA cannot be undone in place. To go back to a single node, create a new RabbitMQ instance. Database high availability is included on the Pro and Business plans.
+:::
 
 ## Publishing and consuming
 
@@ -72,8 +92,8 @@ main().catch(console.error)
 
 ## Backups
 
-RabbitMQ definitions (queues, exchanges, bindings, and users) and persistent message storage live on a persistent volume that is backed up following the platform policy. See [Backups & recovery](/databases/backups/) for retention, scheduling, and restore details that apply across managed databases on StackBlaze.
+RabbitMQ definitions (queues, exchanges, bindings, and users) and persistent messages live on a persistent volume. Backups are off until you turn them on for the environment. When they are on, recovery points include that volume. See [Backups & recovery](/databases/backups/).
 
 :::note[Under the hood]
-RabbitMQ runs via the RabbitMQ Cluster Operator as a Kubernetes **StatefulSet**, with a **persistent volume per node** for definitions and message storage. High availability uses **quorum queues** that replicate messages across nodes scheduled on different hosts, so the loss of a single node does not lose messages or take the broker offline.
+RabbitMQ runs via the RabbitMQ Cluster Operator, with a **persistent volume per node** for definitions and message storage. In HA, quorum queues replicate messages across the three nodes, so losing one node does not lose those messages or take the broker offline.
 :::

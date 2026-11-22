@@ -1,6 +1,6 @@
 ---
 title: Point-in-time database recovery
-description: Restore managed PostgreSQL to any point in the last 7 days using the StackBlaze dashboard.
+description: Turn on point-in-time recovery for a PostgreSQL database and restore it as it was at a chosen time, into a new database. Retention is 7, 14, or 28 days, capped by your plan.
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -8,36 +8,54 @@ import Diagram from '../../../components/Diagram.astro';
 
 <Diagram file="pitr-backup.svg" alt="Point-in-time recovery from continuous WAL archives" />
 
-Accidental `DROP TABLE`, a bad migration, or a bad deploy can corrupt data in seconds. PITR is how you roll the database clock back without restoring from a stale daily backup.
+An accidental `DROP TABLE` or a bad migration can damage data in seconds. Point-in-time recovery (PITR) lets you get the database back as it was just before, not only as it was at the last recovery point.
 
-This guide covers the dashboard workflow and the API. For WAL architecture and retention details, see the [backups documentation](/databases/backups/).
+PITR is for PostgreSQL databases. It is off until you turn it on for a database. Today you turn it on and restore through the [REST API](/reference/api/); the dashboard and CLI work with [recovery points](/databases/backups/) only.
 
 <Steps>
 
-1. **Understand what PITR covers**
+1. **Turn PITR on**
 
-   Point-in-time recovery (PITR) lets you restore a managed PostgreSQL database to any moment within your plan's retention window. StackBlaze continuously archives write-ahead logs and takes scheduled base backups, so you are not limited to the last daily snapshot.
+   PITR needs a plan that includes database backups and a region with a bucket store for the archive; the status call below says `available` and, if not, why. StackBlaze then archives the database's write-ahead log and takes a base backup every day at 02:00 UTC. Pick a retention of 7, 14, or 28 days; your plan caps it.
 
-2. **Pick a recovery timestamp**
+   ```bash
+   curl -X PUT https://api.stackblaze.cloud/api/pipelines/{pipeline}/{phase}/backups/db/{database}/pitr \
+     -H "Authorization: Bearer sb_pat_..." \
+     -H "Content-Type: application/json" \
+     -d '{"enabled": true, "retentionDays": 7}'
+   ```
 
-   Open your database in the dashboard → Backups → Point-in-time recovery. Choose a timestamp in UTC. Use the deploy timeline or application logs to narrow the window — for example, five minutes before a bad migration ran.
+2. **Check the recovery window**
 
-3. **Restore to a new instance**
+   `GET` the same path. The answer shows whether PITR is on, the retention, the WAL archiving health, the earliest and latest time you can restore to, and the restores you have started.
 
-   PITR always creates a new database instance at the selected time — your current database keeps running until you switch over. Attach the restored instance to a staging service first, run smoke tests, then update `DATABASE_URL` on production when ready.
+3. **Restore to a time**
 
-4. **Automate with the API (optional)**
+   Pick a time inside the window, in UTC. Use deploy history or logs to narrow it down, for example five minutes before a bad migration ran.
 
-   For runbooks and incident response, you can trigger a point-in-time restore through the StackBlaze API by passing the source database and a target timestamp. It returns a new database you can attach like any other managed Postgres.
+   ```bash
+   curl -X POST https://api.stackblaze.cloud/api/pipelines/{pipeline}/{phase}/backups/db/{database}/restore-pitr \
+     -H "Authorization: Bearer sb_pat_..." \
+     -H "Content-Type: application/json" \
+     -d '{"targetTime": "2026-11-20T14:05:00Z"}'
+   ```
+
+   The restore always creates a **new** database. The original keeps running unchanged.
+
+4. **Switch over**
+
+   Connect a staging service to the new database first and run your checks. Then connect your production services to it and disconnect the old one.
 
 </Steps>
 
+To turn PITR off, send `{"enabled": false}`. The archive is kept until its retention runs out, then deleted.
+
 :::caution
-Before you cut over production, verify row counts and run application health checks against the restored instance. PITR cannot undo writes made after the recovery timestamp on the original database — plan a maintenance window if you need to merge divergent data.
+Writes made to the original database after the target time are not in the new database. If you need them, plan how to merge them before you switch over.
 :::
 
 ## Next steps
 
-- [Provision PostgreSQL](/databases/postgresql/)
-- [Set up Redis caching](/databases/redis/)
-- [Apps & managed add-ons](/build-deploy/apps/)
+- [Backups & recovery](/databases/backups/)
+- [PostgreSQL](/databases/postgresql/)
+- [REST API](/reference/api/)

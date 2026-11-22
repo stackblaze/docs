@@ -1,21 +1,31 @@
 ---
 title: Kafka
-description: "Managed Apache Kafka on StackBlaze: single-broker or multi-broker high availability (KRaft), a catalog of source and sink connectors (Debezium CDC, JDBC, S3, MongoDB, ClickHouse) with zero-config setup, topic and consumer-group tooling, a message viewer, and Prometheus metrics."
+description: "Managed Apache Kafka on StackBlaze: a single broker or a three-broker high-availability cluster (KRaft), a catalog of source and sink connectors (Debezium CDC, JDBC, S3, MongoDB, ClickHouse), topic and consumer-group tooling, and a message viewer."
 ---
 
 import Diagram from '../../../components/Diagram.astro';
 
-Managed Apache Kafka: a distributed event-streaming platform with single-broker or multi-broker high availability, a built-in catalog of source and sink connectors, topic and consumer tooling, and Prometheus metrics.
+Managed Apache Kafka: a distributed event-streaming platform with a single broker or a three-broker high-availability cluster, a built-in catalog of source and sink connectors, topic and consumer tooling, and metrics.
 
 Kafka is not a traditional database. It is a distributed, append-only event log. Producers write messages to named **topics**, each topic is split into **partitions** for parallelism, and **consumers** read at their own pace. Messages are retained on disk so multiple consumers can replay the same stream independently. StackBlaze runs Kafka with the Strimzi operator in KRaft mode (no ZooKeeper) and adds a managed layer on top: a connector catalog, topic and consumer-group tooling, a message viewer, and metrics.
 
 ## Creating a Kafka cluster
 
-From the dashboard, click **New service**, then **Database**, then **Kafka**. Pick a plan, a storage size, and whether you want a single broker (Standard) or a multi-broker cluster (high availability). Connecting the cluster to a service injects `KAFKA_BOOTSTRAP_SERVERS` into that service, so there is nothing to hardcode.
+On the project canvas, open **+ Service → Add-ons** and pick **Kafka (Strimzi)**. Kafka sits under Add-ons, not Databases. A new cluster runs one broker (Kafka 4.2.0 by default; 4.1.0 and 4.0.0 are also offered) with a 10 GiB volume.
+
+Connect the cluster to a service and these variables are injected, so there is nothing to hardcode:
+
+| Variable | Value |
+| --- | --- |
+| `KAFKA_BOOTSTRAP_SERVERS` | `[service-name]:9092` |
+| `KAFKA_BROKERS` | Same as above |
+| `KAFKA_URL` | Same as above |
+
+Your app creates its own topics, or you create them in the console (see below).
 
 ## Connecting
 
-Kafka clients connect through **bootstrap servers**. A client contacts a bootstrap address, discovers the full set of brokers, then talks directly to whichever broker hosts the partitions it needs. The internal plaintext listener is on port `9092`, and a TLS listener is available on port `9093`.
+Kafka clients connect through **bootstrap servers**. A client contacts a bootstrap address, discovers the full set of brokers, then talks directly to whichever broker hosts the partitions it needs. The plaintext listener is on port `9092` and has no authentication. A TLS listener is on port `9093`. Both are reachable only inside the environment's private network. There is no public endpoint for Kafka.
 
 ```text title="KAFKA_BOOTSTRAP_SERVERS (internal)"
 [service-name]:9092
@@ -57,7 +67,11 @@ produce().then(consume)
 
 ## Standard vs high availability
 
-You choose the topology when you create the cluster. Both modes run in KRaft mode, where each broker is a combined controller and broker (there is no separate ZooKeeper to operate).
+Every cluster starts as Standard. To move to high availability, open the Kafka service, go to **Settings → HA**, and click **Enable HA**. Both modes run in KRaft mode, where each broker is a combined controller and broker (there is no separate ZooKeeper to operate).
+
+:::caution[One-way change]
+Enabling HA cannot be undone in place. To go back to a single broker, create a new Kafka cluster. Database high availability is included on the Pro and Business plans.
+:::
 
 <Diagram file="kafka-ha.svg" alt="A producer writes to the partition leader on broker 1. The leader replicates to in-sync replicas on brokers 2 and 3. A consumer reads from the leader. If the leader fails, an in-sync replica is promoted automatically." />
 
@@ -69,18 +83,18 @@ A single broker with a replication factor of 1 and `min.insync.replicas=1`. It i
 
 ### High availability
 
-Multiple brokers, each on its own node with its own persistent volume. Topics use a replication factor greater than 1 (3 by default), so every partition has a leader plus in-sync replicas on other brokers. Writes are acknowledged once they reach the minimum in-sync replicas (`min.insync.replicas=2` by default), which protects against data loss. If the broker holding a partition leader fails, Kafka elects a new leader from the in-sync replicas automatically, and producers and consumers continue without intervention.
+Three brokers, each with its own persistent volume. Topics use a replication factor of 3 by default, so every partition has a leader plus in-sync replicas on other brokers. Writes are acknowledged once they reach the minimum in-sync replicas (`min.insync.replicas=2` by default), which protects against data loss. If the broker holding a partition leader fails, Kafka elects a new leader from the in-sync replicas automatically, and producers and consumers continue without intervention.
 
 | | Standard | High availability |
 | --- | --- | --- |
-| Brokers | Single broker | Multiple brokers, one per node |
-| Replication factor | 1 | 3 (configurable) |
+| Brokers | 1 | 3 |
+| Default replication factor | 1 | 3 |
 | min.insync.replicas | 1 | 2 |
 | Leader election | Not applicable | Automatic on broker loss |
 | Tolerates broker loss | No | Yes, no data loss |
 | Best for | Development and testing | Production and resilient workloads |
 
-Scaling from Standard to HA raises the broker count and replication factor; StackBlaze performs a rolling change. The internal topics that back consumer offsets and transactions are replicated to match.
+Enabling HA raises the broker count to 3 and the default replication factor to 3. The internal topics that back consumer offsets and transactions are set to replicate to match. Existing topics keep the replication factor they were created with.
 
 ## Kafka Connect: source and sink connectors
 
@@ -95,45 +109,47 @@ Most data does not start or end in Kafka. **Kafka Connect** moves it in and out 
 | Connector | Type | What it does |
 | --- | --- | --- |
 | Postgres CDC (Debezium) | Source | Capture row-level changes (inserts, updates, deletes) from a PostgreSQL add-on into topics, in real time |
-| MySQL / MariaDB CDC (Debezium) | Source | Capture changes from a MySQL or MariaDB add-on into topics via the binlog |
-| JDBC sink | Sink | Write topic records into a SQL database (insert or upsert), with optional auto-create and schema evolution |
-| S3 sink (RustFS) | Sink | Archive topics to S3 object storage as partitioned, compressed JSON objects |
-| MongoDB sink | Sink | Write topic records into a MongoDB or DocumentDB collection |
-| ClickHouse sink | Sink | Stream topics into ClickHouse for real-time analytics |
+| MySQL/MariaDB CDC (Debezium) | Source | Capture changes from a MySQL or MariaDB add-on into topics via the binlog |
+| JDBC Sink | Sink | Write topic records into a SQL database (insert or upsert), with optional auto-create and schema evolution |
+| S3 Sink (RustFS) | Sink | Archive topics to an object storage bucket |
+| MongoDB Sink | Sink | Write topic records into a MongoDB or DocumentDB collection |
+| ClickHouse Sink | Sink | Stream topics into ClickHouse for real-time analytics |
 
 ### Zero-config setup
 
-Each connector is paired with a sibling add-on in your project. When you pick, for example, the Postgres CDC source and point it at one of your PostgreSQL add-ons, StackBlaze auto-fills the host, port, database, and credentials from that add-on. The S3 sink auto-fills the endpoint and access keys from a paired RustFS add-on. You only provide the connector-specific fields: the topic prefix or topic list, and which tables or collections to include. A test step validates the connection before the connector is created.
+Each connector is paired with a sibling add-on in your project. When you pick, for example, the Postgres CDC source and point it at one of your PostgreSQL add-ons, StackBlaze auto-fills the host, port, database, and credentials from that add-on. The S3 sink auto-fills the endpoint and access keys from a paired object storage add-on. You only provide the connector-specific fields: the topic prefix or topic list, and which tables or collections to include. A test step checks the paired add-on before the connector is created. If nothing pairs, you fill the connection fields yourself.
 
 :::tip[Lazy provisioning]
-The first connector you create brings up a Kafka Connect runtime for the cluster automatically. You do not provision or size a Connect cluster yourself, and there is nothing to deploy: the connector plugins (Debezium, JDBC, S3, MongoDB, ClickHouse) are already baked into the image.
+The first connector you create brings up a Kafka Connect runtime for the cluster automatically. You do not provision a Connect cluster yourself: the connector plugins (Debezium, JDBC, S3, MongoDB, ClickHouse) are already in the image.
 :::
 
 A common pattern is change data capture: a Debezium source streams every change from your Postgres add-on into topics, and a sink fans those records out to analytics (ClickHouse), to a search index, or to object storage for archival, all from the same stream.
 
 ## Topics, consumer groups, and message inspection
 
-The Kafka add-on page is a full management console, so you rarely need a separate desktop tool.
+Open the Kafka service and go to **Settings → Manage**. The console has four tabs, so you rarely need a separate desktop tool.
 
-| Area | What you can do |
+| Tab | What you can do |
 | --- | --- |
-| Topics | Create, delete, and describe topics; set partitions and replication factor; view per-partition offsets and message counts |
-| Consumer groups | List groups and inspect per-partition lag, offsets, and members to see how far behind your consumers are |
-| Messages | Peek messages from the earliest or latest offset on a chosen partition, with key, value, and timestamp, like a built-in viewer |
-| Topology | A live flow diagram of brokers, topics, consumer groups, and connectors, with lag and connector state |
+| Topics | Create and delete topics, with partitions and replication factor |
+| Connectors | Create, list, and monitor connectors: status, tasks, messages per second, and messages behind |
+| Groups | List consumer groups and inspect per-partition offset, log end, lag, and members |
+| Messages | Browse messages on a topic, and produce a test message with an optional key |
+
+A resource overview shows brokers, topics, connectors, and consumer groups together. **Settings → Access** shows the bootstrap addresses (plain and in-cluster TLS) and an environment snippet you can paste into a service's variables.
 
 ## Metrics and monitoring
 
-Broker and connector metrics are exported from JMX to Prometheus automatically. You get broker health, per-topic message and partition counts, and per-partition consumer lag, plus connector throughput and error rates for both source and sink tasks. Lag and failed connector tasks surface directly on the topology view so problems are easy to spot.
+Each cluster runs a Kafka exporter that reports topic, partition, offset, and consumer-lag metrics. The Kafka Connect runtime exports connector metrics. They show on the service's **Metrics** tab and in the console.
 
 ## Security
 
-Traffic inside your project uses the private network. A TLS listener is available on port `9093`, and the Strimzi user operator manages SCRAM credentials for authenticated clients. You can also drive topics and messages from the chat assistant, which talks to your cluster over an authenticated connection.
+Kafka is reachable only on the environment's private network. The plaintext listener on `9092` has no authentication, so anything in the environment can connect to it. A TLS listener is on port `9093`. In the chat assistant, Kafka admin tools (topics, groups, consume, produce) appear with the `kafka__` prefix, and the `manage_kafka_connectors` MCP tool creates and monitors connectors.
 
 ## Backups and retention
 
-Kafka retains messages on disk per each topic's retention settings, so consumers can replay history within that window. The persistent volumes backing the brokers follow the standard platform backup policy. For schedules and restores, see [Backups & recovery](/databases/backups/).
+Kafka retains messages on disk per each topic's retention settings, so consumers can replay history within that window. Backups are off until you turn them on for the environment. When they are on, recovery points include the broker volumes. See [Backups & recovery](/databases/backups/).
 
 :::note[Under the hood]
-StackBlaze runs Kafka via the **Strimzi operator** in KRaft mode (no ZooKeeper), with each broker acting as a combined controller and broker. Brokers run as a StatefulSet with a persistent volume each, and HA spreads them across nodes. Kafka Connect runs from a pre-baked image that already contains the Debezium, JDBC, S3, MongoDB, and ClickHouse connector plugins, so connectors start without any plugin installation.
+StackBlaze runs Kafka via the **Strimzi operator** in KRaft mode (no ZooKeeper), with each broker acting as a combined controller and broker. Each broker has its own persistent volume. Kafka Connect runs from a pre-baked image that already contains the Debezium, JDBC, S3, MongoDB, and ClickHouse connector plugins, so connectors start without any plugin installation.
 :::
