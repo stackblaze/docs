@@ -1,0 +1,35 @@
+---
+title: stackblaze db
+description: "Show the engine and current CPU, memory and storage of a database add-on."
+---
+
+Read-only view of an environment's database add-ons (PostgreSQL, MariaDB, Valkey and others). Alias: `database`.
+
+## Usage
+
+```text
+stackblaze db info <instance>
+```
+
+| Subcommand | Description |
+| --- | --- |
+| `info <instance>` | Engine and current CPU, memory and storage of a database add-on |
+
+`<instance>` is the add-on's instance name, for example `web-postgresql`. No app is needed: the add-on is looked up in the project environment.
+
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+- An add-on that is not provisioned yet shows the sizes from its declaration.
+- An in-memory Valkey with no volume shows its storage as none: its data is lost on restart and is not backed up.
+- The CLI cannot resize a database or turn on high availability. An instance that already runs highly available shows `HA: enabled`.
+
+With `--json` it prints the server's document.
+
+## Examples
+
+```bash
+stackblaze db info web-postgresql
+stackblaze db info web-valkey -p shop -e staging --json
+```
+
+To open a database shell, use [`stackblaze connect`](/cli/connect/). To manage add-ons on an app, use [`stackblaze addons`](/cli/addons/).

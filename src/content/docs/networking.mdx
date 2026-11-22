@@ -1,6 +1,6 @@
 ---
 title: Networking
-description: Public domains, TLS, private DNS between services, WebSockets, and redirects.
+description: Public domains, TLS, private networking between services, WebSockets, redirects, and the WAF.
 ---
 
 import { LinkCard, CardGrid } from '@astrojs/starlight/components';
@@ -11,8 +11,9 @@ Services talk to the internet over **public networking**, and to each other over
 
 <CardGrid>
   <LinkCard title="Public networking" href="/networking/custom-domains/" description="Platform domains, custom hostnames, and automatic TLS." />
-  <LinkCard title="SSL / TLS" href="/networking/ssl/" description="Certificates, HTTPS redirects, and cipher defaults." />
-  <LinkCard title="Private networking" href="/networking/private-networking/" description="Service-name DNS inside an environment." />
-  <LinkCard title="WebSockets" href="/networking/websockets/" description="Long-lived connections without extra platform config." />
-  <LinkCard title="Redirects" href="/networking/redirects/" description="HTTP redirects at the edge." />
+  <LinkCard title="SSL / TLS" href="/networking/ssl/" description="Automatic HTTPS and Let's Encrypt certificates for custom domains." />
+  <LinkCard title="Private networking" href="/networking/private-networking/" description="Internal hostnames and variable references inside an environment." />
+  <LinkCard title="WebSockets" href="/networking/websockets/" description="Long-lived connections without extra platform config; send heartbeats." />
+  <LinkCard title="Redirects" href="/networking/redirects/" description="Redirects in your app or web server." />
+  <LinkCard title="WAF (App Shield)" href="/networking/waf/" description="Per-service web application firewall." />
 </CardGrid>

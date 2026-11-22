@@ -3,26 +3,26 @@ title: Rails
 description: Deploy Rails on StackBlaze from GitHub or a Dockerfile.
 ---
 
-Add a service from your Rails repo. Nixpacks detects **ruby** from `Gemfile`. A `Dockerfile` in the service root always wins.
+Add a service from your Rails repo. Railpack detects **ruby** from `Gemfile`. If the service root has a `Dockerfile`, StackBlaze builds from it instead.
 
-Puma must bind `PORT`. Set `RAILS_MASTER_KEY`. Attach Postgres from **+ Service → Databases**.
+Puma must bind `PORT`. Set `RAILS_MASTER_KEY`. With no start command, Railpack runs `bin/rails server` on `PORT`. Put `bin/rails db:migrate` in **Pre-deploy**; Railpack does not run it.
 
 ## Deploy from GitHub
 
-1. [Dashboard](https://dashboard.stackblaze.cloud) → **New project** (or open an existing canvas).
-2. **+ Service → Git repository**. Pick the repo and branch.
-3. Review [staged changes](/deploy/staged-changes/) and **Deploy**.
-4. Generate a `*.stackblaze.app` domain, or attach a [custom domain](/networking/custom-domains/).
+1. [Dashboard](https://dashboard.stackblaze.cloud) → **New Project** (or open an existing canvas).
+2. **+ Service → GitHub repository**. Pick the repo and branch.
+3. Click **Commit 1 change**, review the [staged changes](/deploy/staged-changes/), and **Deploy**.
+4. A service exposed to the internet gets a `*.stackblaze.app` URL. Attach a [custom domain](/networking/custom-domains/) if you want your own.
 
-Override install / build / start on the service if detection is wrong. Typical start: `bundle exec puma -C config/puma.rb`.
+StackBlaze sets `PORT` to the service port and pre-fills `3000` for Rails repos. If detection is wrong, change **Build method**, **Build command**, or **Start command** on the service. Typical start: `bundle exec puma -C config/puma.rb`.
 
 ## Docker
 
-If you already have a Dockerfile, StackBlaze uses it. The process must listen on `PORT`.
+If you already have a `Dockerfile`, StackBlaze uses it. The process must listen on `PORT`.
 
 ## Data
 
-**+ Service → Databases** for Postgres, Redis/Valkey, MySQL, and others. Wire `DATABASE_URL` from the service **Variables** tab or `fromDatabase` in [stackblaze.yaml](/blueprint/).
+**+ Service → Database or cache** for PostgreSQL, MariaDB, Valkey, and more. Wire `DATABASE_URL` from the service **Variables** tab or `fromDatabase` in [stackblaze.yaml](/blueprint/).
 
 ## CLI
 

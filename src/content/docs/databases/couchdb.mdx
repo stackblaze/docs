@@ -1,39 +1,37 @@
 ---
 title: CouchDB
-description: "Managed Apache CouchDB on StackBlaze: a document database with an HTTP/JSON API and multi-master replication, in single-node or clustered high-availability deployments."
+description: "Managed Apache CouchDB on StackBlaze: a document database with an HTTP/JSON API and multi-master replication, with opt-in backups and private networking."
 ---
 
-Managed Apache CouchDB: a document database with an HTTP/JSON API and multi-master replication, in single-node or clustered high-availability deployments.
+Managed Apache CouchDB: a document database with an HTTP/JSON API and multi-master replication. Versions 3.2.1 (default), 3.3, and 3.4.2 are offered.
 
-## Creating a CouchDB instance
+## Creating a CouchDB database
 
-From the StackBlaze dashboard, click **New service**, then **Database**, then **CouchDB**. Pick a plan and storage size, and StackBlaze provisions the instance for you.
+From **+ Service → Databases**, add **CouchDB**. It appears on the canvas as a staged change. Apply your staged changes and StackBlaze creates it with the catalog defaults.
 
-Connecting a CouchDB instance to a service injects the `COUCHDB_URL` environment variable into that service. Your application reads the URL from this variable, so there is nothing to hardcode.
+To connect a service, open the database, go to **Settings → Connection**, and switch the service on.
+
+A connected service gets `COUCHDB_HOST`, `COUCHDB_PORT` (`5984`), `COUCHDB_USER` (`admin`), and `COUCHDB_PASSWORD` (from a secret). `COUCHDB_URL` with the credentials is set only when the password is part of the database's definition.
 
 CouchDB is a document database with an HTTP/JSON API and multi-master replication. That sync model makes it a good fit for offline-first apps, where a client database (for example PouchDB) replicates with the server and resolves changes when connectivity returns.
 
 ## Connecting
 
-CouchDB exposes an HTTP/JSON REST API on port `5984`. Services in the same project reach the database over the cluster's private network using its internal endpoint. The internal address takes the form below:
+CouchDB exposes an HTTP/JSON REST API on port `5984`. Services in the same environment reach it over the private network:
 
 ```text title="Endpoint (internal)"
 http://user:password@[service-name]:5984
 ```
 
-Any HTTP client works: `curl`, a language HTTP library, or a CouchDB driver. The value of `COUCHDB_URL` already includes the credentials, so you can use it directly.
+Any HTTP client works: `curl`, a language HTTP library, or a CouchDB driver. Without `COUCHDB_URL`, compose it in the service's variables:
 
-## Standard vs high availability
+```text title="Variable"
+COUCHDB_URL=http://$(COUCHDB_USER):$(COUCHDB_PASSWORD)@$(COUCHDB_HOST):$(COUCHDB_PORT)
+```
 
-You choose between Standard and high availability when creating the instance. Standard runs a single node, which is a great fit for development and lower-stakes workloads. High availability runs a clustered deployment of multiple nodes with quorum reads and writes, so documents are replicated across nodes and the database stays available during a node loss.
+## Topology
 
-| | Standard | High availability |
-| --- | --- | --- |
-| Topology | Single node | Clustered, multiple nodes |
-| Replication | None (one copy) | Documents replicated across nodes |
-| Reads and writes | Single node | Quorum reads and writes |
-| Survives a node loss | No | Yes, the database stays available |
-| Best for | Development and testing | Production and resilient workloads |
+CouchDB has no **Enable HA** switch in the dashboard. The node count is set when the database is created.
 
 ## Working with documents
 
@@ -54,8 +52,4 @@ curl "$COUCHDB_URL/app/user:1"
 
 ## Backups
 
-StackBlaze takes automated, encrypted backups that follow the platform backup policy applied to all managed databases. For details on schedules, restores, and how the policy works, see [Backups & recovery](/databases/backups/).
-
-:::note[Under the hood]
-Apache CouchDB is a document database with an HTTP API and multi-master replication. StackBlaze runs it via a Kubernetes operator with persistent volumes, and in high availability mode it clusters multiple nodes with quorum so the database tolerates the loss of a node.
-:::
+Backups are off until you turn on a schedule for the environment. Recovery points hold a copy of the database's volumes. A restore always creates a new database next to the running one. See [Backups & recovery](/databases/backups/).

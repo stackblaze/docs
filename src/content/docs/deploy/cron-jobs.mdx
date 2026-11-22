@@ -1,19 +1,33 @@
 ---
 title: Cron Jobs
-description: Schedule recurring tasks with standard cron syntax. Each run is a fresh, isolated container.
+description: Schedule recurring tasks on a service with standard cron syntax. Each run is a fresh, isolated container.
 ---
 
 import Diagram from '../../../components/Diagram.astro';
 
-A **cron service** is a canvas tile with a schedule. At the scheduled time StackBlaze starts the container, runs the start command, and exits. Same Git/Docker source and [variables](/security/env-vars/) as an always-on service — it just does not stay running.
+A **scheduled task** runs a command on a cron schedule. At each tick StackBlaze starts a fresh container, runs the command, and lets it exit. It uses the service's own built image and [variables](/security/env-vars/), unless you give the task its own image.
 
-<Diagram file="cron-lifecycle.svg" alt="A cron schedule tick starts a fresh container, runs the start command, and exits. Overlapping runs follow Forbid (default skip), Replace (cancel previous), or Allow (run both)." />
+<Diagram file="cron-lifecycle.svg" alt="A cron schedule tick starts a fresh container, runs the command, and exits. If the previous run is still active, the new run is skipped." />
 
-Add one from **+ Service** (Git or Docker), then set the schedule on the service.
+## Add a scheduled task
 
-## How cron jobs work
+Scheduled tasks live on a service:
 
-Each run is isolated. Nothing is shared between runs except what you persist to a database or object storage. The process should exit 0.
+1. Open the service and go to the **Add-ons** tab, or pick **Add-on → Scheduled tasks** from **+ Service**.
+2. Click **Add scheduled task** and fill in:
+   - **Name** — for example `nightly-cleanup`.
+   - **Schedule** — a five-field cron expression (minute hour day month weekday).
+   - **Image** — optional; leave empty to run the service's own image.
+   - **Command** — for example `/bin/sh -c 'node report.js'`.
+3. Save, then **Commit N changes** → **Deploy** to apply.
+
+Turn on **Schedule-only app** when the service should have no always-on web or worker pods, only the scheduled runs. This is what a cron job is on StackBlaze: a service from a Git repo or Docker image whose only work is its scheduled tasks.
+
+In [`stackblaze.yaml`](/blueprint/), use `type: cron` with `schedule` and `startCommand`.
+
+## How runs work
+
+Each run is isolated. Nothing is shared between runs except what you persist to a database or object storage. The process should exit 0; a non-zero exit marks the run as failed.
 
 ## Schedule syntax
 
@@ -44,43 +58,15 @@ StackBlaze uses standard five-field cron expression syntax:
 
 ## Timezone
 
-By default, schedules run in **UTC**. You can specify any IANA timezone name in Service Settings → Schedule → Timezone.
+Schedules run in **UTC**. There is no per-task timezone setting; convert your local time to UTC.
 
-| Timezone | IANA name |
-| --- | --- |
-| UTC (default) | `UTC` |
-| US Eastern | `America/New_York` |
-| US Pacific | `America/Los_Angeles` |
-| London | `Europe/London` |
-| Berlin | `Europe/Berlin` |
-| Tokyo | `Asia/Tokyo` |
-| Sydney | `Australia/Sydney` |
+## Overlapping runs
 
-:::caution
-Daylight saving time transitions can cause schedule drift when using non-UTC timezones. If your job must run at a precise interval, use UTC.
-:::
+If a previous run is still active when the next tick arrives, the new run is **skipped**. Runs of one task never overlap.
 
-## Concurrency policy
+## Run now
 
-If a previous run is still executing when the next scheduled time arrives, StackBlaze applies the concurrency policy:
-
-| Policy | Behaviour |
-| --- | --- |
-| `Forbid` | Skip the new run if the previous run is still active. Default. |
-| `Replace` | Cancel the previous run and start a new one. |
-| `Allow` | Let both runs execute simultaneously. |
-
-`Forbid` is the safest default — it prevents duplicate processing if a job takes longer than expected. Use `Replace` if your job is idempotent and a fresh start is preferable to an old one still running. Use `Allow` only if your job is designed for parallel execution.
-
-## Timeout
-
-Set a maximum runtime per execution in Service Settings → Schedule → Timeout. If a run exceeds this duration, StackBlaze terminates the run and marks it as failed. Default is 1 hour, maximum is 24 hours.
-
-## One-off runs
-
-Trigger an immediate run from the dashboard (Service → Runs → Run Now). One-off runs are useful for testing a new cron job before its first scheduled execution, or for manually triggering a report on demand.
-
-Watch logs from the dashboard or via `GET /api/logs/{pipeline}/{phase}/{app}/`.
+On the scheduled tasks' **Runs** list, click **Trigger Run** to start one run right away, for example to test a new task. Manual runs are marked `manual`. The API is `POST /api/apps/{pipeline}/{phase}/{app}/cronjobs/{name}/trigger`.
 
 ## Examples
 
@@ -178,7 +164,7 @@ await redis.quit()
 
 ## Viewing run history
 
-Every cron run is logged in the dashboard under Service → Runs. You can see the start time, duration, exit code, and full log output for each run. StackBlaze retains run history for 30 days.
+The **Runs** list shows scheduled, manual, and after-deploy runs with their state and start time. Click a run to open its logs. A schedule-only service shows its runs on the **Runs** tab (in place of **Deployment**).
 
 ## Related
 

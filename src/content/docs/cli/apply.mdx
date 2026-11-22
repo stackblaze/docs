@@ -1,27 +1,30 @@
 ---
 title: stackblaze apply
-description: "Create or update pipelines and apps from manifest files."
+description: "Create or update projects and apps from manifest files."
 ---
 
-Creates or updates every pipeline and app declared in the manifests (pipelines first). It never deletes; use [`destroy`](/cli/destroy/) for that.
+Creates or updates every project and app declared in the manifests (projects first). It never deletes apps; use [`destroy`](/cli/destroy/) for that.
 
 ## Usage
 
 ```text
-stackblaze apply <path> [--continue-on-error] [-o text|json]
+stackblaze apply <path> [--continue-on-error] [--confirm-phase-delete] [-o text|json]
 ```
 
 | Flag | Description |
 | --- | --- |
 | `--continue-on-error` | Keep going after a resource fails (default: stop at the first failure) |
+| `--confirm-phase-delete` | Delete environments removed from (or disabled in) a project manifest even when they still have apps, pods or volumes |
 
 Also accepts `--token`, `--api-url`, `-o, --output` and `--json` (see [common flags](/cli/#scope-and-common-flags)).
 
-The manifest format is the one [`stackblaze export`](/cli/export/) writes: YAML documents of `kind: KuberoPipeline` or `kind: KuberoApp`. App documents need `metadata.pipeline` and `metadata.phase`. A path can be a file or a directory (all `.yaml` / `.yml` files, recursively). This is separate from the `stackblaze.yaml` [config as code](/blueprint/) file.
+The manifest format is the one [`stackblaze export`](/cli/export/) writes: YAML documents with `apiVersion: stackblaze.com/v1` and `kind: StackBlazeProject` or `kind: StackBlazeApp`. Manifests from older CLIs (`KuberoPipeline`, `KuberoApp`) are still read. App documents need `metadata.pipeline` (the project) and `metadata.phase` (the environment). A path can be a file or a directory (all `.yaml` / `.yml` files, recursively). This is separate from the `stackblaze.yaml` [config as code](/blueprint/) file.
 
-Infrastructure as Code must be enabled; check with [`stackblaze status`](/cli/status/).
+Infrastructure as Code must be on for the project; check with [`stackblaze status`](/cli/status/) and turn it on with [`stackblaze projects iac on`](/cli/projects/). Your platform admin may turn `apply` off. An `iacEnabled` field in a project manifest is ignored.
 
-Exits `1` if any resource failed. The JSON result lists each resource with `action`: `created`, `updated` or `failed`.
+Removing or disabling an environment in a project manifest deletes that environment on a dedicated cluster, with everything in it. While it still has apps, pods or volumes, `apply` refuses (exit `3`) and lists them; re-run with `--confirm-phase-delete` to go ahead. Moving an environment to another cluster is refused until its old one is empty.
+
+Exits `1` if any resource failed. The JSON result has `created`, `updated` and `failed` counts and lists each resource under `resources` with `action`: `created`, `updated` or `failed`.
 
 ```bash
 stackblaze plan ./stackblaze && stackblaze apply ./stackblaze

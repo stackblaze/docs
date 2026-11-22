@@ -13,20 +13,20 @@ The StackBlaze REST API is the same NestJS control plane the dashboard uses. Pat
 
 ## Vocabulary
 
-Marketing copy says project and environment. The API and dashboard use the Kubero names:
+The dashboard and these docs say project, environment, and service. API paths use the older names:
 
 | Docs | API path | Meaning |
 | --- | --- | --- |
-| Organization | `activeTenantId` on the token | Prisma tenant the token is scoped to |
+| Organization | `activeTenantId` on the token | The organization (tenant) the token is scoped to |
 | Project | `pipeline` | Canvas of services in a region |
 | Environment | `phase` | production, review, or a custom environment |
 | Service | `app` | A Git/Docker/cron workload on the canvas |
 | Database | `addon` kind | Managed Postgres, Valkey, MariaDB, Kafka, … |
-| Function | `function` | Knative function, not an app |
+| Function | `app` | A TypeScript function on Bun; an app with a function runtime |
 
 ## Authentication
 
-Create a personal access token in the dashboard under **Settings → API tokens**. The raw value is shown once and starts with `sb_pat_`. Tokens created before the `sb_pat_` prefix (`kbr_pat_…`) keep working. The token inherits the creator's organization (`activeTenantId`) and RBAC. Send it as a Bearer token on every request.
+Create a personal access token in the dashboard under **Personal settings → API tokens**. The raw value is shown once and starts with `sb_pat_`. Tokens created before the `sb_pat_` prefix (`kbr_pat_…`) keep working. The token inherits the creator's organization (`activeTenantId`) and RBAC. Send it as a Bearer token on every request.
 
 ```bash title="Authentication header"
 # Include Authorization header on all requests
@@ -45,10 +45,10 @@ This is the public automation surface. Addon browsers, WAF, Coroot handoff, bill
 | Method | Endpoint | Description |
 | --- | --- | --- |
 | GET | `/api/pipelines` | List projects in the active organization |
-| POST | `/api/pipelines/new` | Create a project (pipeline name is in the body) |
+| POST | `/api/pipelines/{pipeline}` | Create a project |
 | GET | `/api/pipelines/{pipeline}` | Get a project and its phases |
 | PUT | `/api/pipelines/{pipeline}` | Update a project |
-| DELETE | `/api/pipelines/{pipeline}` | Delete a project |
+| DELETE | `/api/pipelines/{pipeline}` | Delete a project and everything in it |
 | GET | `/api/pipelines/{pipeline}/apps` | List apps in every phase of a project |
 | POST | `/api/pipelines/{pipeline}/apply` | Declarative project upsert (IaC, when enabled) |
 | GET | `/api/apps/{pipeline}/{phase}/{app}` | Get an app spec and status |
@@ -57,18 +57,31 @@ This is the public automation surface. Addon browsers, WAF, Coroot handoff, bill
 | DELETE | `/api/apps/{pipeline}/{phase}/{app}` | Delete an app |
 | GET | `/api/apps/{pipeline}/{phase}/{app}/restart` | Restart / redeploy a running app |
 | GET | `/api/apps/{pipeline}/{phase}/{app}/status` | Cached runtime status (pods, add-ons) |
+| GET | `/api/apps/{pipeline}/{phase}/{app}/env` | List variables (values masked) |
+| PATCH | `/api/apps/{pipeline}/{phase}/{app}/env` | Set and unset variables in one release (`skipDeploy` stages instead) |
+| PATCH | `/api/apps/{pipeline}/{phase}/{app}/scale` | Set instances or autoscaling |
+| GET | `/api/apps/{pipeline}/{phase}/{app}/pending` | Changes staged with `skipDeploy` |
+| POST | `/api/apps/{pipeline}/{phase}/{app}/pending/apply` | Apply staged changes as one release |
+| POST | `/api/apps/{pipeline}/{phase}/{app}/pause` | Pause a service (scale to zero) |
+| POST | `/api/apps/{pipeline}/{phase}/{app}/resume` | Resume a paused service |
 | POST | `/api/deployments/build/{pipeline}/{phase}/{app}` | Trigger a new build |
 | GET | `/api/deployments/{pipeline}/{phase}/{app}` | List builds for an app |
-| POST | `/api/deployments/rollback/{pipeline}/{phase}/{app}/{revisionId}` | Roll back to a previous revision |
-| GET | `/api/logs/{pipeline}/{phase}/{app}/` | Stream live logs |
+| POST | `/api/deployments/{pipeline}/{phase}/{app}/cancel` | Cancel a running deployment |
+| GET | `/api/deployments/rollback/{pipeline}/{phase}/{app}/{revisionId}` | Preview a config rollback |
+| POST | `/api/deployments/rollback/{pipeline}/{phase}/{app}/{revisionId}` | Roll back config to a previous revision |
+| POST | `/api/deployments/rollback-deploy/{pipeline}/{phase}/{app}/{deploymentId}` | Roll back to a previous deployment |
+| GET | `/api/logs/{pipeline}/{phase}/{app}` | Stream live logs |
 | GET | `/api/logs/{pipeline}/{phase}/{app}/{container}/history` | Recent log history for a container |
 | GET | `/api/addons` | List add-on kinds available to the organization |
 | GET | `/api/templates/catalog` | Public template catalog (no auth) |
 | GET | `/api/iac/blueprint/schema` | Public JSON Schema for stackblaze.yaml |
+| GET | `/api/iac/blueprint/export` | Export an environment as stackblaze.yaml |
+| POST | `/api/iac/blueprint/validate` | Parse and compile a stackblaze.yaml (no live reads) |
 | POST | `/api/iac/blueprint/plan` | Diff a stackblaze.yaml against live state |
 | POST | `/api/iac/blueprint/apply` | Apply a stackblaze.yaml (never deletes) |
 | GET | `/api/tokens/my` | List API tokens for the current user |
 | POST | `/api/tokens/my` | Create an API token (returns `sb_pat_…` once) |
+| DELETE | `/api/tokens/my/{id}` | Revoke one of your API tokens |
 
 ## Example: list projects
 
@@ -105,7 +118,7 @@ curl https://api.stackblaze.cloud/api/apps/acme-app/production/api/restart \
     -H "Authorization: Bearer $STACKBLAZE_TOKEN"
 ```
 
-To queue a new image build instead, `POST /api/deployments/build/acme-app/production/api`. Declarative updates that create or change an app use `/apply` and require Infrastructure as Code to be enabled on the project.
+To queue a new image build instead, `POST /api/deployments/build/acme-app/production/api`. Declarative updates that create or change an app use `/apply` and require Infrastructure as Code to be on for the project.
 
 ## Error responses
 
@@ -123,10 +136,11 @@ Failed requests return the NestJS HTTP exception body:
 | --- | --- |
 | 400 | Bad Request — invalid body or reserved name (e.g. pipeline named new) |
 | 401 | Unauthorized — missing or invalid token |
-| 403 | Forbidden — token lacks permission, or resource is outside the organization |
+| 402 | Plan limit reached — the body has a `code` such as `PROJECT_LIMIT_REACHED` or `APP_LIMIT_REACHED` |
+| 403 | Forbidden — token lacks permission, the resource is outside the organization, or IaC is off for the project (`IAC_DISABLED`) |
 | 404 | Not Found |
 | 409 | Conflict — resource version or state mismatch |
-| 413 | Payload too large — app specs with several add-ons can be large |
+| 413 | Payload too large |
 | 500 | Internal Server Error |
 | 503 | Transient downstream failure — safe to retry |
 

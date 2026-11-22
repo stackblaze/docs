@@ -1,18 +1,20 @@
 ---
 title: Databases
-description: "Every managed database on StackBlaze runs as a Standard single instance or a high-availability replicated deployment. Browse the full catalog: PostgreSQL, MySQL, Redis, MongoDB, CockroachDB, ClickHouse, OpenSearch, Milvus, Cassandra, ScyllaDB, CouchDB, Memcached."
+description: "Managed databases on the project canvas: PostgreSQL, MariaDB, MySQL, Valkey, Redis, MongoDB, FerretDB, DocumentDB, CockroachDB, ClickHouse, OpenSearch, Milvus, Cassandra, ScyllaDB, CouchDB, and Memcached. Each starts as one instance; some engines can switch to high availability."
 ---
 
 import { LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Diagram from '../../components/Diagram.astro';
 
-Add a database from **+ Service → Databases**. It lands on the canvas, joins the environment private network, and can inject connection strings through [variables](/security/env-vars/).
+Add a database from **+ Service → Databases**. It lands on the canvas as a staged change. Apply your staged changes and StackBlaze creates it with the catalog defaults. It joins the environment's private network.
 
-Every managed database can run as a single Standard instance or as a replicated, high-availability deployment. Pick the topology when you create it.
+To give a service the connection details, open the database, go to **Settings → Connection**, and switch on the services that should use it. Each connected service gets the database's connection [variables](/security/env-vars/). If a service connects to two databases of the same type, the second one's variables get a prefix (`<NAME>_`) so they do not clash.
+
+Memcached, Kafka, RabbitMQ, ProxySQL, and object storage are under **+ Service → Add-ons** instead.
 
 ## Standard vs high availability
 
-You choose Standard or HA when you create the instance (you can raise replica count later).
+Every database starts as a single instance, except CockroachDB, which always runs at least three nodes. For some engines you can switch to high availability later.
 
 <Diagram file="standard-vs-ha.svg" alt="Standard deployment is a single database pod with one volume. High-availability deployment is a primary plus replicas spread across nodes, fronted by a service, with streaming replication and automatic failover." />
 
@@ -20,82 +22,94 @@ You choose Standard or HA when you create the instance (you can raise replica co
 
 ### Standard
 
-A single instance with its own disk. Simplest and cheapest. Fine for development, internal tools, and workloads that can take a short restart. If the instance moves, the database is briefly unavailable until it comes back.
+A single instance with its own disk. Simplest and cheapest. Fine for development, internal tools, and workloads that can take a short restart.
 
 ### High availability (HA)
 
-A primary plus replicas on different nodes. Writes go to the primary and stream to replicas. If the primary fails, a replica is promoted. You can also read from replicas. Use this for production.
+Open the database and go to **Settings → HA**, then click **Enable HA**. HA is available on plans that include database high availability (Pro and Business). It is one-way: you cannot turn it off in place. To go back to one instance, restore a backup into a new database.
 
-| | Standard | High availability |
-| --- | --- | --- |
-| Instances | Single | Primary + 1 or more replicas |
-| Node spread | One node | Replicas on separate nodes |
-| Failover | None (restart) | Automatic primary promotion |
-| Read scaling | Primary only | Reads can fan out to replicas |
-| Best for | Dev, internal, non-critical | Production, uptime SLAs |
+| Engine | What Enable HA does |
+| --- | --- |
+| PostgreSQL | Grows the cluster to 3 instances with streaming replication |
+| MariaDB | Creates a new 3-node Galera cluster from a backup, moves your services to it, and keeps the old instance for rollback |
+| Valkey | Adds a replica (master / replica) |
+| FerretDB | Grows its PostgreSQL backend to 3 instances |
+| OpenSearch | Grows the cluster to 3 nodes |
+| RabbitMQ | Grows the cluster to 3 nodes |
+| Kafka | Grows the cluster to 3 brokers |
+| ClickHouse | Not available in place. HA (2 replicas plus ClickHouse Keeper) is chosen when the database is created |
 
-:::tip[Choosing a topology]
-Start Standard for development and switch to HA before you carry production traffic. For most engines you raise the replica or node count and StackBlaze performs a rolling change with no data loss.
-:::
+Other engines have no HA switch.
 
 ## Available databases
 
-Each database is a managed service on your canvas: backups, private networking, and connection strings without extra config. The table lists engines and topologies.
-
 ### Relational (SQL)
 
-| Database | Engine | Topologies |
+| Database | Engine | Notes |
 | --- | --- | --- |
-| [PostgreSQL](/databases/postgresql/) | CloudNativePG | Standard + HA |
-| [MySQL](/databases/mysql/) | MariaDB (MySQL-compatible) | Standard + HA |
-| [CockroachDB](/databases/cockroachdb/) | Distributed SQL | Standard + HA |
+| [PostgreSQL](/databases/postgresql/) | CloudNativePG | PostgreSQL 17 by default. TimescaleDB is offered as its own catalog entry. HA |
+| [MySQL](/databases/mysql/) | MariaDB, or the official MySQL image | MariaDB 11.4 by default, HA. MySQL runs as one instance |
+| [CockroachDB](/databases/cockroachdb/) | CockroachDB operator | Distributed SQL, 3 nodes |
 
 ### Key-value & cache
 
-| Database | Engine | Topologies |
+| Database | Engine | Notes |
 | --- | --- | --- |
-| [Redis](/databases/redis/) | Valkey (Redis-compatible) | Standard + HA |
-| [Memcached](/databases/memcached/) | Memcached | Standard only |
+| [Redis](/databases/redis/) | Valkey, or the official Redis image | Valkey 8.0 by default, HA. Redis runs as one instance |
+| [Memcached](/databases/memcached/) | Memcached | Under Add-ons. No persistence |
 
 ### Document
 
-| Database | Engine | Topologies |
+| Database | Engine | Notes |
 | --- | --- | --- |
-| [MongoDB](/databases/mongodb/) | DocumentDB (MongoDB-compatible) | Standard + HA |
-| [CouchDB](/databases/couchdb/) | Apache CouchDB | Standard + HA |
+| [MongoDB](/databases/mongodb/) | Official MongoDB image, FerretDB, or DocumentDB | MongoDB runs as one instance. FerretDB has HA |
+| [CouchDB](/databases/couchdb/) | Apache CouchDB | HTTP/JSON API |
 
 ### Search & vector
 
-| Database | Engine | Topologies |
+| Database | Engine | Notes |
 | --- | --- | --- |
-| [OpenSearch](/databases/opensearch/) | OpenSearch | Standard + HA |
-| [Milvus](/databases/milvus/) | Milvus (vector DB) | Standard + HA |
+| [OpenSearch](/databases/opensearch/) | OpenSearch operator | OpenSearch 3.9. HA |
+| [Milvus](/databases/milvus/) | Milvus operator | Vector database |
 
 ### Analytics
 
-| Database | Engine | Topologies |
+| Database | Engine | Notes |
 | --- | --- | --- |
-| [ClickHouse](/databases/clickhouse/) | ClickHouse | Standard + HA |
+| [ClickHouse](/databases/clickhouse/) | Altinity operator | Columnar OLAP |
 
 ### Wide-column
 
-| Database | Engine | Topologies |
+| Database | Engine | Notes |
 | --- | --- | --- |
-| [Cassandra](/databases/cassandra/) | Apache Cassandra | Standard + HA |
-| [ScyllaDB](/databases/scylladb/) | ScyllaDB (Cassandra-compatible) | Standard + HA |
+| [Cassandra](/databases/cassandra/) | Apache Cassandra | CQL on port 9042 |
+| [ScyllaDB](/databases/scylladb/) | ScyllaDB | Cassandra-compatible |
 
-:::note[One engine, the names you know]
-Some databases are served by a compatible engine so we can ship them under a permissive license without changing your client code. MongoDB is provided by `DocumentDB` (MongoDB wire protocol), Redis by `Valkey`, and MySQL by `MariaDB`. Your existing drivers, connection strings, and tools work unchanged.
+:::note[Not every engine on every platform]
+A platform admin can turn individual engines on or off, and some engines need a higher plan. The official MySQL and Redis images, OpenSearch, and ClickHouse are off until an admin turns them on. If an engine is not available on your plan, the catalog shows it with **Upgrade** instead of an add button.
 :::
 
-See [Backups & recovery](/databases/backups/) for snapshot behavior across every database, plus point-in-time recovery for PostgreSQL.
+:::note[Compatible engines]
+Some names in the catalog are served by a compatible engine. **Valkey** speaks the Redis protocol. **MariaDB** speaks the MySQL protocol. **FerretDB** and **DocumentDB** speak the MongoDB wire protocol on top of PostgreSQL. Your existing drivers work. Where the official image is offered too (MySQL, Redis, MongoDB), it is its own catalog entry.
+:::
 
-Looking for messaging? [Kafka](/messaging/kafka/) and [RabbitMQ](/messaging/rabbitmq/) are documented under Messaging.
+## Plan limits
+
+PostgreSQL, MariaDB, Valkey, and the official MySQL, Redis, and MongoDB images show what your plan gives them under **Settings → Plan limits**: connections, backup retention, and for Valkey memory. PostgreSQL, MariaDB, and Redis databases count toward your plan's included databases.
+
+## Working with a database
+
+- **Settings → Access** (PostgreSQL, MariaDB, MySQL, MongoDB, FerretDB, DocumentDB, Valkey, Redis, ClickHouse) shows the in-cluster host, user, password, connection URL, and an environment snippet. For PostgreSQL, MySQL/MariaDB, Redis, and MongoDB you can also turn on **Public access** for the IP addresses you allow.
+- **Logs** and **Metrics** tabs work like a service's.
+- The CLI connects through a private tunnel: `stackblaze connect postgres`, `stackblaze connect mysql`, or `stackblaze connect redis`. `stackblaze addons info <addon> --reveal` prints the connection details.
+- [Backups & recovery](/databases/backups/) covers recovery points for the whole environment. [Point-in-time recovery](/databases/pitr/) is available for PostgreSQL.
+
+Looking for messaging? [Kafka](/messaging/kafka/) and [RabbitMQ](/messaging/rabbitmq/) are documented under Messaging. Files and media go in [object storage](/storage/object-storage/).
 
 <CardGrid>
-	<LinkCard title="PostgreSQL" href="/databases/postgresql/" description="Managed Postgres with backups, PITR, and private networking." />
-	<LinkCard title="MySQL" href="/databases/mysql/" description="MariaDB-compatible MySQL with automated backups." />
-	<LinkCard title="Redis" href="/databases/redis/" description="Valkey-compatible Redis for cache, sessions, and queues." />
-	<LinkCard title="MongoDB" href="/databases/mongodb/" description="DocumentDB-compatible MongoDB with replica sets." />
-	<LinkCard title="Backups" href="/databases/backups/" description="Daily snapshots and PostgreSQL point-in-time recovery." />
+	<LinkCard title="PostgreSQL" href="/databases/postgresql/" description="CloudNativePG Postgres with HA, extensions, and point-in-time recovery." />
+	<LinkCard title="MySQL" href="/databases/mysql/" description="MariaDB with Galera HA, or the official MySQL image." />
+	<LinkCard title="Redis" href="/databases/redis/" description="Valkey, or the official Redis image, for cache, sessions, and queues." />
+	<LinkCard title="MongoDB" href="/databases/mongodb/" description="Official MongoDB, FerretDB, or DocumentDB." />
+	<LinkCard title="Backups" href="/databases/backups/" description="Recovery points for the environment, restored as new databases." />
 </CardGrid>

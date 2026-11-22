@@ -1,76 +1,92 @@
 ---
 title: Auto Deploy on Push
-description: Configure GitHub-triggered automatic deployments on StackBlaze. Learn how the git push → build → rolling deploy pipeline works, how to skip deploys with [skip ci], and how to restrict trigger paths in a monorepo.
+description: How a push to GitHub builds and deploys a service on StackBlaze, how to skip a deploy, and how build filters limit which pushes rebuild a service.
 ---
 
 import Diagram from '../../../components/Diagram.astro';
 
-A Git-connected service [auto-deploys](/deploy/github/) on every push to its branch unless you skip the commit. Typical path from `git push` to live traffic is **60–180 seconds**, depending on build time.
+A Git-connected service [auto-deploys](/deploy/github/) on every push to its branch. You can turn this off per service, skip one commit, or limit which changed files trigger a build.
 
 <Diagram file="deploy-lifecycle.svg" alt="Deploy lifecycle from GitHub push through build and Kubernetes rollout to a live stackblaze.app URL" />
 
-You can skip a deploy by adding `[skip ci]` to your commit message. You can also restrict which file paths trigger a deploy, useful for monorepos where documentation changes shouldn't rebuild your API server.
-
 ## Deploy pipeline
 
-`git push` (commit) → Webhook (received) → Build (Docker image) → Registry (image pushed) → Rolling (deploy) → Live (healthy)
+`git push` → GitHub App webhook → Build (image) → Pre-deploy command (if set) → Rollout → Live
 
-## Build log
-
-```text title="Build #47, my-api, commit a3f9c12"
-00:00  Cloning github.com/acmecorp/my-api (branch: main)
-00:01  Checked out commit a3f9c12 — "feat: add rate limiting middleware"
-00:02  Detected Node.js 22 (package.json engines field)
-00:02  Installing dependencies with npm ci...
-00:18  Dependencies installed (638 packages in 16.4s)
-00:18  Building production image...
-00:39  Layer cache hit: base image (saved 14s)
-00:41  Image built: sha256:d4e8f1a2b3c9... (182 MB)
-00:42  Pushing to internal registry...
-00:48  Image pushed successfully
-00:49  Rolling update starting (3 replicas)...
-01:02  replica-1: updated, readiness probe passed
-01:09  replica-2: updated, readiness probe passed
-01:16  replica-3: updated, readiness probe passed
-01:17  Health check passed — GET /health 200 (12ms)
-01:17  Deploy complete. Live: https://my-api.stackblaze.app
-```
+Each attempt shows on the service's **Deployment** tab with its state: queued, building, pre-deploying, rolling out, live, then superseded when a newer deploy goes live. Failed and canceled attempts stay in the list.
 
 ## Deploy settings
 
-- **Auto-deploy**: Trigger a deploy on every push to the branch below (on by default).
-- **Trigger branch**: Deploy when commits are pushed to this branch (example: `main`).
-- **Build filters (ignored paths)**: Pushes that only change these paths will not trigger a build. Example patterns: `docs/**`, `README.md`, `*.test.ts`, `.github/**`.
+Open the service, then **Settings**. These sit with the repository and build method.
+
+- **Autodeploy**: deploy when you push to the connected branch. On by default.
+- **Branch**: the branch this service deploys. Pushes to other branches are ignored. The name must match exactly.
+- **Build filters**: which changed files trigger a build. Set them in [`stackblaze.yaml`](/blueprint/) as `buildFilter.includedPaths` and `buildFilter.ignoredPaths` (gitignore-style globs, up to 50 each). See [Build filters](#build-filters).
 
 :::note
-GitHub `push` webhooks are verified before a build starts. Builds run in an isolated builder, push an image to the private registry, then roll out: the new revision must pass its health check before traffic moves. Layer cache is kept per service so unchanged dependencies reuse.
+Push events come from the StackBlaze GitHub App and are verified before a build starts. StackBlaze does not add a webhook to each repository. While a build runs, StackBlaze posts a check run on the commit in GitHub.
 :::
+
+## Skip a deploy
+
+Put one of these anywhere in the commit message: `[skip deploy]`, `[deploy skip]`, `[skip cd]`, or `[cd skip]` (any case). Nothing builds, the current deploy keeps running, and the skipped push shows on the **Deployment** tab.
+
+`[skip ci]` does **not** skip a StackBlaze deploy.
+
+## Build filters
+
+- With no filters, a service whose build path is the repo root rebuilds on any change.
+- A service with a build path such as `apps/api` only rebuilds when files under `apps/api/` change. This is the default; you do not have to configure it.
+- `includedPaths` replaces that default with your own list.
+- `ignoredPaths` wins: a push where every changed file is ignored does not rebuild.
+- When GitHub does not report the changed files (for example a force push), the service rebuilds.
+
+```yaml title="stackblaze.yaml"
+services:
+  - name: api
+    rootDir: apps/api
+    buildFilter:
+      includedPaths: ["apps/api/**", "packages/shared/**"]
+      ignoredPaths: ["**/*.md"]
+```
+
+## What else happens on a push
+
+- If the repo has a `stackblaze.yaml`, StackBlaze applies it at the pushed commit before rebuilding. See [Config as Code](/blueprint/).
+- Several pushes close together collapse into one build of the newest commit.
+- A new build for a service cancels that service's build that is still running.
+- Your plan limits how many builds run at once in the workspace. There is no queue: a build over the limit is refused.
+- Builds stop after the plan's build timeout (30 minutes unless your plan sets another value).
 
 ## Step by step
 
 1. **Connect your GitHub repository**
 
-   Connecting a GitHub repo as a service installs the webhook. No extra setup. You will see a StackBlaze entry under GitHub → Settings → Webhooks.
+   Add a service from **+ Service → GitHub repository**. Install the StackBlaze GitHub App on the repo or organization when asked. See [Deploy from GitHub](/deploy/github/).
 
-2. **Configure the trigger branch**
+2. **Pick the branch**
 
-   Navigate to Service → Settings → Build & Deploy. The default trigger branch is "main" (falling back to "master"). You can change this to any branch name, or use a glob pattern like "release/*" to trigger on all release branches simultaneously.
+   In **Settings**, choose the **Branch**. Turn **Autodeploy** off if you only want manual deploys.
 
 3. **Set build filters (optional)**
 
-   Add ignored path patterns to prevent unnecessary builds. For example, add `docs/**` and `README.md` so that documentation-only changes don't trigger a rebuild. Patterns follow gitignore glob syntax. Useful for monorepos where multiple services share a single repository.
+   For a monorepo, set the **Build path** in **Settings** (relative to the repo root). The service then only rebuilds for changes in that folder. Add `buildFilter` in `stackblaze.yaml` for shared folders or ignored files.
 
 4. **Push a commit**
 
-   Push any commit to the configured branch. To skip a deploy, include `[skip ci]` or `[no deploy]` anywhere in the commit message. StackBlaze checks the webhook payload commit message and skips the build if either marker is present, leaving the current deployment untouched.
+   Push to the branch. Add `[skip deploy]` to the message to push without deploying.
 
-5. **Watch the build logs**
+5. **Watch the deploy**
 
-   Open Service → Deployments to see the in-progress build. Logs stream in real time, you'll see clone, install, build, and push phases followed by the rolling update. Each phase is timestamped. Click any line to copy it to your clipboard.
+   Open the **Deployment** tab. Pick **Inspect Deployment** from a row's menu to see its build and rollout logs.
 
 6. **Service goes live**
 
-   Once the rolling update completes and all health checks pass, 100% of traffic is routed to the new version. The previous deployment image is retained for rollback. Rollbacks re-deploy the prior image without a rebuild, typically completing in under 30 seconds.
+   When the new revision passes its health check, it takes the traffic. Earlier deploys stay in the list so you can [roll back](/cicd/rollbacks/) or **Redeploy** one.
+
+## Deploy a specific commit
+
+On the **Deployment** tab, choose a commit from the commit picker (search, or paste a SHA) and click **Deploy commit**.
 
 ## Next steps
 

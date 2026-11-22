@@ -9,58 +9,52 @@ Services in the same **environment** talk over a private network using stable in
 
 ## How it works
 
-Every service and database you deploy is reachable by its name on the project's private network. That hostname resolves to a stable ClusterIP address that is only accessible within the same project's network. Traffic between services never leaves the cluster.
+Each environment (production, a custom environment, a PR preview) has its own private network. Every service and database in it gets a stable internal hostname that only resolves and connects inside that environment. Traffic between services never leaves the cluster.
 
 <Diagram file="private-networking.svg" alt="Diagram showing public HTTPS to API and private connections to Postgres and Redis" />
 
-*Public traffic hits your web service; app-to-database traffic uses internal service hostnames on the private fabric.*
+*Public traffic hits your web service; app-to-database traffic uses internal service hostnames on the private network.*
 
-## Internal hostname format
+## Internal hostnames
 
-```text title="Internal hostname"
-[service-name]
+Do not hardcode internal hostnames. Use variables instead:
+
+- **Reference another service's variables** with `${{service.VAR}}`. Every service has a virtual `STACKBLAZE_PRIVATE_DOMAIN`: its internal hostname. The reference resolves inside the current environment, so a PR preview or staging copy automatically points at its own services.
+- **Databases** inject their connection variables (host, port, user, password, connection string) when you connect them to a service. In `stackblaze.yaml`, use `fromDatabase`.
+
+```text title="Variables on the api service"
+WORKER_URL=http://${{worker.STACKBLAZE_PRIVATE_DOMAIN}}:3000
+API_KEY=${{worker.API_KEY}}
 ```
 
-The service name is the name you gave the service when creating it in the dashboard. Spaces are replaced with hyphens and the name is lowercased.
+Other virtual variables you can reference: `STACKBLAZE_PUBLIC_URL` (`https://` plus the first public hostname) and `STACKBLAZE_PUBLIC_DOMAIN`.
 
-```text title="Examples"
-# Web API service named "api"
-http://api:8080
-
-# PostgreSQL database named "postgres"
-postgresql://user:pass@postgres:5432/dbname
-
-# Redis cache named "cache"
-redis://:password@cache:6379
-
-# Worker service named "background-worker"
-http://background-worker:3000
-```
+A service's full internal hostname has the form `<service>-kuberoapp.<project>-<environment>.svc.cluster.local`. StackBlaze also adds a short alias with the plain service name, so `http://worker:3000` works too (handy for Compose-style configs). Database add-ons get an alias with their name as well, such as `db` or `redis`, unless another service already uses it.
 
 ## Ports
 
-The internal hostname resolves to whatever port(s) your service or database listens on:
+Connect to the port the service or database listens on:
 
-- Web services: the port defined in your service settings (default `8080`)
+- Services: the port in the service settings
 - PostgreSQL: `5432`
-- MySQL: `3306`
-- Redis: `6379`
-- MongoDB: `27017`
+- MySQL / MariaDB: `3306`
+- Valkey / Redis: `6379`
+
+Services with **Internal** access serve HTTP on the private network only, with no public URL. **Worker** services have no HTTP port.
 
 ## Service-to-service communication
 
-Internal requests don't go through the public load balancer or the Ingress controller, they travel directly between pods over the cluster network. This means:
+Internal requests don't go through the public edge; they travel directly between services over the cluster network. This means:
 
 - Lower latency (typically under 1ms within a region)
 - No TLS overhead required (traffic is private to the cluster)
-- No egress costs
 - No firewall rules to configure
 
 ### Example: API calling an internal worker
 
 ```ts title="api/src/jobs.ts"
 // Call a background worker service over the internal network
-const response = await fetch('http://worker:3000/process', {
+const response = await fetch(`${process.env.WORKER_URL}/process`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ jobId: '123', payload: data }),
@@ -71,7 +65,7 @@ const result = await response.json()
 
 ## Authentication on the internal network
 
-Internal network access is not authenticated by default, any service in the same project can reach any other service by its internal hostname. If your services handle sensitive data, implement application-level authentication using a shared secret environment variable or mTLS.
+Internal network access is not authenticated by default: any service in the same environment can reach any other service by its internal hostname. If your services handle sensitive data, implement application-level authentication using a shared secret environment variable or mTLS.
 
 ```js title="Simple shared secret auth"
 // In your worker service, verify caller is legitimate
@@ -90,17 +84,10 @@ Add `INTERNAL_API_SECRET` as a shared environment variable to both the calling s
 
 ## Cross-project communication
 
-The private network is scoped to a single project. Services in different projects cannot reach each other via internal hostnames.
+The private network is scoped to one environment of one project. Services in another environment or another project cannot reach it by internal hostname.
 
-If you need cross-project communication, the options are:
-
-- **Public URL**: call the service's public `stackblaze.app` URL. Traffic goes through the load balancer and Ingress. Secure with API keys.
-- **VPC peering (Enterprise)**: connect two projects over a private network without internet exposure. Contact support to configure.
+To talk across projects, call the other service's public URL and secure it with an API key or token.
 
 :::caution[Don't use public URLs for database connections]
-Databases are not exposed publicly and have no public URL. Always use the internal hostname for database connections. If you need to access a database from your local machine, use the external connection string provided in the dashboard (which routes through a secure proxy).
-:::
-
-:::note[Under the hood]
-Internal hostnames are resolved by **CoreDNS** running in the cluster. Each service gets a Kubernetes **ClusterIP Service**: a stable virtual IP that load-balances across all healthy pods for that service. The ClusterIP does not change when pods restart or the service is redeployed. Namespace-scoped **NetworkPolicy** resources restrict traffic so services in one project cannot accidentally reach services in another project.
+Databases have no public URL by default. Use the injected connection variables from inside the environment.
 :::

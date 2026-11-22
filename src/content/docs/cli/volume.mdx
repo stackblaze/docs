@@ -9,14 +9,14 @@ Extra persistent volumes mounted into the app's container. Alias: `volumes`. `st
 
 ```text
 stackblaze volume [list]
-stackblaze volume add <name> --mount <path> [--size <qty>]
+stackblaze volume add [name] --mount <path> [--size <qty>]
 stackblaze volume delete <name> [-y]
 ```
 
 | Subcommand | Description |
 | --- | --- |
 | `list` | The app's extra volumes |
-| `add <name>` | Attach a new volume at an absolute mount path. Names are lowercase letters, digits and dashes |
+| `add [name]` | Attach a new volume at an absolute mount path. Names are lowercase letters, digits and dashes |
 | `delete <name>` | Detach a volume; asks you to type its name unless `-y` |
 
 | Flag | Applies to | Description |
@@ -26,7 +26,7 @@ stackblaze volume delete <name> [-y]
 | `--name <name>` | `add` | Same as the positional name |
 | `-y, --yes` | `delete` | Skip the confirmation |
 
-Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
 ## Examples
 
@@ -35,4 +35,4 @@ stackblaze volume add data --mount /data --size 10Gi
 stackblaze volume delete data -y
 ```
 
-Work with the files on a volume using [`stackblaze files`](/cli/files/); back it up with [`stackblaze snapshots`](/cli/snapshots/).
+Work with the files on a volume using [`stackblaze files`](/cli/files/); snapshot it with [`stackblaze snapshots`](/cli/snapshots/) or back up the environment with [`stackblaze backups`](/cli/backups/).

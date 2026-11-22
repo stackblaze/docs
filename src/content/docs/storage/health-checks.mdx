@@ -1,29 +1,41 @@
 ---
 title: Health Checks
-description: StackBlaze only routes traffic to pods that pass health checks. Learn how readiness, liveness, and startup probes work, how to implement a /health endpoint in Node.js and Python, and how to configure grace periods for slow-starting services.
+description: StackBlaze probes an HTTP path on each web service instance before it gets traffic, and restarts instances that stop answering. Learn the startup, readiness, and liveness checks, their defaults, and how to set them.
 ---
 
-import Diagram from '../../../components/Diagram.astro';
+StackBlaze sends traffic to a new version of a web service only after its health check passes. If a running instance stops answering, it is restarted. Health checks are on by default.
 
-StackBlaze only routes traffic to pods that pass health checks. A new deployment is not marked live until its readiness probe succeeds. If a running pod fails its liveness probe, Kubernetes restarts it automatically. This gives you zero-downtime deploys and automatic recovery from crashes.
+Health checks apply to web services. They use one HTTP path that you set, and run three checks against it: **startup**, **readiness**, and **liveness**. A response with a 2xx or 3xx status passes.
 
-<Diagram file="health-probes.svg" alt="Readiness keeps the edge sending traffic only to passing replicas. Liveness restarts a stuck process after three failures. Startup grace pauses liveness during slow boot." />
+## The three checks
 
-Health checks are configured per-service and run continuously throughout the pod's lifetime. There are three probe types: **readiness** (is the pod ready for traffic?), **liveness** (is the pod still healthy?), and **startup** (for slow-starting services).
+### Startup
 
-## Probe types
+Runs when an instance starts, once per second, for up to the **Startup** time (default 90 seconds). Readiness and liveness wait until it passes. If it never passes, the instance is restarted. Raise it for services that boot slowly, such as JVM services or apps that load large models.
 
-### Readiness probe
+### Readiness
 
-HTTP GET to your health check path. Returns 200–299 = pod is ready to receive traffic. Returns anything else or times out = pod is removed from the load balancer endpoints until it recovers. Checked every 10 seconds.
+Decides whether the instance gets traffic. It runs every **Interval** seconds (default 10). An instance that keeps failing is taken out of traffic until it passes again. During a deploy, old instances keep serving until the new ones pass.
 
-### Liveness probe
+### Liveness
 
-HTTP GET to your health check path. If the pod fails 3 consecutive liveness checks, Kubernetes kills and restarts the pod. Catches processes that are stuck or deadlocked but haven't crashed. Checked every 15 seconds after startup.
+Catches a process that is stuck but has not crashed. It runs every 3 seconds. After 3 failures in a row, the instance is restarted.
 
-### Startup probe
+Each request waits up to **Timeout** seconds (default 3) for an answer.
 
-Runs on pod start only. The liveness probe is paused until the startup probe succeeds. Configure a grace period of up to 300 seconds for services with slow initialization (JVM warmup, loading ML models, etc.).
+The checks send the service's first domain as the `Host` header, so apps that check the host name still answer. Services in sleep mode are not probed.
+
+## Configure health checks
+
+1. Open the service on the project canvas and go to **Settings → Health checks**.
+2. Leave the switch **On**, or turn it **Off** if your service has no HTTP endpoint to probe. With health checks off, deploys are not gated.
+3. Set **Path** (default `/`) to your health endpoint, for example `/health`.
+4. Adjust **Startup**, **Timeout**, and **Interval** in seconds if needed.
+5. Commit the staged changes.
+
+Whether health checks start on or off comes from the environment's deploy defaults (on, unless the environment changes it). A service can override that, and **Reset** goes back to the environment default.
+
+In `stackblaze.yaml`, set `healthCheckPath` on a service. That turns health checks on with a 30 second startup time, a 5 second timeout, and a 10 second interval.
 
 ## Health endpoint examples
 
@@ -38,7 +50,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', uptime: process.uptime() });
 });
 
-// Advanced: check DB before declaring ready
+// Check the database before reporting ready
 app.get('/health/ready', async (req, res) => {
   try {
     await db.query('SELECT 1');
@@ -66,33 +78,16 @@ async def health_check():
         raise HTTPException(status_code=503, detail=str(e))
 ```
 
-:::note[Under the hood]
-- **readinessProbe**: Kubernetes runs an HTTP GET against your configured path every 10 seconds. If 3 consecutive checks fail, the pod is removed from the Service's Endpoints object, stopping all traffic to it. It is re-added automatically when checks start passing again.
-- **livenessProbe**: runs on the same path every 15 seconds with a timeout of 10 seconds. After 3 consecutive failures, the container is sent SIGTERM and a new one starts. This catches infinite loops, deadlocks, and other unresponsive states that don't cause a crash.
-- **startupProbe**: during the grace period, only the startup probe runs (liveness is paused). This prevents premature kills during slow initialization. The startup probe polls every 10 seconds up to the configured failure threshold (gracePeriodSeconds / 10 attempts).
-- **Rolling deploy gating**: during a rolling update, new pods must pass their readiness probe before the old pods are scaled down. If a new pod never becomes ready, the rolling update stalls and the old version continues serving traffic. StackBlaze times out stalled deploys after 10 minutes and marks them failed.
+:::caution
+The same path is used for liveness. If it fails whenever the database is down, every instance is restarted during a database outage. Keep the liveness path cheap, or point it at a route that only checks the process itself.
 :::
 
-## Step by step
+## Check health from an agent
 
-1. **Implement a /health endpoint**
-
-   Add a GET `/health` route to your application that returns HTTP 200. At minimum it can return an empty 200 response. Optionally include checks for database connectivity, cache availability, or any other critical dependencies your app relies on.
-
-2. **Configure the health check path**
-
-   Go to Service → Settings → Health Check. The default path is `/`. Change it to match your endpoint (e.g. `/health`, `/api/health`, or `/status`). You can also configure the timeout (default 10s, max 60s) and initial delay for slow-starting services.
-
-3. **Configure startup grace period if needed**
-
-   For services that take a long time to start (e.g. JVM services loading large datasets), set a startup probe grace period of up to 300 seconds. This prevents Kubernetes from killing a slow-starting pod before it has a chance to become ready.
-
-4. **Monitor health check status**
-
-   Open Service → Overview to see the current health status of each replica. Green indicates passing, red indicates failing. Click on a failing replica to view its recent health check response bodies and identify what is causing the failure.
+The MCP tool `check_app_health` returns one verdict for a service (healthy, starting, degraded, crashlooping, and so on) with recent restarts and crash causes.
 
 ## Next steps
 
-- [Persistent disks](/storage/persistent-disks/)
-- [Rollbacks when health checks fail](/cicd/rollbacks/)
-- [Health check configuration limits](/reference/limits/)
+- [Volumes](/storage/persistent-disks/)
+- [Rollbacks](/cicd/rollbacks/)
+- [Limits](/reference/limits/)

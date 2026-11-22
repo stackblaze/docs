@@ -7,24 +7,24 @@ import { LinkCard, CardGrid } from '@astrojs/starlight/components';
 
 StackBlaze is an all-in-one deployment platform. You compose **services** and **databases** on a **project canvas**, deploy from Git or a Docker image, and get private networking, TLS, volumes, and observability without operating a cluster.
 
-You work in the dashboard (or [MCP](/agents/) / the [API](/reference/api/)). You do not write Kubernetes manifests or run kubectl.
+You work in the dashboard (or the [CLI](/cli/), [MCP](/agents/), or the [API](/reference/api/)). You do not write Kubernetes manifests or run kubectl.
 
 ## How a deploy works
 
 1. **Add a service** on the canvas from GitHub, a Docker image, a template, or an import.
 2. **Stage and deploy.** The change sits on the canvas until you deploy.
-3. **Build.** StackBlaze clones the commit (or pulls the image). A `Dockerfile` wins; otherwise Nixpacks detects the runtime.
+3. **Build.** StackBlaze clones the commit (or pulls the image). A `Dockerfile` wins; otherwise Railpack detects the runtime and builds from source.
 4. **Rollout.** A new revision comes up behind a health check, then traffic moves over.
-5. **URL.** Generate a `*.stackblaze.app` domain or attach a [custom domain](/networking/custom-domains/).
+5. **URL.** A public service gets a `*.stackblaze.app` URL. Attach a [custom domain](/networking/custom-domains/) if you want your own.
 
-Every push to the connected branch can [auto-deploy](/cicd/auto-deploy/). Add `[skip ci]` to a commit message to skip.
+Every push to the connected branch can [auto-deploy](/cicd/auto-deploy/). Put `[skip deploy]` or `[skip cd]` in a commit message to skip that push.
 
 ## Mental model
 
 | Piece | Role |
 | --- | --- |
 | Project | Canvas of services that share a private network per environment |
-| Service | Git, image, cron, or database |
+| Service | Git, image, cron, function, or database |
 | Environment | Isolated copy of the canvas (production, custom, PR preview) |
 | Variables | Config and secrets, including `fromDatabase` |
 | Volume | Disk attached to one service |
@@ -33,7 +33,7 @@ See [The Basics](/concepts/).
 
 ## Regions
 
-A project is pinned to a region. Default tenant region is `us-east-1`. Services in the same environment talk over private DNS; they do not cross projects on that network.
+A project runs in one region, picked when you create it. The default is the organization's **Default region for new projects**. Services in the same environment talk over private DNS; they do not cross projects on that network.
 
 ## Migrate and compare
 

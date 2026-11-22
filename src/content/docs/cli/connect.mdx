@@ -12,10 +12,10 @@ Opens an interactive database client (`psql`, `mysql` or `redis-cli`) for an add
 ## Usage
 
 ```text
-stackblaze connect <addon> [--instance <name>] [--local | --tunnel] [--port <port>] [--print-only] [scope flags]
+stackblaze connect [addon] [--instance <name>] [--local | --tunnel] [--port <port>] [--print-only] [scope flags]
 ```
 
-`<addon>` is the database type:
+`[addon]` is the database type. You can leave it out when the app has exactly one database add-on.
 
 | Argument | Client |
 | --- | --- |
@@ -31,9 +31,9 @@ stackblaze connect <addon> [--instance <name>] [--local | --tunnel] [--port <por
 | `--local` | Run the client on this machine through a private tunnel (needs `psql`, `mysql` or `redis-cli` installed) |
 | `--tunnel` | Keep a private tunnel open for GUI tools and print host, port, user and database |
 | `--port <port>` | Local port for `--local` or `--tunnel` (default: a free port) |
-| `--print-only` | With `--local`: print the connection string instead of launching a client; the tunnel stays open |
+| `--print-only` | Open the private tunnel and print its connection string instead of launching a client; the tunnel stays open until Ctrl-C |
 
-Also accepts `-p, --pipeline`, `--phase`, `-a, --app`, `--token` and `--api-url` (see [scope](/cli/#scope-and-common-flags)). No JSON output.
+Also accepts `-p, --project`, `-e, --env`, `-a, --app`, `--token` and `--api-url` (see [scope](/cli/#scope-and-common-flags)). No JSON output.
 
 ## Examples
 
@@ -50,7 +50,7 @@ stackblaze connect redis --tunnel --port 16379       # host/port/user/db for a G
 
 With `--local` or `--tunnel`, the CLI listens on `127.0.0.1` only. Each connection your client opens is carried over its own authenticated connection to the StackBlaze API, which forwards it to the add-on. The database is never exposed publicly.
 
-- **Access:** requires **write** access to the app (the same as [`ssh`](/cli/ssh/)). Only add-ons attached to the app are reachable. Every tunnel session is written to the [audit log](/cli/audit/).
+- **Access:** requires **write** access to the app (the same as [`ssh`](/cli/ssh/)). Only add-ons attached to the app are reachable. Every tunnel session is written to the [audit log](/cli/audit/). Your platform admin may turn off `--local`, `--tunnel` and `--print-only`.
 - **Limits:** at most 5 open tunnel connections per user. A tunnel closes after 30 minutes idle. Ctrl-C closes it.
 - **Credentials:** with `--local`, the password is passed to the client through `PGPASSWORD`, `MYSQL_PWD` or `REDISCLI_AUTH`, never on the command line. `--tunnel` prints the password so you can paste it into a GUI tool.
 - **TLS:** Redis or Valkey over TLS is opened with `redis-cli --tls --insecure`, because the certificate cannot match `127.0.0.1`. In a GUI tool, turn off certificate verification for the same reason.

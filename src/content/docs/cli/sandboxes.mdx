@@ -1,0 +1,65 @@
+---
+title: stackblaze sandboxes
+description: "Developer sandboxes: disposable VMs with a shell and VS Code in a project environment."
+---
+
+A sandbox is a disposable VM with a shell and browser VS Code, in a project environment. Aliases: `sandbox`, `sbx`.
+
+Sandboxes are only available when they are turned on for your platform and included in your plan. Until the CLI has seen the `sandboxes` switch on, the command is not listed in `stackblaze --help`, but you can still run it by name.
+
+## Usage
+
+```text
+stackblaze sandboxes sizes
+stackblaze sandboxes create [name] [--size <id>] [--image <ref>] [--for <app> [--read-only]] [--env KEY=value...] [--phase <env>]
+stackblaze sandboxes list
+stackblaze sandboxes get <name>
+stackblaze sandboxes ssh <name> [--command <shell>] [--timeout <seconds>]
+stackblaze sandboxes ide <name> [--reveal]
+stackblaze sandboxes resize <name> --size <id>
+stackblaze sandboxes sleep <name>
+stackblaze sandboxes wake <name>
+stackblaze sandboxes delete <name> [-y]
+```
+
+| Subcommand | Description |
+| --- | --- |
+| `sizes` (alias `capabilities`) | Machine sizes (vCPU, memory, disk) and which ones your plan allows |
+| `create [name]` | Create a sandbox (a random name when omitted) |
+| `list` (alias `ls`) | The sandboxes of a project environment |
+| `get <name>` | Status, size, image, workspace and VS Code URL |
+| `ssh <name>` | Open a shell in the sandbox VM; Console must be enabled for your organization |
+| `ide <name>` | Print a short-lived sign-in link for the sandbox's browser VS Code |
+| `resize <name>` | Change the machine size; the VM restarts, and the disk grows with the size but never shrinks |
+| `sleep <name>` | Scale the sandbox to zero; the disk and volumes stay |
+| `wake <name>` | Boot a sleeping sandbox again |
+| `delete <name>` (alias `rm`) | Delete the sandbox, its workspace disk and checkpoints. Asks you to type its name unless `-y` |
+
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `--size <id>` | `create`, `resize` | Machine size from `sandboxes sizes`, which also sets the disk (default on `create`: the platform default) |
+| `--image <ref>` | `create` | Container image to boot instead of the default image |
+| `--for <app>` | `create` | Develop this service: its volumes and add-ons are attached |
+| `--read-only` | `create` | With `--for`: mount the service's volumes read-only |
+| `--env <pair>` | `create` | `KEY=value` in the sandbox (repeatable; not with `--for`) |
+| `--phase <name>` | `create` | The environment (on `create`, `--env` sets variables, so the environment is `--phase`) |
+| `--command <shell>` | `ssh` | Run this command instead of a login shell; exits with its exit code |
+| `--timeout <seconds>` | `ssh` | Give up on `--command` after this many seconds |
+| `--reveal` | `ide` | Also print the VS Code password |
+| `-y, --yes` | `delete` | Skip the confirmation |
+
+Sandboxes live in a project environment: `-p, --project` and `-e, --env` (default `production`; `--phase` on `create`). Subcommands also accept `--token`, `--api-url`, and except `ssh`, `-o, --output` and `--json` (see [scope and output flags](/cli/#scope-and-common-flags)).
+
+When the platform's `sandboxes` switch is off, `create`, `wake`, `resize`, `ssh` and `ide` exit `3` with "Sandboxes are not available on this platform." When only your plan lacks them, the server refuses with its own message (exit `3`). `list`, `get`, `sleep` and `delete` always work, so you can wind down existing sandboxes.
+
+## Examples
+
+```bash
+stackblaze sandboxes sizes
+stackblaze sandboxes create scratch --size 4x --phase staging
+stackblaze sandboxes create --for web
+stackblaze sandboxes ssh scratch --command "ls /workspace"
+stackblaze sandboxes ide scratch
+stackblaze sandboxes sleep scratch
+stackblaze sandboxes delete scratch -y
+```

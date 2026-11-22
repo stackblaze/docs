@@ -1,0 +1,65 @@
+---
+title: stackblaze projects
+description: "List, create, rename and delete projects, and turn Infrastructure as Code on or off."
+---
+
+A project holds your services, grouped in environments. Aliases: `project`, `pipelines`, `pipeline`.
+
+## Usage
+
+```text
+stackblaze projects list
+stackblaze projects create [name] [--phases <names...>] [--domain <host>] [--region <slug>]
+stackblaze projects delete [name] [-y]
+stackblaze projects rename [display-name] [--clear]
+stackblaze projects iac [on|off|status]
+```
+
+| Subcommand | Description |
+| --- | --- |
+| `list` | Projects and their environments (also `stackblaze list`) |
+| `create [name]` | Create a project, named positionally or with `-p` |
+| `delete [name]` | Delete a project and all its apps (default: the linked project); asks you to type its name unless `-y` |
+| `rename [display-name]` | Set the name people see for the project; `--clear` removes it |
+| `iac [state]` | Show (`status`, the default) or turn `on` / `off` Infrastructure as Code for the project |
+
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `--phases <names...>` | `create` | Environments to create (default `production`) |
+| `--domain <host>` | `create` | Wildcard domain for the project's apps |
+| `--region <slug>` | `create` | Region for the project, from [`stackblaze regions list`](/cli/regions/) (default: the workspace's preferred region) |
+| `--clear` | `rename` | Remove the display name; the project ID is shown again |
+| `-y, --yes` | `create`, `delete` | `create`: do not offer the region list. `delete`: skip the confirmation |
+
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+### create
+
+`--region` is checked against the regions open for new projects. When it is not one of them, the command exits `1` and prints the list. Without `--region`, an interactive run offers the list (Enter keeps the default). A script, or `-y`, leaves placement to the server: the workspace's preferred region.
+
+New projects start with Infrastructure as Code off.
+
+### delete
+
+`delete` takes the project as a positional name or `-p` (passing both with different values is an error). Without either, it targets `STACKBLAZE_PIPELINE` or the linked project, names it on stderr, and still asks you to type the name unless `-y`. When the deleted project is the linked one, `.stackblaze/project.json` is removed. With `-o json` the result is `{"deleted": true, "pipeline": "…"}`. Check the target with [`stackblaze context`](/cli/context/) first.
+
+### rename
+
+Only the display name changes (1 to 60 characters, one line). The project ID used by `-p`, URLs and commands stays the same, and nothing is deployed. Uses the linked project unless `-p` is passed.
+
+### iac
+
+[`apply`](/cli/apply/) and [`plan`](/cli/plan/) are refused while Infrastructure as Code is off. This is the same switch as **Project Settings → General → Infrastructure as Code** in the dashboard. Uses the linked project unless `-p` is passed. `enable` / `true` and `disable` / `false` are accepted for `on` and `off`.
+
+## Examples
+
+```bash
+stackblaze regions list
+stackblaze projects create shop --phases staging production --region us-west-1
+stackblaze projects create shop -y        # no prompt, default region
+stackblaze projects rename "Web shop" -p shop
+stackblaze projects iac on -p shop
+stackblaze projects delete shop-old -y
+```
+
+To create a project and link the directory in one step, use [`stackblaze init`](/cli/init/). Environments are managed with [`stackblaze phases`](/cli/phases/).

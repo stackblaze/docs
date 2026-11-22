@@ -1,0 +1,37 @@
+---
+title: stackblaze proxy
+description: "Forward a local port to one of the app's ports through a private tunnel."
+---
+
+Forwards a local port to one of the app's ports through a private tunnel. Use it to reach something the app serves that is not public, such as an admin UI on a second port, a debugger or a gRPC port. Nothing is exposed publicly. Alias: `port-forward`.
+
+## Usage
+
+```text
+stackblaze proxy [local:remote]
+```
+
+| Port spec | Meaning |
+| --- | --- |
+| (none) | A free local port → the app's http port |
+| `8080:3000` | `127.0.0.1:8080` → app port `3000` |
+| `3000` | The same port on both sides |
+| `:2222` | A free local port → app port `2222` (an extra TCP port) |
+
+Accepts `-p, --project`, `-e, --env`, `-a, --app`, `--token` and `--api-url` (see [scope and output flags](/cli/#scope-and-common-flags)). It has no JSON mode.
+
+The CLI prints the local URL and keeps running until Ctrl-C. It listens on `127.0.0.1` only and closes after 30 minutes idle. Each local connection is carried over an authenticated WebSocket to the StackBlaze API, which forwards it to a ready instance of the app.
+
+- Only the ports the app declares are reachable: its http port (the container port works as an alias) and any extra ports. A wrong port is refused with the allowed list (exit `1`).
+- Requires write access to the app and Console enabled for your organization (**Platform → Console & SSH**), like [`ssh`](/cli/ssh/). A refusal exits `3` with the server's reason. Every session is written to the audit log.
+- At most 5 open connections per user.
+
+To open a tunnel to a database add-on instead, use [`stackblaze connect`](/cli/connect/).
+
+## Examples
+
+```bash
+stackblaze proxy
+stackblaze proxy 8080:3000 -a web
+stackblaze proxy :2222
+```

@@ -1,6 +1,6 @@
 ---
 title: stackblaze setup
-description: "Configure the StackBlaze MCP server and agent skills for Cursor and Claude Code."
+description: "Configure the StackBlaze MCP server and agent skills for your editor or coding agent."
 ---
 
 Sets up AI coding tools to work with StackBlaze.
@@ -8,28 +8,48 @@ Sets up AI coding tools to work with StackBlaze.
 ## Usage
 
 ```text
-stackblaze setup agent [--agent cursor|claude|all]
-stackblaze setup mcp [--ide cursor|claude]
+stackblaze setup agent [--agent <name>|all]
+stackblaze setup mcp [--ide <name>] [--print]
 stackblaze setup skills [--agent cursor|claude|all]
 ```
 
 | Subcommand | Description |
 | --- | --- |
-| `agent` | Install the skills and configure MCP for each detected tool (Cursor, Claude Code). Non-interactive |
-| `mcp` | Add a `stackblaze` MCP server to Cursor (`~/.cursor/mcp.json`, the default) or Claude Code (`~/.claude.json`). Also available as `stackblaze mcp` |
-| `skills` | Write the StackBlaze skill file to `~/.agents/skills/stackblaze/SKILL.md`, and for Cursor and Claude Code to their skills folders. Also available as `stackblaze skills` |
+| `agent` | Install the skills and configure MCP for each detected tool. Non-interactive |
+| `mcp` | Add a `stackblaze` MCP server to one editor's config file (see [MCP config files](#mcp-config-files)). Also available as [`stackblaze mcp`](/cli/mcp/) |
+| `skills` | Write the StackBlaze skill file to `~/.agents/skills/stackblaze/SKILL.md`, and for Cursor and Claude Code to their skills folders. Also available as [`stackblaze skills`](/cli/skills/) |
 
 | Flag | Applies to | Description |
 | --- | --- | --- |
-| `--agent <name>` | `agent`, `skills` | `cursor`, `claude` or `all` (default: every tool detected in your home directory) |
-| `--ide <name>` | `mcp` | `cursor` (default) or `claude` |
+| `--agent <name>` | `agent`, `skills` | `cursor`, `claude`, `codex`, `vscode`, `windsurf`, `opencode`, `copilot` or `all` (default `all`: every tool detected in your home directory, or Cursor when none is found) |
+| `--ide <name>` | `mcp` | `cursor` (default), `claude`, `codex`, `vscode`, `windsurf`, `opencode` or `copilot` (same as `vscode`) |
+| `--print` | `mcp` | Print the config snippet instead of writing the file. The token is shown as a placeholder |
+| `--mcp-path <path>` | `agent`, `mcp` | Use a local StackBlaze MCP server script (stdio) instead of the hosted server |
+| `--force` | `agent`, `mcp` | Use the hosted HTTP server even if a local server is found |
 | `--token <token>`, `--api-url <url>` | `agent`, `mcp`, `skills` | Credentials to use (default: your saved login) |
 
-The MCP entry points at the hosted server (`https://mcp.stackblaze.cloud/mcp` for the default API) and **includes your API token in plain text** in the editor's config file. Restart the editor after setup.
+The MCP entry points at the hosted server (`https://mcp.stackblaze.cloud/mcp` for the default API; set `STACKBLAZE_MCP_URL` to override) and **includes your API token in plain text** in the editor's config file. With `--print`, replace the placeholder with a token from [`stackblaze tokens create`](/cli/tokens/). Restart the editor after setup.
+
+## MCP config files
+
+The `stackblaze` entry is merged in; other servers in the file are kept.
+
+| Editor | File |
+| --- | --- |
+| `cursor` | `~/.cursor/mcp.json` |
+| `claude` | `~/.claude.json` |
+| `codex` | `~/.codex/config.toml`, or `$CODEX_HOME/config.toml` (`[mcp_servers.stackblaze]`). The `--print` snippet reads the token from `$STACKBLAZE_TOKEN` instead of a placeholder |
+| `vscode` (alias `copilot`) | `mcp.json` in the VS Code user directory |
+| `windsurf` | `~/.codeium/windsurf/mcp_config.json` |
+| `opencode` | `~/.config/opencode/opencode.json` |
+
+## Examples
 
 ```bash
 stackblaze setup agent
 stackblaze setup mcp --ide claude
+stackblaze setup mcp --ide codex
+stackblaze setup mcp --ide vscode --print   # paste into .vscode/mcp.json
 ```
 
 See [MCP server](/ai/mcp/).

@@ -1,63 +1,33 @@
 ---
 title: Redirects & Rewrites
-description: Configure URL redirects and rewrites for static sites using a _redirects file, or handle them in application code for web services.
+description: Handle URL redirects and rewrites in your service, in application code or in the web server that serves your files.
 ---
 
-Configure URL redirects and rewrites for static sites using a `_redirects` file, or handle them in application code for web services.
+StackBlaze has no redirect rules of its own and does not read a `_redirects` file. Handle redirects and rewrites in your service: in application code, or in the web server that serves your files.
 
-## HTTPS redirects (automatic)
+## Static sites
 
-HTTP is always redirected to HTTPS automatically on every StackBlaze service. You do not need to configure this, it cannot be disabled. The redirect uses a 301 (permanent) status code.
+A [static site](/deploy/static-sites/) on StackBlaze is a container that serves files, for example nginx. Put redirects and the single-page-app fallback in its config:
 
-## Static sites, the `_redirects` file
+```nginx title="nginx.conf"
+server {
+  listen 8080;
+  root /usr/share/nginx/html;
 
-For static sites, place a `_redirects` file in the root of your build output directory (e.g. `dist/`, `out/`, or `public/`). StackBlaze processes this file and configures the Ingress rules accordingly.
+  # 301 redirects
+  location = /old-path { return 301 /new-path; }
+  location /blog/      { rewrite ^/blog/(.*)$ /posts/$1 permanent; }
 
-### File format
-
-```text title="_redirects"
-# Format: SOURCE DESTINATION STATUS
-/old-path       /new-path       301
-/blog           /posts          302
-/contact        https://form.example.com  301
+  # SPA fallback: serve index.html for client-side routes
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
+}
 ```
 
-| Status code | Meaning | Use case |
-| --- | --- | --- |
-| 301 | Moved Permanently | URL has changed forever. Browsers and search engines cache this. |
-| 302 | Found (Temporary) | URL has temporarily moved. Cache not retained. |
-| 200 | Rewrite (proxy) | Serve different content at the same URL. URL in browser stays the same. |
+## Application-level redirects
 
-### Splat rules (wildcards)
-
-Use `*` as a splat in the source path to match any segment. Use `:splat` in the destination to insert the matched value.
-
-```text title="_redirects"
-# Redirect old blog paths to new structure
-/blog/*         /posts/:splat   301
-
-# Redirect all legacy API routes
-/api/v1/*       /api/v2/:splat  301
-
-# Catch-all: serve index.html for SPA routing (rewrite, not redirect)
-/*              /index.html     200
-```
-
-### SPA (Single-Page Application) routing
-
-React, Vue, and other SPAs use client-side routing. When a user navigates directly to a deep link like `/dashboard/settings`, the server needs to return `index.html` so the client-side router can take over.
-
-```text title="_redirects"
-/*              /index.html     200
-```
-
-:::tip
-The catch-all rule `/* /index.html 200` must be the *last* rule in your `_redirects` file. Rules are evaluated top-to-bottom and the first match wins. Placing the catch-all first would intercept all requests before specific redirect rules could match.
-:::
-
-## Web services, application-level redirects
-
-For web services (Node.js, Python, Go, etc.), implement redirects in your application code. The StackBlaze infrastructure doesn't process a `_redirects` file for web services, they receive all requests and can respond however they like.
+For services built from Node.js, Python, Go and similar, implement redirects in your application code. Your service receives every request and can respond however it likes.
 
 ### Express (Node.js)
 
@@ -129,6 +99,15 @@ urlpatterns = [
 ]
 ```
 
-## www redirect configuration
+## www redirect
 
-If you've added both `example.com` and `www.example.com` as custom domains, configure a redirect between them from **Settings → Domains**. Select the domain you want to redirect *from* and choose the primary domain as the destination. This is configured at the Ingress level and happens before your application sees the request.
+To send `www.example.com` to `example.com` (or the other way), add both as [custom domains](/networking/custom-domains/) on the same service, then redirect on the `Host` header in your app or web server:
+
+```ts title="server.ts"
+app.use((req, res, next) => {
+  if (req.hostname === 'www.example.com') {
+    return res.redirect(301, `https://example.com${req.originalUrl}`)
+  }
+  next()
+})
+```

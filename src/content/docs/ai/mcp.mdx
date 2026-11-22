@@ -3,15 +3,19 @@ title: MCP server
 description: Point an MCP client at mcp.stackblaze.cloud.
 ---
 
-MCP is at `https://mcp.stackblaze.cloud`. Authenticate with `Authorization: Bearer sb_pat_…` from **Settings → API tokens**. Per-session auth is required so each user keeps their own RBAC.
+The hosted MCP server is at `https://mcp.stackblaze.cloud`. Clients connect to the endpoint `https://mcp.stackblaze.cloud/mcp` over HTTP.
 
-Tool names in code are **unprefixed**: `get_app`, `deploy_app`, `search_logs`. Feature tools use prefixes (`pg__*`, `redis__*`, `waf__*`, `fn__*`).
+## Authentication
+
+Send `Authorization: Bearer sb_pat_…` on every request. Create the token in **Personal settings → API tokens**. Tokens created before the `sb_pat_` prefix (`kbr_pat_…`) keep working.
+
+Each call runs as the token's user, in that token's organization, with that user's roles. A request without a bearer token gets `401` and no tool runs. There is no shared fallback token for customer requests.
 
 ```json title="mcp.json"
 {
   "mcpServers": {
     "stackblaze": {
-      "url": "https://mcp.stackblaze.cloud",
+      "url": "https://mcp.stackblaze.cloud/mcp",
       "headers": {
         "Authorization": "Bearer sb_pat_…"
       }
@@ -20,8 +24,25 @@ Tool names in code are **unprefixed**: `get_app`, `deploy_app`, `search_logs`. F
 }
 ```
 
-Wire this from the CLI with `stackblaze setup mcp`.
+`stackblaze setup mcp` writes this entry for you. See [Agent connectors](/ai/connectors/).
 
-Prefer `search_logs` over a raw tail. An empty live stream is not “no logs.”
+## Tools
 
-See [StackBlaze for Agents](/agents/) and [API](/reference/api/).
+Tool names are unprefixed: `get_app`, `deploy_app`, `search_logs`.
+
+By default a client sees a core set of tools for deploying and troubleshooting: for example `list_pipelines`, `get_app`, `deploy_app`, `deploy_template`, `search_templates`, `inspect_repo`, `trigger_build`, `redeploy`, `restart_app`, `get_logs`, `search_logs`, `check_app_health`, and `get_billing`. The rest of the catalog (snapshots and clones, functions, support tickets, audit, database inspection, scaling, and more) stays out of the list to save context:
+
+- `find_tools` searches the whole catalog and returns each tool's parameters.
+- `run_tool` calls any catalog tool by name.
+
+To list every tool directly, send the header `X-Kubero-MCP-Tool-Profile: all` (or add `?profile=all` to the URL).
+
+Destructive tools such as `delete_app` and `delete_pipeline` need `confirm: true`. Your client should ask you first.
+
+## Tips
+
+- For a Git URL, call `inspect_repo` first, then `deploy_app`.
+- `deploy_app` is idempotent by name: running it again with an existing service name updates that service.
+- Prefer `search_logs` (historical, across services) over `get_logs` (recent lines of one container). An empty live stream is not "no logs."
+
+See [StackBlaze for Agents](/agents/) and the [API reference](/reference/api/).

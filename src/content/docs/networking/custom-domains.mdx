@@ -1,114 +1,92 @@
 ---
 title: Public networking
-description: Generate a StackBlaze domain or attach your own. TLS is issued after DNS checks out.
+description: Every public service gets a StackBlaze URL with HTTPS. Add your own hostname with a TXT and a CNAME record; the certificate is issued after DNS checks out.
 ---
 
 import Diagram from '../../../components/Diagram.astro';
 
-**Public networking** is how a service reaches the internet. Generate a `*.stackblaze.app` domain from the service sheet, or attach your own hostname. TLS is issued after DNS verification.
+**Public networking** is how a service reaches the internet. A service with **Public** access gets a default URL under `stackblaze.app` with HTTPS when it deploys. You can add your own hostnames on top. Their TLS certificates are issued after DNS verification.
 
 <Diagram file="custom-domain-dns.svg" alt="Diagram of CNAME from custom domain to StackBlaze edge with automatic TLS" />
 
-*Point your DNS at StackBlaze, cert-manager provisions and renews TLS certificates automatically.*
+*Point your DNS at the service's StackBlaze URL; certificates are issued and renewed automatically.*
+
+## The default URL
+
+StackBlaze generates the default URL from the service name plus a short random suffix, for example `api-k3f9.stackblaze.app`. It shows in **Settings → Domains** ("HTTPS included") and at the top of the service sheet. Until the first deploy it reads "Default URL assigned on deploy".
+
+A service with **Internal** or **Worker** access has no public URL.
 
 ## Adding a domain
 
-From your service's dashboard, go to **Settings → Domains → Add domain**. Enter your domain (e.g. `app.example.com` or `example.com`). StackBlaze will show you the DNS records to configure.
+1. Open the service → **Settings → Domains** and click **+ Custom Domain**.
+2. Enter the hostname, for example `app.example.com` or `example.com`. A hostname another account has already verified is refused.
+3. Step 2 shows the DNS records to create. Copy them into your DNS provider and click **Done**.
 
-## DNS configuration
+The domain is listed as "Routed once DNS is verified" until it is live. Click **Configure DNS** on it to see the records and their status again.
 
-### Subdomains (CNAME)
+## DNS records
 
-For subdomains like `app.example.com` or `www.example.com`, create a CNAME record pointing to your service's StackBlaze hostname.
+Each custom domain needs two records:
 
-```text title="DNS record (subdomain)"
-Type:  CNAME
-Name:  app
-Value: my-service.stackblaze.app
-TTL:   300
-```
+| Type | Name | Value | Why |
+| --- | --- | --- | --- |
+| `TXT` | `_stackblaze-verify.app.example.com` | `stackblaze-verify=<token>` | Proves you own the domain |
+| `CNAME` | `app.example.com` | the service's StackBlaze URL | Sends traffic to the service |
+
+The dialog shows the exact token and target. The CNAME target is assigned after the service's first deploy.
 
 ### Apex domains (root domain)
 
-Many DNS providers don't allow CNAME records on the apex (root) domain because it conflicts with SOA and NS records. Use one of these alternatives instead:
-
-- **ALIAS or ANAME record**: supported by Cloudflare (as "CNAME flattening"), Route 53, Namecheap, and DNSimple. Behaves like a CNAME but is valid at the apex.
-- **A records**: point to our anycast IP addresses. Use this if your DNS provider doesn't support ALIAS/ANAME.
-
-```text title="DNS record (apex, A records)"
-Type:  A
-Name:  @
-Value: 1.2.3.4
-TTL:   300
-
-Type:  A
-Name:  @
-Value: 5.6.7.8
-TTL:   300
-```
-
-:::tip[Cloudflare users]
-If you use Cloudflare, enable "Proxied" mode (orange cloud) for automatic ALIAS-style resolution at the apex. Ensure you're pointing to `my-service.stackblaze.app` as a CNAME with proxy enabled, this is compatible with both subdomains and apex domains.
-:::
+An apex domain such as `example.com` cannot hold a CNAME. Use your DNS provider's **ALIAS** / **ANAME** record or **CNAME flattening** (Cloudflare) pointing at the same target. StackBlaze accepts a flattened record.
 
 ## Verification
 
-After you configure the DNS record, StackBlaze automatically polls for it every 30 seconds. Verification typically completes within 60 seconds for new DNS records. If your TTL was previously set high, you may need to wait for the old record to expire.
+StackBlaze re-checks pending domains every few minutes. Click **Verify now** in the DNS dialog to check right away (at most once every 10 seconds). It looks the records up through your DNS and public resolvers, so a record counts as soon as either sees it.
 
-You can also verify manually with:
+A domain moves through these states:
+
+1. **Waiting for DNS** — the TXT or CNAME record is not visible yet.
+2. **DNS verified** — both records resolve; StackBlaze adds the hostname to its edge.
+3. **Issuing the HTTPS certificate** — usually a few minutes.
+4. **Live** — "Verified — HTTPS certificate issued."
+
+You can check your records yourself:
 
 ```bash title="Terminal"
-# Check CNAME resolution
+dig _stackblaze-verify.app.example.com TXT
 dig app.example.com CNAME
-
-# Check A record (apex)
-dig example.com A
 ```
 
 ## SSL certificates
 
-Once DNS verification succeeds, StackBlaze automatically provisions a Let's Encrypt TLS certificate via cert-manager. This usually takes 30–120 seconds. During provisioning, your domain will briefly show an SSL error, this resolves automatically.
+After DNS verification, the StackBlaze edge issues a Let's Encrypt certificate for the hostname and renews it automatically. See [SSL / TLS](/networking/ssl/).
 
-Certificates are renewed automatically before expiry. You don't need to do anything to maintain SSL.
+## How many domains
 
-## Multiple domains
+Custom domains with automatic TLS are included on every plan. A workspace can add at most **20 new hostnames per 24 hours**; removing a domain does not give the allowance back.
 
-| Plan | Custom domains per service |
-| --- | --- |
-| Free | 1 |
-| Starter | 5 |
-| Pro | Unlimited |
-| Enterprise | Unlimited |
+## Removing a domain
 
-## Domain redirects
-
-You can configure redirects between domains from **Settings → Domains**. Common configurations:
-
-- **www → apex**: `www.example.com` redirects to `example.com` (301)
-- **apex → www**: `example.com` redirects to `www.example.com` (301)
-- **Old domain → new domain**: permanently redirect a legacy domain to your current one
+Click the **−** next to the domain. StackBlaze removes it from the edge, then from the service.
 
 ## Troubleshooting
 
 ### Verification is stuck
 
-If domain verification is taking more than 5 minutes, check:
+If the domain stays on "Waiting for DNS", check:
 
-1. The DNS record is set to the correct value (copy-paste from the dashboard, don't retype)
-2. The TTL on any previous records has expired (lower TTL before making changes)
-3. No DNSSEC issues, use `dnssec-analyzer.verisignlabs.com` to check
-4. The domain isn't blocked by a CAA record that excludes Let's Encrypt
+1. Both records exist with the exact values from the dialog (copy-paste, don't retype)
+2. The TTL on any previous records has expired (lower the TTL before making changes)
+3. For an apex domain, your provider's ALIAS / flattening record points at the CNAME target
+4. No CAA record on the domain excludes Let's Encrypt
 
 ### CAA records
 
-If you have CAA records on your domain, ensure Let's Encrypt is permitted:
+If you have CAA records on your domain, make sure Let's Encrypt is allowed:
 
 ```text title="Required CAA record"
 Type:  CAA
 Name:  @
 Value: 0 issue "letsencrypt.org"
 ```
-
-:::note[Under the hood]
-Each custom domain creates a Kubernetes **Ingress** resource with a `cert-manager.io/cluster-issuer` annotation pointing to the Let's Encrypt ClusterIssuer. cert-manager handles the ACME HTTP-01 challenge via a temporary `/.well-known/acme-challenge/` route on the Ingress. Once issued, the certificate is stored as a Kubernetes Secret and mounted into the Ingress controller.
-:::

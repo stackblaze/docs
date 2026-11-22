@@ -21,16 +21,23 @@ Windows (PowerShell):
 irm https://stackblaze.com/install.ps1 | iex
 ```
 
+Homebrew (macOS and Linux):
+
+```bash
+brew install stackblaze/tap/stackblaze
+```
+
+If Homebrew stops with `Refusing to load formula ... from untrusted tap`, run `brew tap stackblaze/tap && brew trust --tap stackblaze/tap` and install again. Upgrade a Homebrew install with `brew upgrade stackblaze`.
+
 The installers download a standalone binary (no Node.js needed). On Linux and macOS it goes to `~/.local/bin` (or `/usr/local/bin` when run as root); on Windows to `%LOCALAPPDATA%\StackBlaze\bin`, which is added to your user `PATH`.
 
 | Installer variable | Purpose |
 | --- | --- |
-| `STACKBLAZE_VERSION` | Install a specific version, e.g. `1.0.0` (default: newest on the channel) |
+| `STACKBLAZE_VERSION` | Install a specific version, e.g. `1.1.11` (default: newest on the channel) |
 | `STACKBLAZE_CHANNEL` | `stable` (default) or `dev` (prereleases) |
-| `INSTALL_DIR` | Install location (`install.sh`) |
-| `STACKBLAZE_INSTALL_DIR` | Install location (`install.ps1`) |
+| `STACKBLAZE_INSTALL_DIR` | Install location (both installers; `install.sh` also reads the older `INSTALL_DIR`) |
 
-Update an installed CLI in place with [`stackblaze upgrade`](/cli/upgrade/). There is no npm package; use the installers above.
+Update an installed CLI in place with [`stackblaze upgrade`](/cli/upgrade/). There is no npm package; use the installers or Homebrew.
 
 ## Authenticate
 
@@ -38,13 +45,15 @@ Update an installed CLI in place with [`stackblaze upgrade`](/cli/upgrade/). The
 stackblaze login
 ```
 
-`login` starts a browser sign-in: it prints a one-click URL and a code, opens your browser, and waits until you approve. The token is saved to `~/.config/stackblaze/config.json` (file mode `600`; override the path with `STACKBLAZE_CONFIG`).
+`login` starts a browser sign-in: it prints a one-click URL and a code, opens your browser, and waits until you approve. The token is saved to `config.json` in the CLI config directory: `$XDG_CONFIG_HOME/stackblaze/` when set, else `~/.config/stackblaze/`, and `%APPDATA%\StackBlaze\` on Windows (file mode `600`; override the path with `STACKBLAZE_CONFIG`). A login saved by an older CLI in `~/.config/stackblaze/` keeps working.
 
 - On a server or over SSH: `stackblaze login --browserless` prints the URL and code without opening a browser.
 - With an API token: `stackblaze login --token sb_pat_…`
 - With email and password (2FA supported, interactive terminal only): `stackblaze login --password`
 
-Create API tokens in the dashboard under **Settings → API tokens**.
+Create API tokens in the dashboard under **Personal settings → API tokens**, or with [`stackblaze tokens create`](/cli/tokens/).
+
+A login acts in one organization. List yours with [`stackblaze orgs list`](/cli/orgs/) and switch with `stackblaze orgs switch <slug>`. To run one command in another organization without switching, add `--org <slug>`.
 
 In CI, skip `login` and set both environment variables. Commands read them on every run:
 
@@ -61,38 +70,41 @@ stackblaze whoami
 From a project folder:
 
 ```bash
-stackblaze init            # create a project (pipeline) and link this directory
+stackblaze init            # create a project and link this directory
 stackblaze up              # create the app and stream the build
 stackblaze logs            # recent app logs (add -f to follow)
 stackblaze open            # open the app's dashboard page (--app-url opens the app)
 ```
 
-- `init` writes `.stackblaze/project.json`, so later commands know which pipeline and phase to use.
+- `init` writes `.stackblaze/project.json`, so later commands know which project and environment to use.
 - In a git checkout with a remote, `up` builds from the remote and current branch, not from local files: push your commits first. In a folder without a git remote (or with `--local`), it uploads the folder and builds that. See [up](/cli/up/).
 - Run `up` again to ship changes: it updates the existing app and deploys again. It also saves the app name in the link when none is set yet.
 
 ## Scope and common flags
 
-Most commands act on one app, identified by a **pipeline** (project), **phase** (environment) and **app** (service). They are resolved in this order:
+Most commands act on one app (service), identified by a **project**, an **environment** and an **app**. The API calls projects *pipelines* and environments *phases*, which is why the environment variables and JSON fields use those names. They are resolved in this order:
 
-1. Flags: `-p, --pipeline`, `--phase`, `-a, --app`
+1. Flags: `-p, --project`, `-e, --env`, `-a, --app`
 2. Environment: `STACKBLAZE_PIPELINE`, `STACKBLAZE_PHASE`, `STACKBLAZE_APP`
 3. The nearest `.stackblaze/project.json`, searching upward from the current directory (written by [init](/cli/init/), [link](/cli/link/), [up](/cli/up/))
 
-When the phase is still unknown, app commands use `production`. Run [`stackblaze context`](/cli/context/) to see what resolves.
+When the environment is still unknown, app commands use `production`. Run [`stackblaze context`](/cli/context/) to see what resolves.
 
 | Flag | Purpose |
 | --- | --- |
-| `-p, --pipeline <name>` | Pipeline (project) |
-| `--phase <name>` | Phase (environment) |
-| `-a, --app <name>` | App (service) |
-| `--token <token>` | API token for this call |
-| `--api-url <url>` | API base URL for this call |
+| `-p, --project <name>` | Project (env `STACKBLAZE_PIPELINE`). The older `--pipeline` still works |
+| `-e, --env <name>` | Environment, default `production` (env `STACKBLAZE_PHASE`). The older `--phase` still works |
+| `-a, --app <name>` | App (env `STACKBLAZE_APP`) |
+| `--token <token>` | API token for this call (env `STACKBLAZE_TOKEN`) |
+| `--api-url <url>` | API base URL for this call (env `STACKBLAZE_API_URL`) |
+| `--org <slug>` | Run this one command in another organization (not saved; see [orgs](/cli/orgs/)) |
 | `-o, --output <text\|json>` | Output format |
 | `--json` | Same as `-o json` |
-| `-y, --yes` | Skip the confirmation prompt (destructive commands) |
+| `-y, --yes` | Never ask for confirmation |
 
-Each command page lists the flags that command accepts. Flags go after the command name: `stackblaze apps list -o json`.
+On `up`, `apps create`, `apps update`, `templates deploy` and `sandboxes create`, `--env` sets variables (`--env KEY=value`), so the environment is `--phase` there.
+
+Each command page lists the flags that command accepts. Flags go after the command name: `stackblaze apps list -o json`. `--api-url`, `--token`, `--org` and `-y` also work before it: `stackblaze --org acme apps list`.
 
 ## Output and exit codes
 
@@ -106,16 +118,17 @@ stackblaze apps list -o json | jq -r '.[].app'
 
 Streaming commands write one JSON record per line (NDJSON) instead: `up --ci`, `builds logs --ci` and `logs -f --json`.
 
-Commands that take `--wait` (`deployments rollback`, `addons add`, `templates deploy`) print **one** JSON document with `--wait --json`: the command's result with the readiness check under `wait`. A wait that does not end with the app running exits `1`, so `command --wait && next` only continues on a running app. Commands that open an interactive session (`ssh`, `shell`, `connect`, `run`) and the local tooling commands (`setup`, `completion`, `upgrade`, `docs`) have no JSON mode. Set `NO_COLOR=1` to turn off colour; colour is already off when output is not a terminal.
+Commands that take `--wait` (for example `up`, `deployments rollback`, `addons add`, `templates deploy`) print **one** JSON document with `--wait --json`: the command's result with the readiness check under `wait`. A wait that does not end with the app running exits `1`, so `command --wait && next` only continues on a running app. Commands that open an interactive session (`ssh`, `shell`, `connect`, `run`) and the local tooling commands (`setup`, `completion`, `upgrade`, `docs`) have no JSON mode. Set `NO_COLOR=1` to turn off colour; colour is already off when output is not a terminal. Set `STACKBLAZE_ASCII=1` (or `TERM=dumb`) for ASCII-only symbols.
 
 | Exit code | Meaning |
 | --- | --- |
 | `0` | Success |
 | `1` | Usage or validation error, failed build or deploy, an app that did not become ready, or a declined confirmation |
-| `2` | Authentication: no credentials, or the API rejected the token (401/403) |
-| `3` | API or network error: the API returned an error, could not be reached, or timed out |
+| `2` | Authentication: no credentials, a malformed token, or the API rejected the credentials (401, or a 403 that says the credential itself is wrong) |
+| `3` | API or network error: the API returned an error (including other 403s such as missing permission, and 402 upgrade required), could not be reached, or timed out; also features this platform does not offer |
+| `127` | `run`: the local program could not be started |
 
-Destructive commands ask for confirmation. When stdin is not a terminal (CI) the prompt gets no answer and the command exits `1` without changing anything, so pass `-y` in scripts.
+Destructive commands ask for confirmation. When stdin is not a terminal (CI, pipes, AI agents) the CLI never prompts: a command that would ask exits `1` at once without changing anything, so pass `-y` or the value as a flag in scripts. Set `STACKBLAZE_INTERACTIVE=1` to read prompt answers from stdin instead; if stdin ends before a prompt is answered, the command exits `1` and changes nothing.
 
 `stackblaze run` exits with the exit code of the command it runs, and `ssh` with the exit code of the remote shell.
 
@@ -150,8 +163,8 @@ jobs:
 ```
 
 - Keep the `actions/checkout` step: `up` reads the repository and branch from the checkout.
-- `up` builds exactly the pushed commit: it reads it from `GITHUB_SHA` (the pull request's head commit on `pull_request` events), `CI_COMMIT_SHA` or `BUILDKITE_COMMIT`, and the `--ci` deploy event includes it as `commitSha`. CI checkouts are often a detached HEAD; `up` then reads the branch from `GITHUB_HEAD_REF`, `GITHUB_REF_NAME`, `CI_COMMIT_REF_NAME` or `BUILDKITE_BRANCH` (see [branch detection](/cli/up/#branch-detection)). The very first build of a brand-new app uses the head of the branch.
-- `--wait` also waits up to 90 seconds for the new version to be running. Drop it to finish when the build succeeds.
+- `up` builds exactly the pushed commit: it reads it from the pull request's head commit on GitHub `pull_request` events, else `GITHUB_SHA`; `CI_MERGE_REQUEST_SOURCE_BRANCH_SHA` or `CI_COMMIT_SHA` on GitLab; or `BUILDKITE_COMMIT` (see [commit pinning](/cli/up/#commit-pinning)). The `--ci` deploy record includes it as `commitSha`. CI checkouts are often a detached HEAD; `up` then reads the branch from `GITHUB_HEAD_REF`, `GITHUB_REF_NAME`, `CI_COMMIT_REF_NAME` or `BUILDKITE_BRANCH` (see [branch detection](/cli/up/#branch-detection)). The very first build of a brand-new app uses the head of the branch.
+- `--wait` also waits for the new version to be running (up to 600 seconds; change it with `--timeout`). Drop it to finish when the build succeeds.
 - For an image app, run `stackblaze up --ci --wait --image ghcr.io/acme/web --tag "$GITHUB_SHA"`. Without `--wait`, an image deploy ends with `"state":"submitted"` because nothing checked that it runs.
 
 If the app [auto-deploys](/cicd/auto-deploy/) on push, you do not need this workflow.
@@ -161,7 +174,7 @@ If the app [auto-deploys](/cicd/auto-deploy/) on push, you do not need this work
 `stackblaze up --ci` streams NDJSON to stdout (one JSON object per line). Notices and upload progress go to stderr:
 
 ```json
-{"type":"deploy","pipeline":"my-project","phase":"production","app":"web","mode":"git","action":"updated","repository":"https://github.com/acme/web","branch":"main","buildstrategy":"nixpacks","changed":[]}
+{"type":"deploy","pipeline":"my-project","phase":"production","app":"web","mode":"git","action":"updated","repository":"https://github.com/acme/web","branch":"main","buildstrategy":"railpack","changed":[]}
 {"type":"build","build":"web-1a2b3c","state":"Active"}
 {"type":"log","build":"web-1a2b3c","container":"build","message":"…"}
 {"type":"build","build":"web-1a2b3c","state":"Succeeded","success":true}
@@ -169,7 +182,7 @@ If the app [auto-deploys](/cicd/auto-deploy/) on push, you do not need this work
 
 | `type` | Fields | When |
 | --- | --- | --- |
-| `deploy` | `pipeline`, `phase`, `app`, `mode` (`git`, `upload` or `docker`), `action` (`created` or `updated`), `changed` (settings changed on an existing app), plus `repository`, `branch`, `buildstrategy` (git), `uploadId`, `sha256`, `sizeBytes`, `files` (upload) or `image`, `tag` (docker) | Once, after the app is created or updated |
+| `deploy` | `pipeline` (project), `phase` (environment), `app`, `resourceName`, `displayName`, `mode` (`git`, `upload` or `docker`), `action` (`created` or `updated`), `changed` (settings changed on an existing app), plus `repository`, `branch`, `commitSha` (when pinned), `buildstrategy` (git), `uploadId`, `sha256`, `sizeBytes`, `files` (upload) or `image`, `tag` (docker) | Once, after the app is created or updated |
 | `build` | `build`, `state` (`Active`, `Succeeded`, `Failed`, …); the final record also has `success` | First seen, then on every state change |
 | `log` | `build`, `container`, `message` | Each build log line, as it is written |
 | `error` | `message` | The build failed or timed out |
@@ -182,14 +195,14 @@ Exit code is `1` when the build fails or times out, or when `--wait` ends withou
 
 Use the sidebar for every page. By task:
 
-- **Sign in and link:** [login](/cli/login/), [logout](/cli/logout/), [whoami](/cli/whoami/), [init](/cli/init/), [link](/cli/link/), [unlink](/cli/unlink/), [context](/cli/context/), [list](/cli/list/), [status](/cli/status/)
-- **Deploy and operate:** [up](/cli/up/), [deploy](/cli/deploy/), [redeploy](/cli/redeploy/), [restart](/cli/restart/), [scale](/cli/scale/), [down](/cli/down/), [resume](/cli/resume/), [wait](/cli/wait/), [open](/cli/open/), [inspect](/cli/inspect/)
-- **Observe and debug:** [logs](/cli/logs/), [metrics](/cli/metrics/), [events](/cli/events/), [diagnose](/cli/diagnose/), [ssh](/cli/ssh/), [shell](/cli/shell/), [run](/cli/run/), [connect](/cli/connect/)
-- **Resources:** [apps](/cli/apps/), [pipelines](/cli/pipelines/), [phases](/cli/phases/), [builds](/cli/builds/), [deployments](/cli/deployments/), [domain](/cli/domain/), [variables](/cli/variables/), [pending](/cli/pending/), [env](/cli/env/), [addons](/cli/addons/), [templates](/cli/templates/), [functions](/cli/functions/), [waf](/cli/waf/), [volume](/cli/volume/), [snapshots](/cli/snapshots/), [files](/cli/files/)
+- **Sign in and link:** [login](/cli/login/), [logout](/cli/logout/), [whoami](/cli/whoami/), [orgs](/cli/orgs/), [init](/cli/init/), [link](/cli/link/), [unlink](/cli/unlink/), [context](/cli/context/), [list](/cli/list/), [status](/cli/status/)
+- **Deploy and operate:** [up](/cli/up/), [deploy](/cli/deploy/), [redeploy](/cli/redeploy/), [restart](/cli/restart/), [scale](/cli/scale/), [down](/cli/down/), [resume](/cli/resume/), [wait](/cli/wait/), [open](/cli/open/), [inspect](/cli/inspect/), [import](/cli/import/)
+- **Observe and debug:** [logs](/cli/logs/), [metrics](/cli/metrics/), [events](/cli/events/), [diagnose](/cli/diagnose/), [ssh](/cli/ssh/), [shell](/cli/shell/), [run](/cli/run/), [connect](/cli/connect/), [proxy](/cli/proxy/), [log-drains](/cli/log-drains/)
+- **Resources:** [apps](/cli/apps/), [projects](/cli/projects/), [phases](/cli/phases/), [previews](/cli/previews/), [regions](/cli/regions/), [builds](/cli/builds/), [deployments](/cli/deployments/), [domain](/cli/domain/), [cdn](/cli/cdn/), [variables](/cli/variables/), [pending](/cli/pending/), [env](/cli/env/), [addons](/cli/addons/), [db](/cli/db/), [templates](/cli/templates/), [cron](/cli/cron/), [functions](/cli/functions/), [models](/cli/models/), [sandboxes](/cli/sandboxes/), [waf](/cli/waf/), [volume](/cli/volume/), [snapshots](/cli/snapshots/), [backups](/cli/backups/), [files](/cli/files/)
 - **Manifests (Infrastructure as Code):** [plan](/cli/plan/), [apply](/cli/apply/), [export](/cli/export/), [destroy](/cli/destroy/)
 - **AI tooling:** [agent](/cli/agent/), [setup](/cli/setup/) (aliases: [mcp](/cli/mcp/), [skills](/cli/skills/))
-- **Account and CLI:** [billing](/cli/billing/), [audit](/cli/audit/), [upgrade](/cli/upgrade/), [completion](/cli/completion/), [docs](/cli/docs/)
+- **Account and CLI:** [members](/cli/members/), [tokens](/cli/tokens/), [ssh-keys](/cli/ssh-keys/), [notifications](/cli/notifications/), [billing](/cli/billing/), [audit](/cli/audit/), [api](/cli/api/), [upgrade](/cli/upgrade/), [completion](/cli/completion/), [docs](/cli/docs/)
 
-Command aliases: `addon`, `app`, `build`, `deployment`, `domains`, `function` / `func` / `fn` / `fns`, `ls` (list), `new` (init), `phase`, `pipeline`, `snapshot`, `template`, `vars` / `var`, `volumes`.
+Command aliases: `addon`, `app`, `backup`, `build`, `database` (db), `deployment`, `domains`, `drains` / `logdrains` (log-drains), `environments` / `phase` (phases), `function` / `func` / `fn` / `fns`, `ls` (list), `member`, `model` / `ai-models`, `new` (init), `notification`, `org` / `organizations`, `pipelines` / `pipeline` / `project` (projects), `port-forward` (proxy), `preview`, `region`, `sandbox` / `sbx`, `snapshot`, `ssh-key`, `template`, `token`, `vars` / `var`, `volumes`.
 
 The REST API is in the [API reference](/reference/api/).

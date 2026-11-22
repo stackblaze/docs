@@ -1,52 +1,56 @@
 ---
 title: OpenSearch
-description: "Managed OpenSearch on StackBlaze: full-text search and analytics with single-node or multi-node high-availability clusters and automated backups."
+description: "Managed OpenSearch 3.9 on StackBlaze: full-text search and analytics over HTTPS, with high availability, opt-in backups, and private networking."
 ---
 
-Managed OpenSearch for full-text search and analytics, with single-node or multi-node high-availability clusters and automated backups.
+Managed OpenSearch for full-text search and analytics, run by the OpenSearch operator. New databases get OpenSearch 3.9.0.
 
-## Creating an OpenSearch instance
+:::note
+OpenSearch is off until a platform admin turns it on. If you do not see it under **+ Service → Databases**, it is not available on your platform yet.
+:::
 
-From the dashboard, click **New service**, then **Database**, then **OpenSearch**. Pick a storage size and a plan, and StackBlaze provisions the cluster for you.
+## Creating an OpenSearch database
 
-Connect OpenSearch to your service from the **Environment** tab. StackBlaze injects `OPENSEARCH_URL` automatically, so your application can read the endpoint and credentials from the environment.
+From **+ Service → Databases**, add **OpenSearch**. It appears on the canvas as a staged change. Apply your staged changes and StackBlaze creates it with the catalog defaults: one node with an 8 GB data volume.
 
-## Connecting
+To connect a service, open the database, go to **Settings → Connection**, and switch the service on.
 
-OpenSearch exposes an HTTP REST API over TLS on port `9200`. The injected `OPENSEARCH_URL` points at the internal cluster endpoint and includes the credentials, so you rarely need to assemble it by hand.
+## Connection variables
 
-```text title="Internal endpoint (OPENSEARCH_URL)"
-https://user:password@[service-name]:9200
-```
+OpenSearch serves its REST API over HTTPS on port `9200`, with the security plugin on. The certificate is signed by the cluster's own CA.
 
-Because the endpoint is internal, it is reachable from services in the same project over private networking. Most OpenSearch and Elasticsearch client libraries accept this URL directly.
+| Variable | Value |
+| --- | --- |
+| `OPENSEARCH_HOST`, `OPENSEARCH_PORT` | Internal hostname, `9200` |
+| `OPENSEARCH_URL` | `https://[service-name]:9200` (no credentials in it) |
+| `OPENSEARCH_USERNAME`, `OPENSEARCH_PASSWORD` | Admin user, from a secret |
+| `OPENSEARCH_CA_CERT` | The cluster's CA certificate, to trust in your client |
+| `ELASTICSEARCH_*` | The same values under Elasticsearch names (`ELASTICSEARCH_URL`, `ELASTICSEARCH_USERNAME`, …), for clients that only know those |
 
-## Standard vs high availability
+The certificate names the internal hostname, so hostname verification works when your client trusts `OPENSEARCH_CA_CERT`.
 
-You choose the topology when creating the instance. **Standard** runs a single node and is a good fit for development and smaller workloads. **High availability** runs a multi-node cluster where each index has primary and replica shards spread across nodes, so the loss of a single node does not lose data or take the cluster offline.
+## High availability
 
-| | Standard | High availability |
-| --- | --- | --- |
-| Nodes | Single node | Multiple nodes |
-| Shard layout | Primary shards only | Primary and replica shards across nodes |
-| Node loss | Cluster unavailable | Stays available, no data loss |
-| Best for | Development and testing | Production workloads |
+Open the database, go to **Settings → HA**, and click **Enable HA**. The cluster grows to 3 nodes. HA needs a plan with database high availability (Pro or Business) and is one-way. Give your indexes at least one replica shard so a node loss does not lose data.
 
 ## Indexing and searching
 
-OpenSearch speaks a JSON over HTTP API. The example below creates an index, indexes a single document, and runs a match query against `OPENSEARCH_URL`.
+OpenSearch speaks JSON over HTTP. The example writes the CA to a file, then creates an index, indexes a document, and runs a match query.
 
 ```bash title="index-and-search.sh"
+printf '%s' "$OPENSEARCH_CA_CERT" > /tmp/opensearch-ca.crt
+OS="curl -s --cacert /tmp/opensearch-ca.crt -u $OPENSEARCH_USERNAME:$OPENSEARCH_PASSWORD"
+
 # Create an index
-curl -X PUT "$OPENSEARCH_URL/articles"
+$OS -X PUT "$OPENSEARCH_URL/articles"
 
 # Index a document
-curl -X POST "$OPENSEARCH_URL/articles/_doc" \
+$OS -X POST "$OPENSEARCH_URL/articles/_doc" \
   -H 'Content-Type: application/json' \
   -d '{ "title": "Hello OpenSearch", "body": "Full-text search made simple." }'
 
 # Search the index
-curl -X GET "$OPENSEARCH_URL/articles/_search" \
+$OS -X GET "$OPENSEARCH_URL/articles/_search" \
   -H 'Content-Type: application/json' \
   -d '{ "query": { "match": { "title": "OpenSearch" } } }'
 ```
@@ -57,8 +61,4 @@ Refreshing is near real time. If a freshly indexed document does not appear in s
 
 ## Backups
 
-Every OpenSearch instance is protected by automated, encrypted backups that follow the platform backup policy. OpenSearch also supports snapshot repositories, so you can take and restore index snapshots through its native snapshot API when you need application-level control. See [Backups & recovery](/databases/backups/) for details on how backups are scheduled, encrypted, and restored.
-
-:::note[Under the hood]
-OpenSearch is the open-source search and analytics engine forked from Elasticsearch. StackBlaze runs it through a Kubernetes operator with persistent volumes for index data, and high-availability clusters spread primary and replica shards across nodes so the cluster keeps serving reads and writes through a node failure.
-:::
+Backups are off until you turn on a schedule for the environment. Recovery points hold an OpenSearch snapshot archive of the database. A restore always creates a new database next to the running one. See [Backups & recovery](/databases/backups/).

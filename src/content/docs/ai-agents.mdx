@@ -1,0 +1,63 @@
+---
+title: AI agents
+description: Hosted AI agents on the project canvas. Your instructions, a model behind an AI Gateway, a team chat, an API, and triggers.
+---
+
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+An **AI agent** is a service on your project canvas that answers with your instructions. It has a team chat, an HTTP API, and triggers that start chats on their own: a schedule, a webhook, or a chat bubble on your website.
+
+You set it up in the dashboard. There is no code to write and no image to build. The agent runs in its environment like any other service.
+
+## The parts
+
+| Part | What it is |
+| --- | --- |
+| **Instructions** | What the agent does and how it answers. Up to 20,000 characters. |
+| **Model** | The model it uses. By default the agent gets its own **AI Gateway**, which holds your provider key. The agent never holds that key. |
+| **Tools** | What the agent may do while it answers: read and search its files, search the web, keep a task list. Shell and file-editing tools are off unless you turn them on. |
+| **Knowledge** | Files the agent reads and searches: help articles, policies, exports. |
+| **Skills** | Step-by-step notes for one kind of task, read when a request matches. |
+| **Integrations** | Outside services the agent uses as tools, each a hosted MCP server. |
+| **Triggers** | Time (schedules), Webhook, API keys, and the Website widget. |
+| **Sessions** | Every chat the agent had, from every channel, with its transcript. |
+| **Evals** | Repeatable tests that check whether quality holds after a change. |
+| **Optimizations** | Cheaper ways to run the agent, measured against its own recent sessions. |
+
+Each part is a section tab on the agent's **Agent** tab: General, Knowledge, Skills, Integrations, Triggers, Evals, Optimizations, Sessions. Every section title has an info icon that explains the section.
+
+## What it runs on and what it costs
+
+The agent is a service with a 1 GB volume for its files, sessions, evals, and optimization runs. Its chat history is kept in PostgreSQL. With its own AI Gateway, the agent and the gateway share one PostgreSQL and show as one app on the canvas. Both run in your environment and use resources like any service. See [Plans](/reference/pricing/).
+
+Model calls go through the gateway to your provider with your key, so your provider bills the tokens. With an [AI model](/cli/models/) of the same environment, the agent uses that model instead.
+
+Every chat uses tokens: team chats, API calls, webhooks, schedules, widget visitors, eval trials, and optimization runs. Sessions show the tokens in and out of each chat.
+
+## Quick start
+
+1. Open a project and add a service on the canvas. Pick **AI agent**.
+2. Under **Start from**, pick a template (Customer support, FAQ bot, Internal helpdesk, Webhook triage, Daily report) or start blank.
+3. Under **Model**, pick a provider and paste its API key. Deploy also deploys an AI Gateway for this agent, in about two minutes.
+4. Click **Deploy**.
+5. Open the agent from the canvas. Upload files in **Knowledge**, then use **Open chat** on its card to talk to it.
+6. To call it from your code, create a key in **Triggers → API**. See [Triggers](/ai-agents/triggers/).
+
+If you don't see **AI agent** in the add menu, AI agents are not enabled for your organization.
+
+## In this section
+
+<CardGrid>
+  <LinkCard title="Create an agent" href="/ai-agents/create/" description="Templates, the model and its AI Gateway, instructions, tools, and updates." />
+  <LinkCard title="Knowledge" href="/ai-agents/knowledge/" description="Files the agent reads and searches." />
+  <LinkCard title="Skills" href="/ai-agents/skills/" description="Steps for one kind of task, read when a request matches." />
+  <LinkCard title="Integrations" href="/ai-agents/integrations/" description="Hosted MCP servers as tools." />
+  <LinkCard title="Triggers" href="/ai-agents/triggers/" description="Schedules, webhooks, API keys, and the website widget." />
+  <LinkCard title="Sessions" href="/ai-agents/sessions/" description="Every chat, by channel, with its transcript." />
+  <LinkCard title="Evals" href="/ai-agents/evals/" description="Test cases, checks, and results on three axes." />
+  <LinkCard title="Optimizations" href="/ai-agents/optimizations/" description="Cheaper setups tried against recent sessions." />
+  <LinkCard title="API" href="/ai-agents/api/" description="StackBlaze routes for agents and the agent's own chat API." />
+  <LinkCard title="Security and limits" href="/ai-agents/security/" description="Keys, the gateway, public agents, and limits." />
+</CardGrid>
+
+To operate StackBlaze itself from an editor or terminal agent, see [AI](/ai/) and the [MCP server](/ai/mcp/).

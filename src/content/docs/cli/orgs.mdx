@@ -1,0 +1,40 @@
+---
+title: stackblaze orgs
+description: "List your organizations and switch the one your login acts in."
+---
+
+A login acts in one organization. `orgs list` shows yours, and `orgs switch` moves the saved login to another one. Aliases: `org`, `organizations`.
+
+## Usage
+
+```text
+stackblaze orgs list
+stackblaze orgs switch <slug>
+```
+
+| Subcommand | Description |
+| --- | --- |
+| `list` (alias `ls`) | Your organizations; `*` marks the one this login acts in |
+| `switch <slug>` | Switch the saved login to another organization (slug, ID or name) |
+
+Both subcommands accept `--token`, `--api-url`, `-o, --output` and `--json` (see [scope and output flags](/cli/#scope-and-common-flags)).
+
+## Switching
+
+`orgs switch` saves a token scoped to the new organization in the same place [`login`](/cli/login/) saves credentials. If `STACKBLAZE_TOKEN` or `--token` is set, it still takes precedence over the saved login in that shell.
+
+- **Browser login** (`stackblaze login`): the token is exchanged for a new one in that organization, and the old one is revoked.
+- **Password login** (`stackblaze login --password`): the session switches.
+- **Tokens created on the dashboard's tokens page** are pinned to their organization and cannot switch (exit `3`). Run `stackblaze login`, or use a token created in that organization.
+
+You must be a member of the organization. A suspended organization is refused, and an organization that enforces SSO needs a login made through your identity provider (exit `3`).
+
+To run a single command in another organization without saving anything, use the global `--org <slug>` flag instead. Naming the organization you are already in does nothing.
+
+## Examples
+
+```bash
+stackblaze orgs list
+stackblaze orgs switch side-project
+stackblaze apps list --org acme        # this command only
+```

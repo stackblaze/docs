@@ -1,0 +1,31 @@
+---
+title: Knowledge
+description: Files the agent reads and searches with its read, grep, and glob tools.
+---
+
+**Knowledge** holds reference files the agent reads and searches: help articles, policies, price lists, exports. Open the agent, go to **Agent → Knowledge**, and click **Upload files**.
+
+The agent uses its `read`, `grep`, and `glob` tools on these files. If those tools are off in **General → Tools**, it cannot see them.
+
+## Files
+
+| | |
+| --- | --- |
+| Types | `.md`, `.txt`, `.csv`, `.json`, `.html`, `.htm`, `.xml`, `.yaml`, `.yml`, `.pdf` |
+| Size | Up to 10 MB per file |
+| Totals | Up to 200 files and 200 MB per agent |
+| Names | Letters, digits, `.`, `_`, `-`, and spaces, up to 100 characters. The folder is flat. |
+
+Uploading a file with an existing name replaces it. **Delete** removes one.
+
+Uploads save at once; they are not staged. New chats use the files. Open chats keep what they had.
+
+## How the agent uses them
+
+Say so in the instructions. For example: "Answer using only the files in your knowledge folder. Search them before you answer." The FAQ bot and Customer support templates already do this.
+
+The agent can read its knowledge folder but nothing else on the service. See [Security and limits](/ai-agents/security/).
+
+## API
+
+`GET`, `PUT`, and `DELETE` on `/api/ai-agents/{pipeline}/{phase}/{name}/knowledge[/{file}]`. Send the raw file as the body with `Content-Type: application/octet-stream`. See [API](/ai-agents/api/).

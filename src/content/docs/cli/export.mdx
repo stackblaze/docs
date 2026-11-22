@@ -1,24 +1,30 @@
 ---
 title: stackblaze export
-description: "Write live pipelines and apps out as manifest files."
+description: "Write live projects and apps out as manifest files."
 ---
 
-Writes one YAML file per pipeline (`<pipeline>.pipeline.yaml`) and per app (`<pipeline>.<phase>.<app>.app.yaml`) that [`plan`](/cli/plan/) and [`apply`](/cli/apply/) accept.
+Writes one YAML file per project (`<project>.project.yaml`) and per app (`<project>.<environment>.<app>.app.yaml`) that [`plan`](/cli/plan/) and [`apply`](/cli/apply/) accept. A `<project>.pipeline.yaml` left by an older CLI is replaced by the new file.
 
 ## Usage
 
 ```text
-stackblaze export [--out <dir>] [-p <pipeline>] [-o text|json]
+stackblaze export [--out <dir>] [-p <project>] [--reveal] [--all] [-o text|json]
 ```
 
 | Flag | Description |
 | --- | --- |
 | `--out <dir>` | Output directory (default `stackblaze`) |
-| `-p, --pipeline <name>` | Export one pipeline (default: all you can see) |
+| `-p, --project <name>` | Export one project (default: all you can see) |
+| `--reveal`, `--include-secrets` | Write variable values in plain text (default: masked as `********`) |
+| `--all` | Keep platform-injected variables in app specs |
 
 Also accepts `--token`, `--api-url`, `-o, --output` and `--json` (see [common flags](/cli/#scope-and-common-flags)).
 
-Infrastructure as Code must be enabled. Exported app specs include variable values; review the files before committing them.
+Without `--reveal`, variable values (scheduled-task variables too), basic-auth passwords, shared add-on credentials and registry passwords are written as `********`. `plan` and `apply` treat `********` as "keep the current value", so an export applies back unchanged. An app's size is written as resources, so export followed by apply never resizes it. The project's Infrastructure as Code switch is not exported; use [`stackblaze projects iac`](/cli/projects/).
+
+`export` only reads, so it works whether or not Infrastructure as Code is on for a project. Your platform admin may turn it off. With `--reveal`, review the files before committing them.
+
+With `-o json` the result is `{"dir", "pipelines", "apps", "files", "secretsMasked"}`.
 
 ```bash
 stackblaze export --out ./infra -p shop

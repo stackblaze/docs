@@ -14,7 +14,7 @@ stackblaze agent [prompt...] [options]
 | Flag | Description |
 | --- | --- |
 | `--prompt <text>` | One-shot prompt (or pass it positionally, not both) |
-| `-p, --pipeline <name>`, `--phase <name>`, `-a, --app <name>` | Give the conversation this scope |
+| `-p, --project <name>`, `-e, --env <name>`, `-a, --app <name>` | Give the conversation this scope |
 | `--json` | One-shot only: print `sessionId`, `response`, `toolCalls` and `model` as JSON |
 | `--plain` | Plain text, without the streaming terminal UI |
 | `-y, --yes` | Approve the agent's destructive actions automatically |
@@ -23,7 +23,7 @@ stackblaze agent [prompt...] [options]
 
 Also accepts `--token`, `--api-url` and `-o, --output`.
 
-`-p` means `--pipeline`, as in every other command. Pass the prompt as text: `stackblaze agent "why is my app slow?"`.
+`-p` means `--project`, as in every other command. Pass the prompt as text: `stackblaze agent "why is my app slow?"`.
 
 ## Examples
 
@@ -39,4 +39,4 @@ stackblaze agent --session-id 3f2c…
 
 When the agent wants to take a destructive action, it asks you first. Without a terminal, those requests are declined unless you pass `-y`. A one-shot run whose turn fails exits `3`.
 
-Sessions are saved under `~/.config/stackblaze/`.
+Sessions are saved in the `sessions` folder of the CLI config directory (`~/.config/stackblaze/`, or `$XDG_CONFIG_HOME/stackblaze/`; `%APPDATA%\StackBlaze\` on Windows). Set `STACKBLAZE_SESSIONS_DIR` to use another folder.

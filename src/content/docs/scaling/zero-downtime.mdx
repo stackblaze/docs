@@ -1,54 +1,48 @@
 ---
 title: Zero-Downtime Deployments
-description: Every StackBlaze deploy uses a rolling update strategy. New pods pass readiness probes before old ones terminate, no downtime for your users.
+description: StackBlaze deploys are rolling updates. New instances pass their health check before old ones stop, so users see no downtime.
 ---
 
 import Diagram from '../../../components/Diagram.astro';
 
-Every deploy on StackBlaze uses a rolling update strategy. New pods become ready before old ones are terminated, your users never see an outage.
+Deploys on StackBlaze are rolling updates. New instances become healthy before old ones stop, so your users do not see an outage.
 
 ## How rolling updates work
 
-When you push a new deploy, StackBlaze starts a new pod running the updated version of your code. The new pod goes through your configured readiness probe. Only once it returns a successful response does Kubernetes begin sending traffic to it, and only then does the old pod start receiving fewer requests.
+When you deploy, StackBlaze first builds the image and runs your pre-deploy command, if you set one. Then it starts new instances on the new version. Each new instance gets traffic only after it passes its health check; old instances are stopped after that.
 
-The update continues pod-by-pod until all replicas are running the new version. The timeline looks like this:
+The update continues instance by instance until all of them run the new version:
 
 <Diagram file="zero-downtime-rolling.svg" alt="Timeline of rolling update replacing v1 pods with v2 pods one at a time" />
 
-*New pods pass readiness checks before old pods terminate, traffic never drops to zero.*
+*New instances pass their health check before old ones stop, so traffic never drops to zero.*
 
-1. New pod starts with updated image
-2. Pre-deploy command runs (e.g. `npm run migrate`)
-3. Readiness probe starts polling the health path (default `/`) every 10 seconds
-4. Once 3 consecutive successful responses received, pod is marked `Ready`
-5. Traffic begins routing to the new pod
-6. Old pod receives `SIGTERM`, finishes in-flight requests, then exits
+1. The new image is built
+2. The pre-deploy command runs in the new image (for example `npm run migrate`); if it fails, the deploy stops here
+3. A new instance starts
+4. StackBlaze probes the health check path until it answers
+5. Traffic starts going to the new instance
+6. An old instance gets `SIGTERM`, finishes in-flight requests, then exits
 
-## Rolling update configuration
+## When a deploy is not rolling
 
-StackBlaze configures rolling updates with the following defaults:
+- **A volume that only one instance can mount** (ReadWriteOnce): the old instance stops before the new one starts, so expect a brief gap on each deploy. The **Deploy** section of the service settings warns about this.
+- **Health checks turned off**: rollouts are not gated; new instances take traffic as soon as they start.
 
-```yaml title="Kubernetes rolling update strategy"
-strategy:
-  type: RollingUpdate
-  rollingUpdate:
-    maxSurge: 1        # One extra pod spun up during the deploy
-    maxUnavailable: 0  # No capacity reduction during the deploy
-```
+## Health checks
 
-With `maxUnavailable: 0`, you always have full capacity during a deploy. With `maxSurge: 1`, one additional pod is created above your replica count during the update, then removed once the update completes.
+Health checks are on by default for services with a public or internal URL. Configure them under the service **Settings → Health checks**:
 
-## Readiness probes
+| Setting | Default for a new service | Meaning |
+| --- | --- | --- |
+| **Path** | `/` | HTTP path StackBlaze requests (`GET`) |
+| **Startup** | 90 s | How long a new instance may take to start |
+| **Timeout** | 3 s | Max wait for one response |
+| **Interval** | 10 s | Time between probes |
 
-A readiness probe tells Kubernetes when your pod is ready to serve traffic. Without a properly configured readiness probe, Kubernetes has no way to know if your application has finished starting up, it would start sending traffic before your app is ready to handle it.
+Use a dedicated path such as `/health` that answers fast and returns 200 only when the app can serve real requests. Turn the switch off to deploy without a health gate. After you change it, **Reset** returns the service to the default.
 
-### Default probe
-
-By default, StackBlaze probes `GET /` on the port your service listens on. The probe expects a 2xx HTTP response. A dedicated path such as `/health` is recommended.
-
-### Configuring the probe path
-
-Set a custom readiness probe path in **Settings → Health Check → Readiness probe path**. Use a path that is fast to respond (no database queries) and returns 200 only when the application is ready to handle real requests.
+In [`stackblaze.yaml`](/blueprint/), set `healthCheckPath`.
 
 ### Implementing a health endpoint
 
@@ -88,14 +82,14 @@ async def ready():
 ```
 
 :::tip[Keep health checks fast]
-The readiness probe runs every 10 seconds during normal operation. If it makes slow queries or external HTTP calls, it can cause spurious "not ready" states. Keep health endpoints lightweight, check that your server is up, not that every dependency is working perfectly.
+The health check runs at its interval (10 seconds by default) while the service runs. If it makes slow queries or external HTTP calls, it can cause spurious "not ready" states. Keep health endpoints lightweight, check that your server is up, not that every dependency is working perfectly.
 :::
 
 ## Pre-deploy commands and migrations
 
-The most dangerous part of a deploy is running database migrations while the old code is still running. StackBlaze lets you define a pre-deploy command that runs before the rolling update starts. This is the safest place to run migrations.
+The most dangerous part of a deploy is running database migrations while the old code is still running. StackBlaze lets you define a pre-deploy command that runs in the freshly built image before the new version starts. This is the safest place to run migrations.
 
-Configure the pre-deploy command in **Settings → Deploy → Pre-deploy command**.
+Set it in **Settings → Deploy → Pre-deploy**, or `preDeployCommand` in `stackblaze.yaml`. The image needs a shell.
 
 ### Writing safe migrations
 
@@ -107,12 +101,12 @@ Since both the old and new versions of your code may run simultaneously during a
 - **Adding a non-nullable column without a default**: not safe. Old code won't know to set it. Add with a default value first, then make it required later.
 
 :::caution[Failed migrations block the deploy]
-If your pre-deploy command exits with a non-zero code, the deploy is cancelled and no pods are updated. Your current version keeps running unaffected. Always test migrations on a staging environment first.
+If your pre-deploy command exits with a non-zero code, the deploy stops and no instances are updated. Your current version keeps running unaffected. Always test migrations on a staging environment first.
 :::
 
 ## Graceful shutdown
 
-When Kubernetes terminates a pod, it sends `SIGTERM` to the main process. Your application has up to 30 seconds to finish handling in-flight requests before it receives `SIGKILL`. Handle this signal to avoid dropping requests.
+When an instance is stopped, its main process gets `SIGTERM`, then a grace period to finish in-flight requests before it is killed. Handle this signal to avoid dropping requests.
 
 ```ts title="Graceful shutdown (Node.js)"
 import { createServer } from 'http'
@@ -139,14 +133,10 @@ process.on('SIGTERM', () => {
     process.exit(0)
   })
 
-  // Forcefully shut down after 25s (leave buffer before Kubernetes SIGKILL at 30s)
+  // Force exit if connections don't drain in time
   setTimeout(() => {
     console.log('Force exit after timeout')
     process.exit(0)
   }, 25_000)
 })
 ```
-
-:::note[Under the hood]
-StackBlaze uses the Kubernetes **RollingUpdate** deployment strategy with `maxSurge: 1` and `maxUnavailable: 0`. The **readiness gate** ensures pods only receive traffic after passing the configured probe. When a pod is terminated, Kubernetes removes it from the Service's endpoints list before sending `SIGTERM`, so no new requests are routed to it. The `terminationGracePeriodSeconds` is set to 30 seconds.
-:::

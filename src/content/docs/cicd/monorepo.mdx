@@ -1,11 +1,11 @@
 ---
 title: Monorepo Deployments
-description: Deploy multiple services from a single GitHub repository on StackBlaze. Configure root directories, build filters, and per-service commands for Turborepo, Nx, pnpm workspaces, and other monorepo setups.
+description: Deploy multiple services from a single GitHub repository on StackBlaze. Configure build paths, build filters, and per-service commands for Turborepo, Nx, pnpm workspaces, and other monorepo setups.
 ---
 
 import Diagram from '../../../components/Diagram.astro';
 
-StackBlaze supports monorepos out of the box. Multiple services can point to the same GitHub repository, each with its own root directory, build command, build filters, and deploy history. Turborepo, Nx, pnpm workspaces, and plain npm/yarn monorepos all work.
+StackBlaze supports monorepos out of the box. Multiple services can point to the same GitHub repository, each with its own build path, build command, build filters, and deploy history. Turborepo, Nx, pnpm workspaces, and plain npm/yarn monorepos all work.
 
 Build filters ensure that only the relevant services rebuild when you push a change. A commit that only touches `apps/web` won't trigger a build for `apps/api`, saving build time and preventing unnecessary churn.
 
@@ -30,7 +30,7 @@ acmecorp/
 
 ## Per-service settings
 
-| Service | Root Dir | Build Command | Build Filter |
+| Service | Build path | Build command | Build filter (`includedPaths`) |
 | --- | --- | --- | --- |
 | `web-frontend` | `apps/web` | `turbo run build --filter=web` | `apps/web/**`, `packages/**` |
 | `web-api` | `apps/api` | `turbo run build --filter=api` | `apps/api/**`, `packages/**` |
@@ -56,33 +56,44 @@ acmecorp/
 # turbo run build --filter=api   (builds api + its deps)
 ```
 
-:::note[Under the hood]
-- **Independent build Jobs**: each service gets its own Kubernetes build Job even when they share a repository. Build jobs for different services can run in parallel, so a commit touching multiple packages can deploy all affected services simultaneously.
-- **Root directory isolation**: the build Job sets the working directory to your configured root directory after clone. Your build command runs in that directory context. Output artifacts are packaged from there into the Docker image.
-- **Build filter evaluation**: StackBlaze compares the set of changed files in the push payload against each service's build filter patterns. A service only gets a build Job queued if at least one changed file matches its filter patterns. Evaluation is O(n) per service per push.
+:::note[How it works]
+- **Separate builds**: each service gets its own build, even when services share a repository. A push that touches several services builds each of them.
+- **Build path**: the build runs with your build path as its context. The Dockerfile path and build path are both relative to the repo root.
+- **Build filters**: StackBlaze compares the changed files in the push with each service's filters. A service only builds when at least one changed file counts. With no filters, a service with a build path such as `apps/web` watches `apps/web/**`. When GitHub does not report the changed files, every service builds.
 :::
 
 ## Step by step
 
-1. **Create a separate service for each app**
+1. **Add the repository**
 
-   Each application in your monorepo becomes its own StackBlaze service. Create them individually from the dashboard, they can all point to the same GitHub repository. Each service will have its own build configuration, environment variables, and deploy history.
+   Click **+ Service → GitHub repository** and pick the repo. StackBlaze scans it and offers one service per app folder it can build (a folder with a Dockerfile or a language manifest such as `package.json`). You can also add each service yourself; they can all point to the same repository. Each has its own variables, settings, and deploy history.
 
-2. **Set the root directory per service**
+2. **Set the build path per service**
 
-   For each service, navigate to Settings → Build → Root Directory. Enter the path to the app within the monorepo, for example `apps/web` for a Next.js frontend or `packages/api` for an API server. StackBlaze runs the build command from this directory.
+   In the service's **Settings**, set **Build path** to the app's folder, for example `apps/web`. Paths are relative to the repo root. With **Docker** as the build method, pick the **Dockerfile** too (for example `apps/web/Dockerfile`).
 
 3. **Configure build filters**
 
-   Set build filters to prevent unnecessary builds. For example, on the "web" service, set the trigger path to `apps/web/**` and `packages/shared/**`. Changes outside these paths will not trigger a build for this service, saving build minutes and avoiding redundant deploys.
+   By default a service only rebuilds for changes under its build path. If it also depends on shared code, list the paths in `stackblaze.yaml`:
 
-4. **Set the correct build command**
+   ```yaml title="stackblaze.yaml"
+   services:
+     - name: web-frontend
+       rootDir: apps/web
+       buildFilter:
+         includedPaths: ["apps/web/**", "packages/**"]
+         ignoredPaths: ["**/*.md"]
+   ```
 
-   Configure the build command appropriate for your monorepo tool. For Turborepo: `turbo run build --filter=web`. For Nx: `nx build web`. For pnpm workspaces: `pnpm --filter web run build`. StackBlaze runs this from the repository root unless you've set a root directory.
+   Patterns are gitignore-style globs. `ignoredPaths` wins over `includedPaths`.
+
+4. **Set the build command**
+
+   Leave **Build command** blank to use the framework default, or set one for your monorepo tool. For Turborepo: `turbo run build --filter=web`. For Nx: `nx build web`. For pnpm workspaces: `pnpm --filter web run build`.
 
 5. **Set the start command**
 
-   Set the start command to run your specific app. For a Node.js API: `node apps/api/dist/index.js`. For a Next.js app with a custom root dir set: `node server.js`. The start command runs from your configured root directory.
+   Set **Start command** to run your app, for example `node dist/index.js`. Leave it blank to use the framework default.
 
 ## Next steps
 

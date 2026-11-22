@@ -1,20 +1,38 @@
 ---
 title: Agent connectors
-description: Cursor, Claude, and other MCP clients.
+description: Cursor, Claude Code, Codex, VS Code, Windsurf, OpenCode, and other MCP clients.
 ---
 
-Any client that speaks MCP HTTP can drive StackBlaze. We test:
+Any client that speaks MCP over HTTP and can send an `Authorization` header can drive StackBlaze. See [MCP server](/ai/mcp/) for the URL and token.
 
-- **Cursor** — MCP server entry in `mcp.json` (see [MCP server](/ai/mcp/)).
-- **Claude** (Desktop / Code) — same URL and bearer header.
-- **Other editors** — anything that can set `Authorization` on the MCP transport.
+## Write the config with the CLI
 
-The CLI can write the config for you:
+`stackblaze setup mcp --ide <name>` adds a `stackblaze` server to the editor's MCP config. Other servers and settings in the file are kept. The entry carries your API token, and the file is written with `0600` permissions.
+
+| `--ide` | File |
+| --- | --- |
+| `cursor` (default) | `~/.cursor/mcp.json` |
+| `claude` (Claude Code) | `~/.claude.json` |
+| `codex` | `~/.codex/config.toml` |
+| `vscode` (alias `copilot`) | VS Code user `mcp.json` |
+| `windsurf` | `~/.codeium/windsurf/mcp_config.json` |
+| `opencode` | `~/.config/opencode/opencode.json` |
 
 ```bash
-stackblaze setup mcp
-stackblaze setup skills
-stackblaze setup agent
+stackblaze setup mcp --ide claude
+stackblaze setup mcp --ide vscode --print > .vscode/mcp.json   # print instead of writing
 ```
 
-There is no Slack or Discord “StackBlaze Agent” bot on this control plane. Operate the canvas from an editor, the dashboard, or CI (`stackblaze up --ci`).
+`--print` prints the snippet with a placeholder instead of your token.
+
+## Agent skills
+
+`stackblaze setup skills` installs a StackBlaze skill file for coding agents: `~/.agents/skills/stackblaze/SKILL.md`, plus the Cursor and Claude Code skill folders (`--agent cursor`, `claude`, or `all`).
+
+`stackblaze setup agent` does both: it installs the skills and configures MCP for every editor it detects.
+
+## In the terminal
+
+`stackblaze agent` is a chat assistant in your terminal, backed by the same agent and tools as the dashboard chat. See [stackblaze agent](/cli/agent/).
+
+In CI, use `stackblaze up --ci` for NDJSON build output. See the [CLI](/cli/).

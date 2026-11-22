@@ -1,0 +1,102 @@
+---
+title: Triggers
+description: Start agent chats on a schedule, from a webhook, from your code with an API key, or from a chat bubble on your website.
+---
+
+**Triggers** are everything that starts a chat without someone opening it. Open the agent and go to **Agent → Triggers**. Pick **Time**, **Webhook**, **API**, or **Widget**, or **All** to see every kind.
+
+Every chat a trigger starts shows in [Sessions](/ai-agents/sessions/) under its channel.
+
+## Time
+
+**Schedules** send the agent a message on a schedule, like a daily report. Each run is a new chat.
+
+Click **Add schedule** and fill in:
+
+| Field | What to enter |
+| --- | --- |
+| **When** | A cron expression, or pick a preset. |
+| **Time zone** | `UTC` or a zone such as `Europe/Berlin`. Times are wall-clock times there, daylight saving included. |
+| **On** | Turn a schedule off without removing it. |
+| Message | The first message of each run, up to 4,000 characters. |
+
+The cron expression has 5 fields: minute, hour, day of month, month, day of week. Each is `*`, a number, a range `a-b`, a step `*/n`, `a-b/n` or `a/n`, or a comma list. Day of week is 0 to 7 (0 and 7 are Sunday). Names like `MON` are not accepted. When both day fields are restricted, a day that matches either one runs.
+
+```text
+0 9 * * 1-5    09:00 on weekdays
+*/30 * * * *   every 30 minutes
+```
+
+A run is skipped while the previous run of the same schedule is still going. An agent can have up to 20 schedules. Schedules are [staged changes](/deploy/staged-changes/): commit them to apply.
+
+## Webhook
+
+A **webhook** lets another service start a chat. The agent gets the request body as its message.
+
+Enter what calls it (for example "GitHub") and click **Create webhook**. The URL and secret are shown once. Copy the secret then.
+
+```bash
+curl -X POST https://<agent>/v1/hooks/<id> \
+  -H "Authorization: Bearer $SECRET" \
+  -H 'content-type: application/json' \
+  -d '{"event":"order.created","order":1042}'
+# 202 {"chat_id":"…"}  the turn runs in the background
+```
+
+- Send the secret as `Authorization: Bearer <secret>` or in `X-Agent-Webhook-Secret`. Webhook secrets start with `sbwh_`.
+- The body can be any type, up to 64 KB. JSON is pretty-printed into the message, after the line `A webhook "<id>" was received.`
+- Add `?wait=true` to wait for the reply: `200 {"chat_id","reply","usage","error"}`.
+- Up to 60 calls per webhook per minute (429 above that). A wrong secret gets 401, an unknown webhook 404.
+
+**Revoke** removes a webhook. An agent can have up to 20.
+
+## API
+
+**API keys** are for your code and other services. Enter what the key is for and click **Create key**. The key is shown once and starts with `sbag_`. The list shows its first characters so you can tell keys apart. An agent can have up to 20 keys. **Revoke** removes one.
+
+```bash
+curl -X POST https://<agent>/v1/chats \
+  -H "Authorization: Bearer $AGENT_KEY" \
+  -H 'content-type: application/json' \
+  -d '{"message":"Where is order 1042?"}'
+```
+
+```json
+{
+  "chat_id": "…",
+  "reply": "…",
+  "usage": { "input": 1234, "output": 56, "cached": 1000 },
+  "model": "…",
+  "error": null
+}
+```
+
+Continue the chat with `POST /v1/chats/<chat_id>/messages`. Add `"stream": true` for server-sent events. The full chat API is on the [API](/ai-agents/api/#the-agents-chat-api) page.
+
+## Widget
+
+The **Website widget** puts a chat bubble on your site. Visitors are anonymous.
+
+1. Turn the widget on.
+2. Under **Sites that may embed it**, add each site by its address only, like `https://acme.com` or `https://shop.acme.com:8443`. `http` works only for `localhost`.
+3. Stage and commit the change.
+4. Copy the **Embed code** and paste it before `</body>` on the pages that should show the bubble:
+
+```html
+<script src="https://<agent>/widget.js" async></script>
+```
+
+The bubble opens the chat in a frame that only the listed sites may show. Each visitor gets an anonymous token for 24 hours and can only continue their own chats.
+
+While the widget is on, the agent is **public**:
+
+- It has no shell or file-editing tools (`bash`, `edit`, `write`).
+- It has no integrations.
+
+Visitor limits: 10 messages per minute per visitor, 60 messages and 10 new visitors per IP per minute, and 3 new chats per visitor per day. Over a limit, the visitor gets 429 and waits.
+
+The widget is not the service's network access. See [Security and limits](/ai-agents/security/).
+
+## Team chat
+
+Your team doesn't need a trigger. **Open chat** on the agent's card opens a chat with the agent, signed in as you. These chats show as **Team chat** in Sessions.

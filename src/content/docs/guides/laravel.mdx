@@ -3,26 +3,26 @@ title: Laravel
 description: Deploy Laravel on StackBlaze from GitHub or a Dockerfile.
 ---
 
-Add a service from your Laravel repo. Nixpacks detects **php** from `composer.json`. A `Dockerfile` in the service root always wins.
+Add a service from your Laravel repo. Railpack detects **php** from `composer.json`. If the service root has a `Dockerfile`, StackBlaze builds from it instead.
 
-Prefer php-fpm + nginx via Dockerfile for production. Set `APP_KEY` as a variable. Attach MySQL or Postgres from the canvas.
+Railpack serves the app with FrankenPHP on `PORT`, from `public/`. Set `APP_KEY` as a variable. Attach MySQL/MariaDB or Postgres from the canvas.
 
 ## Deploy from GitHub
 
-1. [Dashboard](https://dashboard.stackblaze.cloud) → **New project** (or open an existing canvas).
-2. **+ Service → Git repository**. Pick the repo and branch.
-3. Review [staged changes](/deploy/staged-changes/) and **Deploy**.
-4. Generate a `*.stackblaze.app` domain, or attach a [custom domain](/networking/custom-domains/).
+1. [Dashboard](https://dashboard.stackblaze.cloud) → **New Project** (or open an existing canvas).
+2. **+ Service → GitHub repository**. Pick the repo and branch.
+3. Click **Commit 1 change**, review the [staged changes](/deploy/staged-changes/), and **Deploy**.
+4. A service exposed to the internet gets a `*.stackblaze.app` URL. Attach a [custom domain](/networking/custom-domains/) if you want your own.
 
-Override install / build / start on the service if detection is wrong. Typical start: `php artisan serve --host=0.0.0.0 --port=$PORT`.
+StackBlaze sets `PORT` to the service port and pre-fills `8000` for Laravel repos. If detection is wrong, change **Build method**, **Build command**, or **Start command** on the service. Typical start: leave it blank; Railpack starts FrankenPHP.
 
 ## Docker
 
-If you already have a Dockerfile, StackBlaze uses it. The process must listen on `PORT`.
+If you already have a `Dockerfile`, StackBlaze uses it. The process must listen on `PORT`.
 
 ## Data
 
-**+ Service → Databases** for Postgres, Redis/Valkey, MySQL, and others. Wire `DATABASE_URL` from the service **Variables** tab or `fromDatabase` in [stackblaze.yaml](/blueprint/).
+**+ Service → Database or cache** for PostgreSQL, MariaDB, Valkey, and more. Wire `DATABASE_URL` from the service **Variables** tab or `fromDatabase` in [stackblaze.yaml](/blueprint/).
 
 ## CLI
 

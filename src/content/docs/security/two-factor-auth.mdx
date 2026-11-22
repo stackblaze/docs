@@ -1,86 +1,62 @@
 ---
 title: Two-Factor Authentication
-description: Enable TOTP two-factor authentication on your StackBlaze account. Learn how to set up Google Authenticator, Authy, or 1Password, save recovery codes, and authenticate the CLI with SSH keys.
+description: Turn on two-factor authentication with an authenticator app or a passkey, keep recovery codes, and add SSH keys.
 ---
 
-Two-factor authentication (2FA) adds a second layer of protection to your account. Even if your password is compromised, an attacker cannot sign in without access to your authenticator app. StackBlaze uses TOTP (Time-based One-Time Password), the same standard used by GitHub, Google, and AWS.
+Two-factor authentication (2FA) adds a second step to every sign-in, on top of your password or sign-in provider. StackBlaze supports two second factors:
 
-We strongly recommend enabling 2FA on all accounts. Enterprise workspace owners can **enforce 2FA** for all members, anyone without 2FA enabled will be locked out of the dashboard until they enable it.
+- **Authenticator app** — any TOTP app (Google Authenticator, Authy, 1Password, Bitwarden, and others) gives you a 6-digit code.
+- **Passkeys** — Face ID, Touch ID, a security key, or your device.
 
-## Supported authenticator apps
+2FA is a setting on your own account. It applies in every organization you belong to.
 
-| App | Notes |
-| --- | --- |
-| Google Authenticator | Free, iOS & Android. Simple and widely used. Recommended. |
-| Authy | Free, iOS, Android & desktop. Supports encrypted backup across devices. |
-| 1Password | Paid, all platforms. TOTP built into your existing password manager. |
-| Any TOTP app | Any RFC 6238-compliant authenticator works, Bitwarden, Dashlane, Raivo, etc. |
+## Turn on 2FA
 
-## 2FA login flow
+1. Open **Personal settings → Authentication**.
+2. Under **Two-factor authentication**, click **Set up**.
+3. Scan the QR code with your authenticator app, or copy the key and enter it by hand.
+4. Enter the 6-digit code from the app.
+5. Save the recovery codes that appear. They are shown once.
 
-1. **Enter email + password** — standard credential verification.
-2. **Enter 6-digit code** — from your authenticator app. The code refreshes every 30 seconds.
+Turning 2FA on signs you out of every other session. The browser you used stays signed in.
+
+To add passkeys, use **Manage** next to **Passkeys** on the same tab.
+
+## Sign in with 2FA
+
+After your password (or sign-in provider), enter the current code from your authenticator app, or use a passkey. If you lost your phone, choose **Lost your phone? Use a recovery code**.
 
 ## Recovery codes
 
-When you enable 2FA, StackBlaze generates 10 single-use recovery codes. Each code can be used once in place of a 2FA code. After use, the code is invalidated. Store them securely, they are the only way to regain access if you lose your authenticator device.
+You get 10 single-use recovery codes. Each looks like `abcde-fgh23` and works once in place of a 2FA code.
 
-```text title="Recovery codes, store safely, shown once"
-a3f9-c12b
-b2e8-d01a
-c1d7-e90f
-d0c6-f89e
-e9b5-g78d
-f8a4-h67c
-g7z3-i56b
-h6y2-j45a
-i5x1-k34z
-j4w0-l23y
-```
+To replace them, click **Generate new recovery codes** on the **Authentication** tab and confirm with a code from your authenticator app. Your old codes stop working.
 
-:::caution
-Save these codes now, they will not be shown again. If you lose your device and don't have recovery codes, contact support@stackblaze.com for account recovery verification.
-:::
+If you lose your device and your recovery codes, an organization admin can reset your second factor. Otherwise, contact support.
 
-## SSH keys for git
+## Reset your authenticator app
 
-SSH keys on the account are for git fetch over `ssh.stackblaze.app:2222`, not for API login. API automation uses an `sb_pat_` token from Settings → API tokens. Tokens created before the `sb_pat_` prefix (`kbr_pat_…`) keep working.
+Moving to a new phone? Click **Reset** under **Two-factor authentication**. You confirm with your current factor, then scan a new QR code.
+
+## Require stronger sign-in for the organization
+
+There is no organization switch that forces 2FA. To control how members sign in, require SSO for the organization. See [SSO](/enterprise/saml/).
+
+## SSH keys
+
+SSH keys let you open a shell on your running services. They are not used for API login.
+
+Add a public key (`ssh-ed25519` or `ssh-rsa`) under **Personal settings → SSH keys**. Then connect with `stackblaze ssh`, or with plain `ssh` to the host and port shown under **Connect** on that tab (`ssh.stackblaze.app`, port `2222`). The SSH user is the service (`project/environment/service`). `scp`, `sftp`, `rsync`, and `-L` port forwards work too.
 
 ```bash title="terminal"
-# Generate an SSH key pair if you don't have one
-$ ssh-keygen -t ed25519 -C "me@example.com"
-
-# Add the public key in the dashboard
-# Settings → SSH Keys → Add Key → paste ~/.ssh/id_ed25519.pub
-
-# API access is a Bearer token, not SSH
-export STACKBLAZE_TOKEN=sb_pat_…
+ssh-keygen -t ed25519 -C "me@example.com"
+# Paste ~/.ssh/id_ed25519.pub in Personal settings → SSH keys
 ```
 
-## Step by step
-
-1. **Open Account Security settings**
-
-   Click your avatar in the top-right corner of the dashboard → Account Settings → Security. You'll see a "Two-Factor Authentication" section showing the current status (Disabled). Click "Enable 2FA".
-
-2. **Scan the QR code**
-
-   Open your authenticator app (Google Authenticator, Authy, 1Password, or any TOTP-compatible app). Tap "Add account" or the "+" button and scan the QR code displayed on screen. Alternatively, copy the secret key and enter it manually.
-
-3. **Verify with a 6-digit code**
-
-   Enter the 6-digit TOTP code shown in your authenticator app. This confirms that the app is correctly configured. The code refreshes every 30 seconds, if it expires while you're typing, wait for the next code.
-
-4. **Save your recovery codes**
-
-   StackBlaze generates 10 single-use recovery codes. Download or copy them and store them somewhere secure (password manager, printed, offline storage). These codes are shown exactly once. If you lose access to your authenticator app, recovery codes are the only way back in.
-
-5. **Sign in with 2FA**
-
-   Next time you sign in, you'll be prompted for your 6-digit code after entering your password. Enter the current code from your authenticator app. If you've lost your device, click "Use recovery code" and enter one of your saved recovery codes instead.
+API automation uses an `sb_pat_` token from **Personal settings → API tokens**. Tokens created before the `sb_pat_` prefix (`kbr_pat_…`) keep working.
 
 ## Next steps
 
-- [Enforce 2FA for all team members (Enterprise)](/security/team-permissions/)
-- [IP allowlisting](/security/ip-allowlist/)
-- [CLI authentication with SSH keys](/reference/cli/)
+- [Team & permissions](/security/team-permissions/)
+- [SSO](/enterprise/saml/)
+- [API reference](/reference/api/)

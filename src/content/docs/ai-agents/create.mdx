@@ -1,0 +1,93 @@
+---
+title: Create an agent
+description: Add an AI agent to the canvas, pick its model and AI Gateway, write its instructions, choose its tools, and update it to a newer version.
+---
+
+An agent is created from the project canvas, in the environment it should run in.
+
+## Add it to the canvas
+
+1. Open a project. You are on the environment canvas.
+2. Add a service and pick **AI agent** ("Chatbot or support agent with your instructions").
+3. The **New AI agent** panel opens. Fill it in and click **Deploy**.
+
+The agent gets a name like any service (`ai-agent`, `ai-agent-2`, …). Rename it from the panel title later.
+
+## Start from a template
+
+**Start from** fills in the instructions, the tools, and for some templates a trigger. You can change all of it before Deploy.
+
+| Template | What it sets up | What to do after Deploy |
+| --- | --- | --- |
+| Blank | Your own instructions from scratch. Tools `read`, `grep`, `glob`. | |
+| Customer support | Answers from your help articles. Turns the website widget on, so it asks for **Your site**. | Upload help articles in **Knowledge**, then add the widget snippet from **Triggers** to your site. |
+| FAQ bot | Answers from your documents, nothing else. | Upload the documents in **Knowledge**. |
+| Internal helpdesk | IT and HR questions for your team. Adds `web_search`. | Upload internal guides in **Knowledge**. Your team uses **Open chat**. |
+| Webhook triage | Summarises incoming events and rates them Urgent, Normal, or Ignore. | A webhook is created right after Deploy. Its URL and secret are shown once. |
+| Daily report | A short report every weekday at 09:00 UTC. | Upload the source files in **Knowledge**. Reports show in **Sessions**. |
+
+## Model and the AI Gateway
+
+No model provider key is ever stored on an agent. **Model** offers three kinds of source:
+
+- **A provider, with its own AI Gateway** (the default). Pick Anthropic, OpenAI, one of the listed OpenAI-compatible providers, or **Another endpoint** (any OpenAI-compatible URL). Paste the provider's API key. For anything but Anthropic, also enter the **Model ids**, comma-separated; the agent uses the first. Deploy first deploys an **AI Gateway** for this agent (about two minutes), then the agent. The gateway is a LiteLLM service that holds your key in its variables. The agent gets its own gateway key, limited to its one model.
+- **An AI Gateway already in this environment.** The agent gets its own gateway key for the model you pick. It shares that gateway with the other agents behind it. A gateway that has no models yet shows **add a provider key…** so you can give it one.
+- **An AI model in this environment** ("local model (GPU), no key"). The agent connects to an [AI model](/cli/models/) of the same environment like any app. No key is needed.
+
+Before a gateway is deployed, StackBlaze asks the provider whether it accepts the key. If the provider refuses it, nothing is deployed and the panel says **The API key was refused**. An endpoint of your own is not checked.
+
+An agent with its own gateway shows on the canvas as one app with it. They share one PostgreSQL: one database for the gateway, one for the agent's chat history.
+
+:::note[Agents created before this rule]
+An older agent may still hold its own provider key ("Key on this agent (no longer offered)"). Pick an AI Gateway model to move the key off the agent.
+:::
+
+## Instructions
+
+**Instructions** say what the agent does and how it answers. Up to 20,000 characters. For example:
+
+```text
+You are the support assistant for Acme. Answer questions about orders and shipping briefly.
+If you do not know, say so and offer to hand over to a person.
+```
+
+The agent's own instructions replace the default coding-agent prompt. Keep facts in [Knowledge](/ai-agents/knowledge/) and task steps in [Skills](/ai-agents/skills/), so the instructions stay short.
+
+## Tools
+
+**Tools** decide what the agent may do while it answers. The default is `read`, `grep`, `glob`.
+
+| Tool | What it does |
+| --- | --- |
+| `read` | Read files in its knowledge folder. Skills also need it. |
+| `grep` | Search file contents |
+| `glob` | Find files by name |
+| `web_search` | Search the web |
+| `todo` | Keep a task list |
+| `bash` | Run shell commands |
+| `edit` | Edit files |
+| `write` | Create files |
+
+With no tools, the agent answers from its instructions only. `bash`, `edit`, and `write` are off while the website widget is on. See [Security and limits](/ai-agents/security/).
+
+[Integrations](/ai-agents/integrations/) add more tools from outside services.
+
+## Change the settings
+
+Open the agent from the canvas. It opens on its **Agent** tab.
+
+- **General** (instructions, model, tools) and the **Time** and **Widget** triggers are [staged changes](/deploy/staged-changes/). Click **Stage changes**, then commit them on the canvas as one release. The agent restarts with them in a few seconds.
+- Knowledge, Skills, Integrations, Evals, and Optimizations save at once.
+- API keys and webhooks save at once. Secrets never go through staging.
+
+A tab with changes you have not staged or saved yet shows a dot after its name.
+
+## Update the agent version
+
+An agent keeps the version it was created with. When new agents get a newer one, the Agent tab shows **A newer agent version is available**, with both versions. Newer features need the newer version.
+
+Click **Update agent**. The agent restarts. Its chats, files, and settings stay.
+
+## Delete an agent
+
+Deleting the agent deletes its service and its chat history. Its own AI Gateway and their PostgreSQL go with it, unless another agent was put behind that gateway since. A shared gateway is kept.

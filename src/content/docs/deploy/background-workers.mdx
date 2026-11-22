@@ -11,7 +11,7 @@ A **private service** is an always-on service with no public domain. Same canvas
 
 ## When to leave a service private
 
-Skip generating a domain when the process does not serve public HTTP:
+In the service **Settings → Access**, pick **Worker** (background process, no HTTP port, no domain) or **Internal** (HTTP reachable only inside the project). Use this when the process does not serve public HTTP:
 
 - Queue consumers (BullMQ, Celery, Sidekiq, NATS, RabbitMQ)
 - Event stream processors (Kafka, Redis Streams)
@@ -20,15 +20,17 @@ Skip generating a domain when the process does not serve public HTTP:
 - Webhook fanout processors
 - Machine learning inference workers
 
+Your plan must allow worker services. In [`stackblaze.yaml`](/blueprint/), use `type: worker`, or `type: web` with `internal: true`.
+
 ## Build pipeline
 
-Workers use the exact same build pipeline as web services. StackBlaze detects your runtime, runs the install and build commands, and packages the result into a Docker image. The only difference is the *run* configuration — workers are deployed with no public ingress.
+Workers use the same build as public services (Railpack, Dockerfile, or Buildpacks). The only difference is how they run: no public URL.
 
 This means you can share a monorepo between a web service and its worker. They build from the same code but run different start commands.
 
 ## Restart policy
 
-Workers must run continuously. If your worker process exits (due to an unhandled exception or crash), StackBlaze restarts it with an exponential backoff: 10s, 20s, 40s, up to a maximum of 5 minutes. After an instance runs successfully for 10 minutes, the backoff counter resets.
+Workers must run continuously. If your worker process exits (an unhandled exception or a crash), StackBlaze restarts it, waiting longer after each repeated crash.
 
 :::tip
 Design your worker to crash-fast on unrecoverable errors (bad config, missing env vars) rather than silently hanging. A fast crash + restart is healthier than a zombie process.
@@ -36,7 +38,7 @@ Design your worker to crash-fast on unrecoverable errors (bad config, missing en
 
 ## Environment variables
 
-Workers have full access to the project's environment variables. Commonly you'll want:
+Workers have their own [variables](/security/env-vars/) like any service; connect a database to inject its connection variables. Commonly you'll want:
 
 | Variable | Example |
 | --- | --- |
@@ -116,7 +118,7 @@ app.post('/send-welcome-email', async (req, res) => {
 ```
 
 :::note
-Both the API and the worker connect to the same Redis instance using the internal hostname `cache`. No public exposure of Redis is needed.
+Both the API and the worker connect to the same Valkey/Redis database on the [private network](/networking/private-networking/). No public exposure of Redis is needed.
 :::
 
 ## Celery + Redis example (Python)
@@ -142,11 +144,11 @@ def process_order(order_id: str) -> dict:
 
 Workers can be scaled horizontally just like web services — increase the replica count to process more jobs in parallel. Each replica runs an independent worker process and pulls from the same queue. Queue libraries like BullMQ and Celery handle concurrent access safely via Redis atomic operations.
 
-From the dashboard, go to Service → Settings → Scaling and set the replica count.
+Open the service → **Settings → Scale** and set **Instances**, or turn on **Autoscale**.
 
 ## Monitoring worker health
 
-Workers don't have HTTP health checks (no port to probe). StackBlaze monitors the process exit code instead. You can view worker logs in real time from the dashboard, or search history with `search_logs` in MCP / chat:
+Workers don't have HTTP health checks (no port to probe); StackBlaze watches whether the process keeps running. View worker logs live on the service's **Logs** tab, or read them from the API:
 
 ```bash title="terminal"
 # project / environment / service

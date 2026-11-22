@@ -1,86 +1,92 @@
 ---
 title: Backups & Recovery
-description: Automated daily backups and on-demand snapshots for all managed databases, with point-in-time recovery for PostgreSQL. Backups are encrypted at rest.
+description: Opt-in backups for a whole environment. A recovery point holds the environment's services, its volumes, and a dump of each database. A restore always creates new databases and volumes; nothing running changes.
 ---
 
-import Diagram from '../../../components/Diagram.astro';
+Backups on StackBlaze work per environment. A **recovery point** holds the environment's services, its volumes, and a dump of each database. Backups are off until you turn them on. StackBlaze never creates a schedule for you.
 
-Automated daily backups and on-demand manual snapshots for all managed databases, plus point-in-time recovery for PostgreSQL.
+## Opening Backup and restore
 
-<Diagram file="pitr-backup.svg" alt="Diagram of daily base backup plus continuous WAL archiving for point-in-time recovery" />
+On the project canvas, open **+ Service → Backups**, or right-click a database and pick **Backups**. The **Backup and restore** sheet has two tabs: **Backups** and **Restore**.
 
-*Daily snapshots plus WAL archiving let you restore to a specific timestamp, not just the last backup.*
+## Turning on a schedule
 
-## Automated daily backups
+On the **Backups** tab, the **Schedule** section has three cadences: **Daily**, **Weekly**, and **Monthly**. Tick the ones you want and pick how long to keep each (from 3 days to 1 year). Your plan caps the retention you can pick.
 
-StackBlaze automatically backs up all managed databases (PostgreSQL, MySQL, MongoDB, Redis with persistence) once per day. Backups run during off-peak hours, typically between 02:00 and 04:00 UTC, to minimize impact on query performance.
+| Plan | Backup retention |
+| --- | --- |
+| Free Trial | Not included |
+| Developer | 7 days |
+| Pro | 14 days |
+| Business | 30 days |
 
-All backups are encrypted at rest and stored separately from your primary data, so a lost node or volume never takes your backups with it.
+See [Plans](/reference/pricing/) for current plan details. If your workspace reaches its disk cap, scheduled backups pause and resume on their own once usage drops below the cap.
 
-## Backup retention by plan
+Saving a schedule also turns off the separate database dump schedule, because every recovery point already holds the databases.
 
-| Plan | Snapshot retention | PITR window (PostgreSQL) |
-| --- | --- | --- |
-| Free | 1 day | Not available |
-| Starter | 3 days | Not available |
-| Pro | 7 days | 7 days |
-| Enterprise | 30 days | 30 days |
+## Backing up now
 
-:::caution[Free plan limitation]
-Free-plan databases retain only the last 24 hours of backups. If you need longer retention or point-in-time recovery, upgrade to Starter or above before you need to restore.
-:::
+Click **Back up now** on the **Backups** tab, or **Back up `<name>`** when you opened the sheet from a database. This works without a schedule. The new point appears under **Recovery points**.
 
-## Point-in-time recovery (PITR)
+From the CLI:
 
-For managed PostgreSQL on Pro and Enterprise plans, StackBlaze continuously archives write-ahead log (WAL) segments to object storage alongside periodic base backups. This lets you recover to any moment within the retention window, not just the last daily snapshot. Other engines rely on daily and on-demand snapshots.
+```bash
+stackblaze backups create --wait
+stackblaze backups create --only web --only web-postgresql   # a partial point
+```
 
-### Initiating a PITR restore
+## What a recovery point holds
 
-Navigate to your database in the dashboard, click **Backups**, then **Restore to point in time**. Select a target timestamp, then choose:
+| Engine | Held as |
+| --- | --- |
+| PostgreSQL, MariaDB, MySQL, MongoDB, FerretDB, Redis (official image) | A dump of the database |
+| OpenSearch | A snapshot archive |
+| ClickHouse | A native `BACKUP` archive |
+| Valkey and other engines | A copy of the database's volume |
+| Services | Their volumes |
 
-- **Restore to new instance**: creates a new database instance at the target timestamp. Your existing database keeps running. Recommended for investigating an incident.
-- **Restore in-place**: replaces the current database with the state at the target timestamp. This is destructive and causes downtime. Only use this when you have no other option.
+## Restoring
 
-:::tip[Best practice]
-Always restore to a new instance first. Verify the data is correct by querying the restored instance, then update your service's `DATABASE_URL` to point to it if needed. This gives you a rollback path if the restore doesn't have the data you expect.
-:::
+Open the **Restore** tab, pick a recovery point under **From**, pick what to restore under **What**, and click **Stage restore**. Apply your staged changes to start it.
 
-## Manual backups
+A restore always creates a **new** database (and a new volume) next to the running one, under a new name. Nothing running is interrupted or changed. Connect your services to the copy when you are ready, then delete the old one. Copies are billed like any other database or volume.
 
-You can trigger a manual snapshot at any time, useful before running a risky migration or major data operation.
+From the CLI:
 
-From the dashboard: navigate to your database → **Backups** → **Take snapshot now**. The snapshot is taken immediately and appears in the backup list within a few minutes.
+```bash
+stackblaze backups list
+stackblaze backups restore latest --database web-postgresql --wait
+```
 
-Manual snapshots are retained according to your plan's snapshot retention policy and count toward the same retention limit as automated backups.
+## Deleted databases
 
-## Restoring from a snapshot
+When you delete a database, its dumps are kept. They show under **Deleted databases** on the **Restore** tab. Click **Restore as new database** to create a database from one of them, or delete the dumps when you no longer need them.
 
-To restore from a daily snapshot (rather than a specific point in time):
+## Single-database dumps
 
-1. Navigate to your database and click **Backups**.
-2. Select the snapshot you want to restore from the list.
-3. Click **Restore** and choose whether to restore to a new instance or in-place.
-4. Confirm the restore. StackBlaze will notify you by email when the restore completes (usually 2–15 minutes depending on database size).
+For PostgreSQL and MariaDB you can also work with one database's dumps from the CLI. These commands never turn on a schedule.
 
-## Backup encryption
+```bash
+stackblaze addons backups status web-postgresql   # is it covered by the schedule?
+stackblaze addons backups create --wait           # dump now
+stackblaze addons backups restore web-postgresql --backup <name> --wait
+```
 
-All backups are encrypted at rest. Encryption happens before data is written to the backup storage layer, so unencrypted data never lands there, and the keys are managed for you.
+The restored database is named `<database>-restored`.
 
-If your organisation has specific key-management or data-residency requirements, reach out to support to discuss the options available on Enterprise.
+## Point-in-time recovery
+
+For PostgreSQL you can also turn on [point-in-time recovery](/databases/pitr/). It archives the write-ahead log so you can restore to a chosen time, not only to a recovery point.
 
 ## Testing your backups
 
-A backup you've never tested is not a backup. StackBlaze recommends testing restores at least quarterly. Use the **Restore to new instance** option, run your application's data validation scripts against the restored instance, then delete it.
+A backup you have never restored is not a backup. Restore a recovery point now and then, run your checks against the new database, then delete it.
 
-```bash title="Example validation script"
+```bash title="Example checks against the restored database"
 #!/bin/bash
-# Point DATABASE_URL at the restored instance
-export DATABASE_URL="postgresql://user:pass@restored-db:5432/dbname"
+# Point DATABASE_URL at the restored database
+export DATABASE_URL="postgres://user:pass@restored-db:5432/app"
 
-# Run row count checks
-psql $DATABASE_URL -c "SELECT COUNT(*) FROM users;"
-psql $DATABASE_URL -c "SELECT COUNT(*) FROM orders WHERE created_at > NOW() - INTERVAL '7 days';"
-
-# Run your app's health check
-curl -f http://your-service/health || echo "Health check failed"
+psql "$DATABASE_URL" -c "SELECT COUNT(*) FROM users;"
+psql "$DATABASE_URL" -c "SELECT COUNT(*) FROM orders WHERE created_at > NOW() - INTERVAL '7 days';"
 ```

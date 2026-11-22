@@ -1,0 +1,164 @@
+---
+title: AI agents API
+description: StackBlaze REST routes for creating and managing AI agents, and the agent's own chat API that agent API keys reach.
+---
+
+There are two APIs:
+
+- **The StackBlaze API** creates and manages agents. It is the API the dashboard uses, at `https://api.stackblaze.cloud`, with an `sb_pat_` token. See the [API reference](/reference/api/) for authentication.
+- **The agent's chat API** is served by the agent itself, at its own URL, with an agent API key (`sbag_…`).
+
+## StackBlaze API
+
+All routes are under `/api/ai-agents/{pipeline}/{phase}`. As elsewhere in the API, `pipeline` is the project, `phase` the environment, and `name` the agent's service name.
+
+Reading needs read access to the project. Every change needs write access. No route ever returns a provider key, a token, or a stored secret. New API keys and webhook secrets are returned once, when created.
+
+### Agents
+
+| Method | Path | What it does |
+| --- | --- | --- |
+| GET | `/api/ai-agents/{pipeline}/{phase}` | List the agents in an environment |
+| POST | `/api/ai-agents/{pipeline}/{phase}` | Create an agent: `{ name, model, instructions?, tools?, public?, title? }` |
+| GET | `/api/ai-agents/{pipeline}/{phase}/{name}` | Get one agent (never its keys) |
+| PUT | `/api/ai-agents/{pipeline}/{phase}/{name}` | Change its settings. Fields left out keep their value. A release like any service save. |
+| DELETE | `/api/ai-agents/{pipeline}/{phase}/{name}` | Delete the agent and its chat history |
+| POST | `/api/ai-agents/{pipeline}/{phase}/{name}/update-image` | Move it to the version new agents get. It restarts; its data and settings stay. |
+| POST | `/api/ai-agents/{pipeline}/{phase}/{name}/chat` | A 120-second link that opens the agent's chat signed in as you |
+
+`model` is one of:
+
+```json
+{ "source": "litellm", "app": "<ai-gateway-service>", "model": "claude-haiku" }
+{ "source": "ai-model", "aiModel": "<ai-model-name>" }
+```
+
+The settings body also takes `widget: { enabled, origins }` and `schedules: [{ cron, message, tz?, enabled? }]`. A provider key (`modelKey`) is refused: keys live in the AI Gateway.
+
+### AI Gateway
+
+| Method | Path | What it does |
+| --- | --- | --- |
+| GET | `/api/ai-agents/{pipeline}/{phase}/litellm` | The AI Gateways in the environment and their models |
+| POST | `/api/ai-agents/{pipeline}/{phase}/litellm` | Deploy an AI Gateway with a provider key: `{ provider, apiKey, models?, baseUrl? }` |
+| POST | `/api/ai-agents/{pipeline}/{phase}/litellm/{app}/setup` | Give an existing AI Gateway a provider key and its models |
+
+`provider` is `anthropic`, `openai`, or `openai-compatible`.
+
+### Knowledge and skills
+
+| Method | Path | What it does |
+| --- | --- | --- |
+| GET | `…/{name}/knowledge` | The agent's knowledge files |
+| PUT | `…/{name}/knowledge/{file}` | Upload a file: raw body, `application/octet-stream`, up to 10 MB |
+| DELETE | `…/{name}/knowledge/{file}` | Delete a file |
+| GET | `…/{name}/skills` | The agent's skills (name and description) |
+| GET | `…/{name}/skills/{skill}` | One skill with its steps |
+| PUT | `…/{name}/skills/{skill}` | Create or replace a skill: `{ description, body }` |
+| DELETE | `…/{name}/skills/{skill}` | Delete a skill |
+
+### Integrations
+
+| Method | Path | What it does |
+| --- | --- | --- |
+| POST | `…/{name}/integrations` | Add an integration: `{ name, url, token?, header?, scheme?, label? }`. The token is stored, never returned. |
+| DELETE | `…/{name}/integrations/{id}` | Remove an integration and its stored token |
+
+### Triggers
+
+| Method | Path | What it does |
+| --- | --- | --- |
+| POST | `…/{name}/keys` | Create an API key: `{ label? }`. The key is returned once. |
+| DELETE | `…/{name}/keys/{id}` | Revoke an API key |
+| POST | `…/{name}/webhooks` | Create a webhook: `{ label? }`. Its URL and secret are returned once. |
+| DELETE | `…/{name}/webhooks/{id}` | Revoke a webhook |
+
+Schedules and the widget are agent settings: send them with `PUT …/{name}`.
+
+### Sessions
+
+| Method | Path | What it does |
+| --- | --- | --- |
+| GET | `…/{name}/sessions` | The agent's chats, newest first: `?limit`, `?before` for the next page, `?channel` |
+| GET | `…/{name}/sessions/{chat}` | One chat's transcript |
+
+### Evals
+
+| Method | Path | What it does |
+| --- | --- | --- |
+| GET | `…/{name}/evals` | The agent's evals, each with its last run |
+| GET | `…/{name}/evals/{eval}` | One eval: its test cases, checks, epochs, and last run |
+| PUT | `…/{name}/evals/{eval}` | Create or replace an eval: `{ samples, checks, epochs }`. See [Evals](/ai-agents/evals/#advanced-json). |
+| DELETE | `…/{name}/evals/{eval}` | Delete an eval and its runs |
+| POST | `…/{name}/evals/{eval}/run` | Start a run |
+| GET | `…/{name}/evals/{eval}/runs/{run}` | A run: running or done, with its trials and its structural, behavioral, and efficiency summary |
+
+### Optimizations
+
+| Method | Path | What it does |
+| --- | --- | --- |
+| GET | `…/{name}/optimizations` | Whether the agent can be optimized, and its runs |
+| POST | `…/{name}/optimizations` | Start an optimization: `{ budget? }` in dollars (default 50) |
+| GET | `…/{name}/optimizations/{run}` | One optimization: its eval, candidates, and verdicts |
+| POST | `…/{name}/optimizations/{run}/accept` | Apply the recommended change |
+| POST | `…/{name}/optimizations/{run}/dismiss` | Decline the recommended change |
+| POST | `…/{name}/optimizations/{run}/cancel` | Stop the run. A change waiting for a decision is dismissed. |
+
+## The agent's chat API
+
+Every agent has its own HTTPS URL (shown on the agent). Send an API key from **Triggers → API** as `Authorization: Bearer sbag_…`.
+
+| Method | Path | What it does |
+| --- | --- | --- |
+| POST | `/v1/chats` | Start a chat. With `message`, the reply comes back too. |
+| POST | `/v1/chats/{id}/messages` | Send the next message: `{ message, stream? }` |
+| GET | `/v1/chats/{id}` | The transcript |
+| DELETE | `/v1/chats/{id}` | End a chat |
+
+Listing chats (`GET /v1/chats`) is for the team only. With an API key, use the Sessions route of the StackBlaze API instead.
+
+### Request and response
+
+```bash
+curl -X POST https://<agent>/v1/chats \
+  -H "Authorization: Bearer $AGENT_KEY" \
+  -H 'content-type: application/json' \
+  -d '{"message":"Where is order 1042?"}'
+```
+
+```json
+{
+  "chat_id": "…",
+  "reply": "…",
+  "usage": { "input": 1234, "output": 56, "cached": 1000 },
+  "model": "…",
+  "error": null
+}
+```
+
+- `usage.input` is the whole prompt, cache reads and writes included. `usage.cached` is the part read from the provider's prompt cache.
+- Without `message`, `POST /v1/chats` returns only `{ "chat_id" }`.
+- A message is up to 8,000 characters.
+
+### Streaming
+
+Add `"stream": true` to get server-sent events: `chat`, `delta`, `tool`, `done`, and `error`.
+
+```bash
+curl -N -X POST https://<agent>/v1/chats/<id>/messages \
+  -H "Authorization: Bearer $AGENT_KEY" \
+  -H 'content-type: application/json' \
+  -d '{"message":"Thanks!","stream":true}'
+```
+
+### Errors
+
+| Status | When |
+| --- | --- |
+| 401 | No key, or a key that is not this agent's |
+| 403 | `GET /v1/chats` with an API key |
+| 404 | No such chat |
+| 429 | A rate limit (webhooks, widget). Wait for `Retry-After`. |
+| 503 | All chat slots are mid-reply, or chat storage is starting. Retry after `Retry-After`. |
+
+Chats started with an API key show as **API** in [Sessions](/ai-agents/sessions/). Webhooks have their own URL and secret; see [Triggers](/ai-agents/triggers/#webhook).

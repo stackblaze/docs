@@ -1,70 +1,54 @@
 ---
 title: Limits & Quotas
-description: Complete limits and quotas reference for StackBlaze. Per-plan service counts, replica limits, bandwidth, build minutes, rate limits for API and deploy hooks, and absolute platform limits.
+description: Per-plan limits for projects, services, databases, environments, members, instances, service size, and builds.
 ---
 
-StackBlaze enforces quotas to ensure fair resource distribution across all users. Per-plan quotas limit the number of services, replicas, and bandwidth. Rate limits protect the API and deployment pipeline from abuse. Absolute limits are hard caps that apply regardless of plan.
+Each plan caps how much you can create. When you reach a cap, the dashboard, CLI, and API refuse the change that would go over it (HTTP 402 with an upgrade hint). What is already running keeps running.
 
-## Per-plan quotas
+## Per-plan limits
 
-| Feature | Free | Starter | Pro | Enterprise |
+| Limit | Free Trial | Developer | Pro | Business |
 | --- | --- | --- | --- | --- |
-| Web services | 1 | 3 | Unlimited | Unlimited |
-| Background workers | 1 | 3 | Unlimited | Unlimited |
-| Cron jobs | 1 | 5 | Unlimited | Unlimited |
-| Databases | 1 | 3 | Unlimited | Unlimited |
-| Replicas per service | 1 | 3 | 10 | Unlimited |
-| Build minutes / month | 500 | 2,000 | Unlimited | Unlimited |
-| Bandwidth / month | 100 GB | 500 GB | Unlimited | Unlimited |
-| Custom domains | 1 | 5 | Unlimited | Unlimited |
-| Backup retention | 1 day | 3 days | 7 days | 30 days |
-| Log retention | 7 days | 14 days | 30 days | 90 days |
-| Team members | 1 | 5 | 25 | Unlimited |
-| Environments | 1 | 3 | Unlimited | Unlimited |
-| Support | Community | Email | Priority | Dedicated SLA |
+| Projects | 1 | 5 | 25 | 100 |
+| Services per project | 3 | 10 | 50 | 200 |
+| Environments per project | 1 | 2 | 5 | 10 |
+| Databases (Postgres, MariaDB, Redis — one count per organization) | 2 | 2 | 10 | 30 |
+| Regions in use | 1 | 1 | 3 | 3 |
+| Team members (including pending invites) | 1 | 1 | 5 | 20 |
+| Max instances per service | 1 | 1 | 3 | 10 |
+| Max size per service | 0.5 vCPU · 0.5 GB | 2 vCPU · 4 GB | 4 vCPU · 16 GB | 8 vCPU · 32 GB |
+| Database connections | 100 | 200 | 400 | 500 |
+| Redis memory | 25 MB | Up to max size | Up to max size | Up to max size |
+| Redis connections | 50 | 200 | 1,000 | 2,000 |
+| Concurrent builds | 1 | 2 | 5 | 10 |
+| Build timeout | 10 min | 30 min | 60 min | 90 min |
+| Database backup retention | Not available | 7 days | 14 days | 30 days |
+| Log retention | Not promised | 3 days | 14 days | 30 days |
 
-## Rate limits
+## What counts
 
-Rate limits apply across all plans. Exceeding a rate limit returns HTTP 429 with a `Retry-After` header indicating when you can retry.
+- **Services per project** — every service on the canvas, including each service a template adds (an n8n template is three). Databases do not take a service slot.
+- **Databases** — Postgres, MariaDB, and Redis count together, across all projects in the organization. Removing one frees the slot at once.
+- **Max size per service** — the total for all instances of a service. Two instances share the cap.
+- **Concurrent builds** — a build over the limit is refused. There is no queue; a push that arrives while you are at the limit is skipped.
+- **Builds** — free and unlimited. There are no build minutes.
 
-| Resource | Limit |
+## Plan-gated features
+
+| Feature | Plans |
 | --- | --- |
-| GitHub webhooks | Processed as they arrive; retries follow GitHub’s delivery policy |
-| Builds | One active build per app unless you queue another after it finishes |
-| Log streams | Live tail is per app/container; use search for history |
+| Preview environments | Pro, Business |
+| Database high availability | Pro, Business |
+| Database backups | Developer, Pro, Business |
+| Single sign-on | Business |
+| Tracing | Business |
+| Advanced networking (CORS, inbound IP rules) | Business |
 
-## Absolute limits
+## When you hit a limit
 
-These limits apply regardless of plan and cannot be increased. Contact support if you have a specific requirement that falls outside these limits.
-
-| Limit | Value |
-| --- | --- |
-| Max build time | 30 minutes |
-| Max Docker image size | 8 GB uncompressed |
-| Max file upload (secret files) | 1 MB per file |
-| Max environment variables per service | 200 |
-| Max environment variable value length | 65,535 bytes |
-| Max disk size (persistent disk) | 1 TB |
-| Max replicas per service (Pro) | 10 |
-| Max services per project | Unlimited (Pro/Enterprise) |
-| Startup probe grace period | 300 seconds max |
-
-## Bandwidth billing
-
-Bandwidth is measured as outbound data transfer from your services to the internet. Inbound traffic and internal traffic (service-to-service within a project) is always free.
-
-| | |
-| --- | --- |
-| First 100 GB/month | Free on all plans |
-| Over included amount | $0.10 per GB |
-| Internal & inbound traffic | Always free |
-
-:::note[What happens when you hit a limit]
-Soft limits (services, replicas, bandwidth) show a warning in the dashboard when you're at 80% and block new resource creation when reached, existing services continue running. Rate limits (API, deploy hooks) return 429 with `Retry-After`. To increase limits, upgrade your plan from Settings → Billing.
-:::
+Upgrade from **Billing** in the dashboard. After a downgrade, anything above the new limits keeps running, but you cannot add more until you are back under.
 
 ## Next steps
 
 - [Pricing & plans](/reference/pricing/)
 - [API reference](/reference/api/)
-- [Storage options](/storage/persistent-disks/)

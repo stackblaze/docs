@@ -1,18 +1,20 @@
 ---
 title: Account
-description: Secret files, team roles, 2FA, and IP allowlisting.
+description: Team roles, two-factor authentication, and source IP rules.
 ---
 
 import { LinkCard, CardGrid } from '@astrojs/starlight/components';
 
 Team access and account security. Service [variables](/security/env-vars/) live under Develop.
 
+API tokens for the CLI, the API, and MCP are in **Personal settings → API tokens**. See [API reference](/reference/api/#authentication).
+
 ## In this section
 
 <CardGrid>
   <LinkCard title="Variables" href="/security/env-vars/" description="Service config, secrets, and database-linked values." />
   <LinkCard title="Secret files" href="/security/secret-files/" description="Mount files that should not live in git." />
-  <LinkCard title="Team & permissions" href="/security/team-permissions/" description="Owner, Admin, Developer, and Viewer roles." />
-  <LinkCard title="Two-factor auth" href="/security/two-factor-auth/" description="TOTP 2FA and recovery codes." />
-  <LinkCard title="IP allowlisting" href="/security/ip-allowlist/" description="Restrict dashboard and app access by source IP." />
+  <LinkCard title="Team & permissions" href="/security/team-permissions/" description="Organization roles, teams, and invitations." />
+  <LinkCard title="Two-factor auth" href="/security/two-factor-auth/" description="Authenticator app, passkeys, and recovery codes." />
+  <LinkCard title="IP allowlisting" href="/security/ip-allowlist/" description="Limit which source IPs can reach a service." />
 </CardGrid>

@@ -13,7 +13,7 @@ These are the building blocks you work with on StackBlaze.
 
 - **Dashboard** — every [project](#projects) under your account.
 - **Project** — a canvas of [services](#services) that share a [private network](/networking/private-networking/) in each [environment](#environments).
-- **Service** — a deploy target: Git repo, Docker image, template, or database.
+- **Service** — a deploy target: Git repo, Docker image, template, function, or database.
 - **Variables** — config and secrets for a service. Database URLs can be wired from an attached database.
 - **Deployment** — a built image rolled out to a service.
 - **Volume** — disk that survives restarts, attached to one service.
@@ -38,22 +38,24 @@ The canvas is mission control. From **+ Service** you add:
 | Git repository | A service built from GitHub or a public git URL |
 | Docker images | A service from a registry image |
 | Templates | A pre-wired group of services and databases |
-| Databases | A managed database on the same canvas |
+| Databases | A managed database (PostgreSQL, MariaDB, Valkey, and more) |
+| Add-ons | Kafka, RabbitMQ, object storage, and more |
 | Import | Compose, `render.yaml`, or `fly.toml` mapped onto services |
 
 New tiles and config edits are **staged**. [Deploy](/deploy/staged-changes/) applies them.
 
 ## Services
 
-A service is a container that StackBlaze builds and runs. Source is a Git repo, a Docker image, or a template. If the repo has a `Dockerfile`, that file is used; otherwise Nixpacks detects the runtime.
+A service is a container that StackBlaze builds and runs. Source is a Git repo, a Docker image, or a template. If the repo has a `Dockerfile`, that file is used; otherwise Railpack detects the runtime and builds from source.
 
 A service can:
 
 - Listen for HTTP and get a public domain ([public HTTP](/deploy/web-services/))
 - Run continuously with no public domain ([private services](/deploy/background-workers/))
 - Run on a cron schedule until it exits ([cron jobs](/deploy/cron-jobs/))
+- Run one TypeScript file on Bun that scales to zero ([functions](/functions/))
 
-Databases are services on the canvas too. They are managed add-ons (Postgres, Valkey/Redis, MariaDB, and others), not app processes.
+Databases are tiles on the canvas too. They are managed databases (Postgres, Valkey/Redis, MariaDB, and others), not app processes.
 
 Click a tile for source, variables, networking, volumes, metrics, and logs.
 
@@ -61,13 +63,13 @@ Click a tile for source, variables, networking, volumes, metrics, and logs.
 
 [Variables](/security/env-vars/) are injected at build and runtime. Set them on the service. In `stackblaze.yaml`, point a key at a database with `fromDatabase` instead of hardcoding a URL.
 
-Shared groups can be referenced from config as code (`fromGroup`). Prefer that over copying the same secret onto every service.
+Shared variable groups live in **Project settings → Shared variables** and can be linked to any service in the project (`fromGroup` in config as code). Prefer that over copying the same secret onto every service.
 
 ## Deployments
 
 A deployment builds the service image and rolls it out in the current environment. Triggers:
 
-- **Deploy** on the canvas (staged changes)
+- **Commit N changes** on the canvas, then **Deploy** ([staged changes](/deploy/staged-changes/))
 - A push to the connected branch when auto-deploy is on
 - [Deploy hooks](/cicd/deploy-hooks/) or `POST /api/deployments/build/{project}/{environment}/{service}`
 
@@ -75,17 +77,17 @@ You can restart without rebuilding, and [roll back](/cicd/rollbacks/) to a previ
 
 ## Volumes
 
-[Volumes](/storage/persistent-disks/) keep data across restarts. Attach one to a service and set the mount path. A volume is bound to that service instance; it is not a shared filesystem across replicas.
+[Volumes](/storage/persistent-disks/) keep data across restarts and redeploys. Attach one to a service and set the mount path. A volume belongs to that service.
 
 ## Environments
 
-Each project has one or more environments. Production is created with the project. You can add more. [Pull-request previews](/cicd/pr-previews/) use a review environment and clone the source service so previews do not share production data.
+Each project has one or more environments. Production is created with the project. You can add more, up to your plan's limit. [Pull-request previews](/cicd/pr-previews/) clone the source service into a preview environment with its own empty databases, so previews do not share production data. Previews need the Pro or Business plan.
 
 See [Environments](/deploy/environments/).
 
 ## Regions
 
-A project is pinned to a region (default `us-east-1`). Services and databases in that project run there.
+A project runs in one region, picked when you create it. The default is the organization's **Default region for new projects** (**Settings → General**). Services and databases in that project run there.
 
 ## Names in the API
 

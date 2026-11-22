@@ -1,9 +1,9 @@
 ---
 title: stackblaze context
-description: "Show the API URL, pipeline, phase and app the CLI resolves here."
+description: "Show the API URL, project, environment and app the CLI resolves here."
 ---
 
-Prints what the CLI would use in this directory: the API URL and the pipeline, phase and app after applying flags, `STACKBLAZE_*` environment variables and `.stackblaze/project.json` (see [scope](/cli/#scope-and-common-flags)).
+Prints what the CLI would use in this directory: the API URL and the project, environment and app after applying flags, `STACKBLAZE_*` environment variables and `.stackblaze/project.json` (see [scope](/cli/#scope-and-common-flags)).
 
 ## Usage
 
@@ -11,6 +11,6 @@ Prints what the CLI would use in this directory: the API URL and the pipeline, p
 stackblaze context [options]
 ```
 
-Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
-Needs credentials (it reads the API URL from them) but makes no API call.
+When a project is set but no environment, it shows `production (default)`, the environment commands fall back to. Needs credentials (it reads the API URL from them) but makes no API call.

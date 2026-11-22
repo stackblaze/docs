@@ -1,26 +1,36 @@
 ---
 title: Horizontal Scaling
-description: Run multiple replicas of your service for higher throughput and availability. Zero-downtime scaling with round-robin load balancing.
+description: Run multiple instances of your service for higher throughput and availability, within your plan's limits.
 ---
 
 import Diagram from '../../../components/Diagram.astro';
 
-Run multiple replicas of your service to handle higher traffic and improve availability. New replicas become ready before traffic is redistributed.
+Run multiple instances (replicas) of your service to handle more traffic and improve availability. New instances become ready before they take traffic.
 
 <Diagram file="horizontal-replicas.svg" alt="HTTPS requests reaching a service that spreads traffic across three healthy replicas with no sticky sessions" />
 
-## Setting replica count
+## Setting the instance count
 
-Open the service → **Scaling** and set **Replicas**. New instances come up, pass health checks, then take traffic.
+Open the service → **Settings → Scale** and use **Instances** (− / +). A service with a worker process has a separate **Worker process** count. New instances come up, pass health checks, then take traffic. The section shows how many instances your plan allows ("Up to N on your plan").
 
-## Replica limits by plan
+Turn on **Autoscale** to set a min and max instead. See [Autoscaling](/scaling/autoscaling/).
 
-| Plan | Min replicas | Max replicas |
-| --- | --- | --- |
-| Free | 1 | 1 (no scaling) |
-| Starter | 1 | 3 |
-| Pro | 1 | 10 |
-| Enterprise | 1 | Unlimited |
+In [`stackblaze.yaml`](/blueprint/), set `numInstances`.
+
+## Instance limits by plan
+
+| Plan | Max instances per service |
+| --- | --- |
+| Free Trial | 1 |
+| Developer | 1 |
+| Pro | 3 |
+| Business | 10 |
+
+A save above the limit is refused. Current values are on [Pricing](/reference/pricing/).
+
+:::note
+Your plan's **max size per service** (CPU and memory) is shared by all of the service's instances. More instances means a smaller share each. See [Memory & CPU limits](/scaling/limits/).
+:::
 
 ## Traffic distribution
 
@@ -56,9 +66,9 @@ app.use(session({
 
 ## Zero-downtime scaling
 
-When you increase replica count, Kubernetes starts new pods and waits for them to pass their readiness probe before sending traffic to them. When you decrease replica count, pods are terminated gracefully, they finish processing in-flight requests before shutting down.
+When you add instances, new ones only get traffic after they pass their health check. When you remove instances, they get `SIGTERM` and a grace period to finish in-flight requests before they are stopped.
 
-This means scaling up or down never causes a request error for your users, as long as your service implements graceful shutdown correctly.
+Scaling up or down does not cause request errors as long as your service shuts down gracefully.
 
 ### Graceful shutdown (Node.js)
 
@@ -72,15 +82,11 @@ process.on('SIGTERM', () => {
     process.exit(0)
   })
 
-  // Force exit after 30s if connections don't drain
-  setTimeout(() => process.exit(0), 30_000)
+  // Force exit if connections don't drain in time
+  setTimeout(() => process.exit(0), 25_000)
 })
 ```
 
 :::tip
-Kubernetes sends `SIGTERM` when terminating a pod. Your application has 30 seconds (configurable via `terminationGracePeriodSeconds`) to finish in-flight requests before being force-killed. Always handle `SIGTERM` in your application.
-:::
-
-:::note[Under the hood]
-Horizontal scaling updates the `.spec.replicas` field on the Kubernetes **Deployment** object. The ReplicaSet controller reconciles the actual pod count to match. Traffic is load-balanced by the **ClusterIP Service** across all `Ready` pods. Pods are only added to the Service's endpoints list after passing their readiness probe.
+Always handle `SIGTERM`: stop accepting new connections, finish in-flight requests, then exit.
 :::

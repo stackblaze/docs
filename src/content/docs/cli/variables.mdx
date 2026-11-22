@@ -8,7 +8,7 @@ Manages the linked app's environment variables. Aliases: `vars`, `var`.
 ## Usage
 
 ```text
-stackblaze variables list [--reveal]
+stackblaze variables list [--reveal] [--all]
 stackblaze variables set <KEY=value>... [--stdin] [--skip-deploy] [-m <text>]
 stackblaze variables unset <KEY>... [-y] [--skip-deploy] [-m <text>]
 stackblaze variables import <file> [--replace] [-y] [--skip-deploy] [-m <text>]
@@ -23,17 +23,18 @@ stackblaze variables edit [-y] [--skip-deploy] [-m <text>]
 | `import <file>` | Set every variable from a `.env` file |
 | `edit` | Edit the app's variables in your editor, review the changed names, then apply |
 
-Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
 ## Options
 
 | Flag | Applies to | Description |
 | --- | --- | --- |
 | `--reveal` | `list` | Show values (requires write access to the app) |
+| `--all` | `list` | Include platform-injected variables (hidden by default) |
 | `--stdin` | `set` | Read `KEY=VALUE` lines from stdin, or the value of a single bare `KEY` |
 | `--replace` | `import` | Make the app's own variables exactly the file: variables not in the file are removed (add-on and env-group variables are kept) |
 | `--skip-deploy` | `set`, `unset`, `import`, `edit` | Stage the change instead of deploying it; ship it later with [`stackblaze pending apply`](/cli/pending/) |
-| `-m, --message <text>` | `set`, `unset`, `import`, `edit` | Release message shown in the deployment history |
+| `-m, --message <text>` | `set`, `unset`, `import`, `edit` | Release message shown in the deployments timeline |
 | `-y, --yes` | `unset`, `import`, `edit` | Skip the confirmation (`import`: only asked with `--replace` when variables would be removed) |
 
 ## Examples

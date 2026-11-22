@@ -1,0 +1,69 @@
+---
+title: stackblaze backups
+description: "Back up a whole environment as a recovery point and restore it as new databases and volumes."
+---
+
+Manages the recovery points of a project environment. A recovery point holds the environment's services, its volumes and a dump of each database. Alias: `backup`. Running `stackblaze backups` with no subcommand lists the recovery points.
+
+To dump one PostgreSQL or MariaDB database, use [`stackblaze addons backups`](/cli/addons/).
+
+## Usage
+
+```text
+stackblaze backups list
+stackblaze backups show <id>
+stackblaze backups create [--only <service|database>]... [--wait] [--timeout <s>] [--ci]
+stackblaze backups restore <id> [--database <name>]... [--volume <name>]... [--wait] [--timeout <s>] [--ci]
+stackblaze backups status
+stackblaze backups schedule
+stackblaze backups delete <id> [-y]
+```
+
+| Subcommand | Description |
+| --- | --- |
+| `list` (`ls`) | Recovery points: time, status, and whether each holds everything or is partial |
+| `show <id>` (`get`) | What a recovery point holds (databases, volumes) and what a restore would create |
+| `create` | Back the environment up now. `--only` makes a partial recovery point |
+| `restore <id>` | Restore a recovery point as **new** databases and volumes. Nothing running changes |
+| `status` | The running restore, or one that ended in the last 10 minutes |
+| `schedule` | Show the environment's backup schedule (read only) |
+| `delete <id>` (`rm`) | Delete a recovery point and its data. Asks you to type its id unless `-y` |
+
+`<id>` is a recovery point id from `backups list`, a unique prefix of one, or `latest` (the newest completed point).
+
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `--only <name>` | `create` | Back up only this service (its volumes) or database. Repeatable or comma-separated |
+| `--database <name>` | `restore` | Restore only this database. Repeatable or comma-separated |
+| `--volume <name>` | `restore` | Restore only this volume, by volume or PVC name. Repeatable or comma-separated |
+| `--wait` | `create`, `restore` | Wait until the backup (with its database dumps) or the new databases and volumes are done. Exits `1` if it fails |
+| `--timeout <seconds>` | `create`, `restore` | Longest `--wait` (default `1800` for `create`, `2700` for `restore`) |
+| `--ci` | `create`, `restore` | Print NDJSON events |
+| `-y, --yes` | `delete` | Skip the confirmation |
+
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+## Restores create new resources
+
+A restore always creates new databases and volumes under new names. The running environment is never touched. You choose when to connect your app to the new ones (with [`stackblaze apps update`](/cli/apps/) or the dashboard) and when to delete the old ones. Both are billed until then.
+
+- With no `--database` or `--volume`, the restore creates new copies of everything in the point.
+- With `--database` or `--volume`, it creates new copies of only those items.
+- Only a completed recovery point can be restored.
+- A restore needs no confirmation. `--copy` and `-y` are still accepted for compatibility and change nothing.
+
+The CLI never creates or changes a backup schedule. Set the schedule in the dashboard; `backups schedule` shows it.
+
+## Examples
+
+```bash
+stackblaze backups create --wait
+stackblaze backups create --only web --only web-postgresql -e staging
+stackblaze backups list
+stackblaze backups show latest
+stackblaze backups restore latest --database web-postgresql
+stackblaze backups restore <id> --volume data --wait
+stackblaze backups status
+```
+
+Volume snapshots of a single app are under [`stackblaze snapshots`](/cli/snapshots/).

@@ -1,53 +1,55 @@
 ---
 title: Volumes
-description: Attach a disk to a service so data survives restarts and redeploys.
+description: Attach a volume to a service so its files survive restarts and redeploys.
 ---
 
-import Diagram from '../../../components/Diagram.astro';
+Files inside a container are ephemeral. A **volume** is a disk mounted into a service at a path you choose, so data written there survives restarts and redeploys. Use it for SQLite, uploads, model caches, and similar.
 
-Files inside a container are ephemeral. A **volume** is block storage mounted into a service so data survives restarts and redeploys. Use it for SQLite, uploads, model caches, and similar.
+A volume you add in the dashboard is a shared filesystem: every instance of the service mounts the same volume and sees the same files. For data that other services must read too, use [object storage](/data-storage/) or a database on the canvas.
 
-A volume is attached to one service instance. It is not shared across replicas. For data every replica must see, use object storage or a database on the canvas.
+## Add a volume
 
-<Diagram file="volume-vs-ephemeral.svg" alt="Ephemeral container filesystem lost on restart, compared with a volume mounted on one service replica that survives restart and redeploy" />
+1. Open the service on the project canvas and go to **Settings → Volumes**.
+2. Click **Add volume**.
+3. Set the fields:
 
-## Performance specifications
+   | Field | Example | Notes |
+   | --- | --- | --- |
+   | Name | `uploads` | Identifies the volume. |
+   | Size | `5 GB` | Pick from 5 GB up to 1 TB. New volumes default to 5 GB. |
+   | Mount path | `/data` | Absolute path inside the container. Each volume needs its own path. The first one defaults to `/data`. |
 
-| Metric | Value |
-| --- | --- |
-| Sequential throughput | ~100 MB/s |
-| Baseline IOPS | 1,000 IOPS |
-| Burst IOPS | 3,000 IOPS |
-| Minimum size | 1 GB |
-| Maximum size | 1 TB |
-| Type | Network block storage (NVMe-backed) |
-| Billing | Per GB-month (provisioned size) |
+4. Review the staged changes and commit. The volume is mounted on the next deploy.
 
-:::caution[One disk per service instance, not shared across replicas]
-A volume is attached to one service instance. It is not shared across replicas. For data every replica must see, use object storage or a database on the canvas.
-:::
+Once a volume is in use, its name and size are locked in the form. Pick a size with room to grow.
 
-## Disk configuration
+If **Volumes** shows an upgrade tag, your plan does not include volumes. Volumes you already have keep working and can still be removed.
 
-When you add a disk, you set:
+## Remove a volume
 
-| Field | Example | Notes |
-| --- | --- | --- |
-| Disk name | `uploads` | Identifier for the volume |
-| Mount path | `/data/uploads` | Absolute path where the disk appears inside the container |
-| Size | `20` GB | Minimum 1 GB — can be increased later |
+Click **Remove** on the volume and commit the change. The service stops mounting it. The data is not deleted with it: the volume stays until it is deleted separately.
 
-The disk is added on the next deploy.
+## Browse files
 
-## Example: SQLite on a persistent disk
+Services with a volume get a **Files** tab. From there you can browse folders, open and edit text files, upload and download files, create folders, and rename or delete entries. Your platform admin can turn the file browser off.
+
+## Snapshots and backups
+
+- **Backups**: volumes are included in the environment's recovery points when backups are turned on. See [Backups & recovery](/databases/backups/).
+- **Snapshots**: the **Snapshots** tab takes a snapshot of all of a service's volumes (its own and its add-ons') at once. It only shows when the cluster supports volume snapshots. To get data back, clone the snapshot into a new service. A restore never overwrites a running volume.
+
+## Billing
+
+Volumes are billed on their provisioned size per GiB-month, not on what you use. An empty 10 GB volume is billed as 10 GB. See [Pricing](/reference/pricing/).
+
+## Example: SQLite on a volume
 
 ```js title="app.js (Node.js)"
 const Database = require('better-sqlite3');
 
-// Mount path matches the disk configured in StackBlaze
+// Path inside the volume's mount path
 const db = new Database('/data/app.db');
 
-// Data persists across restarts and deploys
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id    INTEGER PRIMARY KEY,
@@ -56,33 +58,39 @@ db.exec(`
 `);
 ```
 
-:::note[Under the hood]
-- **PersistentVolumeClaim**: StackBlaze creates a Kubernetes PVC bound to a PersistentVolume provisioned by the cluster's default StorageClass (network block storage). The PVC is owned by the service and is not deleted on redeploy.
-- **VolumeMount in the pod spec**: the PVC is referenced in the pod spec as a `volumeMount` at the configured mount path. The volume is mounted with `ReadWriteOnce` access mode, one writer pod at a time.
-- **Online resize**: increasing disk size triggers a `PVC spec.resources.requests.storage` update. The CSI driver handles filesystem expansion online, no pod restart or unmount is required for most filesystems (ext4, xfs).
-- **Rolling update constraint**: because the PVC uses ReadWriteOnce, StackBlaze uses `Recreate` deployment strategy for single-replica services with a disk (old pod terminates before new pod starts). Multi-replica services with disks each get their own PVC via a StatefulSet.
-:::
+SQLite allows one writer at a time. If several instances share the volume, run one instance or move to a managed database.
 
-## Step by step
+## From the CLI
 
-1. **Add a disk to your service**
+```bash
+stackblaze volume list
+stackblaze volume add uploads --mount /data/uploads --size 10Gi
+stackblaze volume delete uploads
 
-   Navigate to Service → Settings → Disk → Add Disk. Enter a name for the disk (e.g. "uploads"), the mount path where it will appear inside the container (e.g. `/data` or `/var/lib/uploads`), and the size in GB. Click Save. A rolling deploy triggers automatically.
+stackblaze files mounts
+stackblaze files ls /data
+stackblaze files upload ./seed.db --path /data/seed.db
+stackblaze files download /data/uploads
 
-2. **Write files to the mount path**
+stackblaze snapshots create
+stackblaze snapshots list
+```
 
-   Inside your container, the disk is accessible at the configured mount path as a standard filesystem. You can read, write, and delete files normally. All writes are persisted to the underlying block storage volume immediately, no special API required.
+`stackblaze volume add` defaults to `5Gi`. The `files` and `snapshots create` commands may be disabled by your platform admin.
 
-3. **Verify persistence**
+## Config as code
 
-   Deploy a new version of your service. The disk remains mounted at the same path with the same contents, files written before the deploy are still there. Even if the underlying pod is rescheduled to a different node, the volume follows the pod.
+In `stackblaze.yaml`, give a service a `disk` with `name`, `mountPath`, and `sizeGB` (default 1). A volume made this way attaches to one instance at a time, so the service is redeployed by stopping the old instance before the new one starts.
 
-4. **Resize the disk**
+## MCP tools
 
-   Go to Service → Settings → Disk → Edit. You can increase the size at any time, the filesystem is automatically expanded without downtime. Shrinking a disk is not supported (the underlying block device cannot be safely reduced in size while mounted).
+- `snapshot_app`: snapshot all of an app's volumes under one group.
+- `list_snapshots`: list an app's volumes and their snapshots.
+- `clone_app`: restore a snapshot group into a new app, with new volumes and databases. The source is not touched.
+- `get_snapshot_job`: check on a clone started by `clone_app`.
 
 ## Next steps
 
 - [Health checks](/storage/health-checks/)
 - [Environment variables](/security/env-vars/)
-- [Storage limits & quotas](/reference/limits/)
+- [Limits](/reference/limits/)

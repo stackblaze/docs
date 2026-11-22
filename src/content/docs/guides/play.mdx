@@ -3,26 +3,26 @@ title: Play
 description: Deploy Play on StackBlaze from GitHub or a Dockerfile.
 ---
 
-Add a service from your Play repo. Nixpacks detects **scala** from `build.sbt`. A `Dockerfile` in the service root always wins.
+Add a service from your Play repo. Railpack does not detect sbt (`build.sbt`) projects, so add a `Dockerfile`.
 
-A Dockerfile is the reliable path. Bind `http.port` to `PORT`.
+Stage the app in the `Dockerfile`. Bind `http.port` to `PORT`.
 
 ## Deploy from GitHub
 
-1. [Dashboard](https://dashboard.stackblaze.cloud) → **New project** (or open an existing canvas).
-2. **+ Service → Git repository**. Pick the repo and branch.
-3. Review [staged changes](/deploy/staged-changes/) and **Deploy**.
-4. Generate a `*.stackblaze.app` domain, or attach a [custom domain](/networking/custom-domains/).
+1. [Dashboard](https://dashboard.stackblaze.cloud) → **New Project** (or open an existing canvas).
+2. **+ Service → GitHub repository**. Pick the repo and branch.
+3. Click **Commit 1 change**, review the [staged changes](/deploy/staged-changes/), and **Deploy**.
+4. A service exposed to the internet gets a `*.stackblaze.app` URL. Attach a [custom domain](/networking/custom-domains/) if you want your own.
 
-Override install / build / start on the service if detection is wrong. Typical start: `the staged binary`.
+StackBlaze sets `PORT` to the service port. Set the port on the service to match your app. If detection is wrong, change **Build method**, **Build command**, or **Start command** on the service. Typical start: the staged binary.
 
 ## Docker
 
-If you already have a Dockerfile, StackBlaze uses it. The process must listen on `PORT`.
+If you already have a `Dockerfile`, StackBlaze uses it. The process must listen on `PORT`.
 
 ## Data
 
-**+ Service → Databases** for Postgres, Redis/Valkey, MySQL, and others. Wire `DATABASE_URL` from the service **Variables** tab or `fromDatabase` in [stackblaze.yaml](/blueprint/).
+**+ Service → Database or cache** for PostgreSQL, MariaDB, Valkey, and more. Wire `DATABASE_URL` from the service **Variables** tab or `fromDatabase` in [stackblaze.yaml](/blueprint/).
 
 ## CLI
 

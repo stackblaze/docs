@@ -50,10 +50,11 @@ volumes:
 | --- | --- | --- |
 | service | `web` | Built from your Dockerfile, port 3000 |
 | database | `postgres` | Managed PostgreSQL |
-| database | `redis` | Managed Redis-compatible cache |
-| volume | `/data` | Volume on the web service |
+| database | `redis` | Managed Valkey (Redis-compatible) |
 
-Import stages the tiles. [Deploy](/deploy/staged-changes/) applies them. You can also describe the same stack in [config as code](/blueprint/).
+`DATABASE_URL` and `REDIS_URL` point at Compose service names, so import rewrites them to the managed databases' connection strings. The `pgdata` and `redisdata` volumes are not needed: database storage is managed. `depends_on` is ignored.
+
+Import stages the tiles. **Commit N changes** → **Deploy** applies them ([staged changes](/deploy/staged-changes/)). You can also describe the same stack in [config as code](/blueprint/).
 
 ## Compose → StackBlaze
 
@@ -61,19 +62,25 @@ Import stages the tiles. [Deploy](/deploy/staged-changes/) applies them. You can
 | --- | --- |
 | `build: .` | Service (from Dockerfile) |
 | `image: postgres:16` | Managed PostgreSQL |
-| `image: redis:7-alpine` | Managed Redis-compatible database |
-| `volumes:` | Volume |
+| `image: mariadb`, `mysql` | Managed MariaDB / MySQL |
+| `image: redis:7-alpine`, `valkey` | Managed Valkey |
+| `image: kafka` | Managed Kafka |
+| `ports:` | Service port (first port); no ports makes a private worker |
+| `command:` | Start command |
+| `volumes:` (named) | Volume on that service |
 | `environment:` | [Variables](/security/env-vars/) |
+| `deploy.replicas` | Instance count |
 
 ## Under the hood
 
 The mapping is consistent:
 
 - **build / image**: source builds and your own images become **services**, same port and start command.
-- **known datastores**: stock images such as `postgres`, `redis`, `mysql`, or `mongo` become **managed databases**.
-- **volumes**: named volumes on a service become **volumes** at the same path. Database storage is managed for you.
-- **environment**: values become [variables](/security/env-vars/). Database URLs are injected, so drop hardcoded `DATABASE_URL` from Compose.
-- **networking**: Compose's default network becomes the environment's [private network](/networking/private-networking/). Names still resolve.
+- **known datastores**: stock `postgres`, `mariadb`, `mysql`, `redis`/`valkey`, and `kafka` images become **managed databases**. Other datastores (for example `mongo`, `rabbitmq`, `elasticsearch`, `minio`) are skipped with a warning; add them from **+ Service → Database or cache** if available.
+- **volumes**: the first named volume on a service becomes a **volume** at the same path. Bind mounts such as `./src:/app` are dropped.
+- **environment**: values become [variables](/security/env-vars/). A value that points at a Compose datastore (a URL with its host, or just the host) is rewritten to that managed database. A value with `${VAR}` becomes a variable you must fill in.
+- **ignored**: `depends_on`, `healthcheck` (set an HTTP health check path afterwards), `build.args`, and extra ports beyond the first.
+- **networking**: other services are reachable by name on the environment's [private network](/networking/private-networking/).
 
 ## Step by step
 
@@ -89,11 +96,11 @@ The mapping is consistent:
 
 3. **Datastore containers become managed databases**
 
-   Do not run your own postgres or redis container. Import maps those images to managed databases with backups and optional HA.
+   Do not run your own postgres or redis container. Import maps those images to managed databases.
 
 4. **Wire them together**
 
-   Connection strings land as variables. Other services are reachable by name on the private network, so `depends_on` is handled for you.
+   Connection strings land as variables. Other services are reachable by name on the private network. `depends_on` is ignored: services start independently and retry.
 
 </Steps>
 

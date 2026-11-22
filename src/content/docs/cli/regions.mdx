@@ -1,0 +1,25 @@
+---
+title: stackblaze regions
+description: "List the regions a new project can be created in."
+---
+
+Lists the regions open for new projects. The workspace's preferred region is marked `*`: that is where [`projects create`](/cli/projects/) places a project when `--region` is omitted. Alias: `region`.
+
+## Usage
+
+```text
+stackblaze regions [list]
+```
+
+| Subcommand | Description |
+| --- | --- |
+| `list` (alias `ls`) | The regions open for new projects. Plain `stackblaze regions` does the same |
+
+Also accepts `--token`, `--api-url`, `-o, --output` and `--json` (see [scope and output flags](/cli/#scope-and-common-flags)).
+
+## Examples
+
+```bash
+stackblaze regions list
+stackblaze projects create shop --region us-west-1
+```

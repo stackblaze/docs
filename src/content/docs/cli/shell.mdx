@@ -3,7 +3,7 @@ title: stackblaze shell
 description: "Open a local subshell with the app's environment variables."
 ---
 
-Starts your shell (`$SHELL`; `cmd.exe` on Windows) on your machine with the linked app's variables set, like [`run`](/cli/run/) for an interactive session. Type `exit` to leave.
+Starts your shell (`$STACKBLAZE_SHELL` if set, else `$SHELL`; `cmd.exe` on Windows, or set `STACKBLAZE_SHELL=pwsh`) on your machine with the linked app's variables set, like [`run`](/cli/run/) for an interactive session. Type `exit` to leave.
 
 ## Usage
 
@@ -11,7 +11,7 @@ Starts your shell (`$SHELL`; `cmd.exe` on Windows) on your machine with the link
 stackblaze shell [options]
 ```
 
-Also accepts `-p, --pipeline`, `--phase`, `-a, --app`, `--token` and `--api-url` (see [scope](/cli/#scope-and-common-flags)). No JSON output.
+Also accepts `-p, --project`, `-e, --env`, `-a, --app`, `--token` and `--api-url` (see [scope](/cli/#scope-and-common-flags)). No JSON output.
 
 `STACKBLAZE_PIPELINE`, `STACKBLAZE_PHASE` and `STACKBLAZE_APP` are set inside the subshell, so `stackblaze` commands you run there target the same app.
 

@@ -1,14 +1,43 @@
 ---
-title: SAML SSO
-description: Enterprise single sign-on with Okta, Google Workspace, or Microsoft Entra.
+title: SSO
+description: Single sign-on with SAML 2.0 or OpenID Connect, verified login domains, just-in-time provisioning, and Require SSO.
 ---
 
-SAML 2.0 SSO is an **Enterprise** organization setting. Owners configure the identity provider (Okta, Google Workspace, Microsoft Entra / Azure AD). Members sign in through that IdP instead of a password.
+Single sign-on lets members sign in with their work account through your identity provider (IdP). StackBlaze supports **SAML 2.0** and **OpenID Connect (OIDC)**, for example Okta, Microsoft Entra ID, or Google Workspace.
 
-SCIM provisioning is available on the same plan for joiner/leaver sync.
+SSO is available on the **Business** plan and on Enterprise agreements. Organization admins set it up themselves in **Settings → SSO & provisioning**. On other plans the page is listed but locked.
 
-SSO does not replace [role-based access](/security/team-permissions/) on a project. After a user lands in the org, Owner / Admin / Developer / Viewer still decide what they can deploy.
+## Set up a connection
 
-Enforced [2FA](/security/two-factor-auth/) can be required in addition to SSO.
+1. Open **Settings → SSO & provisioning** and choose **Connect an identity provider**.
+2. Pick SAML or OIDC.
+3. **Register StackBlaze at your identity provider.** Create an app at your IdP and enter the values the page shows:
+   - SAML: **ACS / Reply URL** and **SP Entity ID / Audience**
+   - OIDC: **Redirect URI**, with scopes `openid email profile`
+4. **Identity provider details.** Paste what your IdP gives you:
+   - SAML: the **IdP metadata URL**, or the **Sign-on URL (entryPoint)**, **IdP issuer / entity ID**, and certificate
+   - OIDC: the **Issuer URL**, **Client ID**, and client secret
+5. Run the connection test. It checks the details without saving them or signing anyone in.
+6. Enable the connection, then use **Test sign-in** to sign in through it once yourself.
 
-Setup is done with StackBlaze support — you do not upload IdP XML yourself in the dashboard today. Contact sales or your TAM with the ACS URL and entity ID they issue for your org.
+## Login domains
+
+Add your email domains under **Login domains**. Each domain is verified with a DNS TXT record: add the record at your DNS provider, then click **Verify**. Members with a verified email domain are sent to your IdP when they sign in.
+
+## Just-in-time provisioning
+
+People on your verified domains get an account in the organization the first time they sign in through your IdP. Choose their role under **Default role for new members** (member by default). Each new account takes a seat; when the plan's member limit is reached, the sign-in is refused.
+
+There is no SCIM provisioning.
+
+## Require SSO
+
+Under **Enforcement**, turn on **Require SSO** to make members sign in through your IdP. Before you turn it on, sign in through the connection once yourself.
+
+While SSO is required, the connection cannot be pointed at a different IdP (protocol or issuer). Certificate and secret rotation still work.
+
+If the organization leaves a plan that includes SSO, the connection stops signing people in and enforcement stops applying, so password sign-in works again. Nobody is locked out.
+
+## SSO and roles
+
+SSO decides how members sign in. [Roles and teams](/security/team-permissions/) still decide what they can do.

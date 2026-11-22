@@ -1,0 +1,38 @@
+---
+title: Skills
+description: Step-by-step notes for one kind of task. The agent reads a skill when a request matches.
+---
+
+A **skill** is a short set of steps for one kind of task, like handling a refund. The agent sees each skill's name and description. When a request matches, it reads the steps.
+
+Open the agent, go to **Agent → Skills**, and click **New skill**.
+
+| Field | What to enter |
+| --- | --- |
+| **Name** | Lowercase letters, digits, and dashes, up to 40. For example `refund-policy`. It cannot change later. |
+| **When to use it** | One line, up to 300 characters. For example "A customer asks for a refund or wants to return an order". |
+| **Steps** | The instructions, in Markdown, up to 40,000 characters. |
+
+```md title="Steps"
+1. Ask for the order number.
+2. Refunds are allowed within 30 days of delivery.
+3. If it is later than that, offer store credit and hand over to a person.
+```
+
+Click **Save skill**. An agent can have up to 50 skills.
+
+Skills save at once. New chats use them. Open chats keep what they had.
+
+## Skills need `read`
+
+The agent reads a skill's steps with its `read` tool. If `read` is off, the Skills tab says so. Turn it on in **General → Tools**.
+
+The agent can read its skills but never change them.
+
+## Skills or instructions
+
+Put what applies to every chat in the [instructions](/ai-agents/create/#instructions). Put steps for one kind of request in a skill. The agent only loads a skill's steps when it needs them.
+
+## API
+
+`GET /api/ai-agents/{pipeline}/{phase}/{name}/skills` lists them. `PUT …/skills/{skill}` with `{ "description", "body" }` creates or replaces one. `GET` and `DELETE` on `…/skills/{skill}` read and remove one. See [API](/ai-agents/api/).

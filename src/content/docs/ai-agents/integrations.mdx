@@ -1,0 +1,38 @@
+---
+title: Integrations
+description: Outside services the agent uses as tools. Each integration is a hosted MCP server.
+---
+
+An **integration** gives the agent tools from an outside service, like looking up an issue or an order. Each one is a hosted MCP server.
+
+Open the agent, go to **Agent → Integrations**, and click **Add integration**.
+
+| Field | What to enter |
+| --- | --- |
+| **Service** | A listed service, or **Another MCP server** (any hosted server, by URL). |
+| **Name** | Lowercase letters, digits, and dashes, up to 32. The tools show up as `mcp__<name>_<tool>`. |
+| **Server URL** | For **Another MCP server**. Must be `https`, by host name. A service of this environment can be named as `http://<service>/mcp`. |
+| **Token** | The secret the server needs. Optional for **Another MCP server**. |
+| **Header** | Optional, for **Another MCP server**. Empty sends `Authorization: Bearer <token>`. |
+
+An `https` server must resolve to a public address. When you add one, StackBlaze connects to the server and lists its tools. If the server refuses the token, the integration is not added and you are asked to paste it again. A server that cannot be reached is still added. While it does not answer, the agent simply has none of its tools.
+
+Adding or removing an integration restarts the agent. An agent can have up to 10.
+
+## The token
+
+The token is kept in the agent's [variables](/security/env-vars/), masked like any secret, and never shown again. The list shows **token stored** or **no token**. Use a token limited to what the agent should be able to do.
+
+Each token goes only to its own server. The agent's configuration holds a reference to the variable, never the secret.
+
+## Public agents
+
+Integrations are off while the website widget is on. A visitor could talk the agent into using them. Turn the widget off in **Triggers** to add integrations. See [Security and limits](/ai-agents/security/).
+
+## In evals
+
+An eval check can require a tool call. `mcp__<integration>` matches any tool of that integration. See [Evals](/ai-agents/evals/).
+
+## API
+
+`POST /api/ai-agents/{pipeline}/{phase}/{name}/integrations` with `{ name, url, token?, header?, scheme?, label? }` adds one. `DELETE …/integrations/{id}` removes it and its stored token. See [API](/ai-agents/api/).
