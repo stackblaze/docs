@@ -42,10 +42,6 @@ Use the external connection string for GUI clients like TablePlus, MySQL Workben
 mysql://user:password@db.stackblaze.cloud:3306/dbname?ssl=true
 ```
 
-## Importing an existing database
-
-Moving from another host? Dump the database with `mysqldump` or `mariadb-dump` and load it with `stackblaze addons import`. See [Import a database dump](/databases/import-dump/).
-
 ## Running migrations
 
 Configure a pre-deploy command under **Settings → Deploy → Pre-deploy command** to ensure migrations run before new traffic is routed to your service.
