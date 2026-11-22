@@ -97,6 +97,23 @@ export default defineConfig({
 					],
 				},
 				{
+					label: 'AI agents',
+					collapsed: true,
+					items: [
+						{ slug: 'ai-agents', label: 'Overview' },
+						{ slug: 'ai-agents/create', label: 'Create an agent' },
+						{ slug: 'ai-agents/knowledge', label: 'Knowledge' },
+						{ slug: 'ai-agents/skills', label: 'Skills' },
+						{ slug: 'ai-agents/integrations', label: 'Integrations' },
+						{ slug: 'ai-agents/triggers', label: 'Triggers' },
+						{ slug: 'ai-agents/sessions', label: 'Sessions' },
+						{ slug: 'ai-agents/evals', label: 'Evals' },
+						{ slug: 'ai-agents/optimizations', label: 'Optimizations' },
+						{ slug: 'ai-agents/api', label: 'API' },
+						{ slug: 'ai-agents/security', label: 'Security and limits' },
+					],
+				},
+				{
 					label: 'Templates & open source',
 					collapsed: true,
 					items: [

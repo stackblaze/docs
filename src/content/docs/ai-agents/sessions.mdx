@@ -1,0 +1,48 @@
+---
+title: Sessions
+description: Every chat the agent had, by channel, with its transcript and token counts. Turn a real request into an eval test case.
+---
+
+**Sessions** lists the agent's chats, newest first. Open the agent and go to **Agent → Sessions**. Pick a chat to read it.
+
+## Channels
+
+Filter by channel, or pick **All channels**.
+
+| Channel | Where the chat came from |
+| --- | --- |
+| **Team chat** | **Open chat** on the agent's card |
+| **API** | `POST /v1/chats` with an API key |
+| **Widget** | A visitor on your website |
+| **Webhook** | A webhook call |
+| **Schedule** | A schedule run |
+| **Eval** | An eval trial, a judge, or an optimization run |
+
+Each row shows the first message, the channel, the number of turns, and when it was last updated.
+
+## What is kept
+
+A transcript shows each message, the tools the agent used, and errors. Its header shows the channel, when the chat started, and the tokens in and out.
+
+Chats are kept in the agent's PostgreSQL and survive restarts. A chat not updated for 90 days is removed. Deleting the agent deletes its chat history.
+
+An agent from before chat history was stored keeps chats in memory, and the tab says so. They reset when it restarts.
+
+## Add to eval
+
+**Add to eval** turns a real chat into a test. Its first message becomes a test case's request. Pick **A new eval** or an existing eval, then save it. The reply that chat got is shown next to the test case while you write its checks. See [Evals](/ai-agents/evals/).
+
+## Limits of a chat
+
+| | |
+| --- | --- |
+| Message | Up to 8,000 characters |
+| Turns | Up to 30 per chat |
+| Reply time | A reply that takes longer than 120 seconds is stopped |
+| Chats at once | 5 live chats per agent. A new one replaces the least recently used idle chat. If all are mid-reply, the API returns 503 with `Retry-After`. |
+
+A chat with no messages for 10 minutes is put to sleep. The next message wakes it with its history.
+
+## API
+
+`GET /api/ai-agents/{pipeline}/{phase}/{name}/sessions` lists chats (`?limit`, `?before` for the next page, `?channel`). `GET …/sessions/{chat}` returns one transcript. See [API](/ai-agents/api/).

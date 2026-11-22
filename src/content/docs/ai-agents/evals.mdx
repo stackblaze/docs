@@ -1,0 +1,134 @@
+---
+title: Evals
+description: Repeatable tests for an agent. Test cases, checks measured on every test case, run settings, and results on three separate axes.
+---
+
+An **eval** is a repeatable test that checks whether the agent's quality holds up. Run it after you change the instructions, a skill, or the model, to see what broke before a customer does.
+
+An eval has three parts:
+
+- **Test cases**: the requests the agent should handle.
+- **Checks**: what is measured on every test case.
+- **Run settings**: how many times each test case runs.
+
+Every trial is a real chat on the **Eval** channel. It uses tokens and shows in [Sessions](/ai-agents/sessions/).
+
+Open the agent, go to **Agent → Evals**, and click **New eval**. Enter a **Name** (lowercase letters, digits, and dashes, up to 40), then use the **Guided builder** or **Advanced JSON**.
+
+## Test cases
+
+Click **Add test case** for each request. Each case runs on its own, in a fresh chat.
+
+| Field | What to enter |
+| --- | --- |
+| **Test case ID** | Letters, digits, `-`, and `_`, up to 64. Unique in the eval. |
+| **Request** | The message the agent gets, up to 4,000 characters. |
+| Reference data | Optional JSON that checks can read. Set it in **Advanced JSON**. |
+
+To add a real request, use **Add to eval** on a chat in Sessions.
+
+## Checks
+
+Click **Add check** and pick a **Check type**. Every check is measured on every test case.
+
+### Judge response quality
+
+A judge scores the reply. Enter a **Score name** and **What should a good result do?**, for example "The request was completed."
+
+The judge is a second chat with the agent's own model. It answers PASS (1) or FAIL (0). It is a second opinion, not an independent one. Where a fact can be named, use **Output matches text** instead.
+
+### Tool was called
+
+The agent called the tool named in **Tool name**. `mcp__<integration>` matches any tool of that [integration](/ai-agents/integrations/).
+
+### Tool call contains arguments
+
+The agent called the tool with these arguments. Add one row per argument under **Expected arguments**: a name and a value. Values can be text, numbers, booleans, arrays, or JSON objects. Objects match by key, so the call may hold more keys than you list.
+
+### Output matches text
+
+The reply **Contains** or **Does not contain** the **Text**. **Case sensitive** is on by default.
+
+Instead of fixed text, the check can read a **Reference path** into each test case's reference data, like `expected.orderId`. Set it in **Advanced JSON**. A test case without that value abstains for this check.
+
+## Run settings
+
+**Epochs** runs each test case one to three times. **Total trials** is test cases × epochs.
+
+## Advanced JSON
+
+**Advanced JSON** shows the same eval as `{ samples, checks, epochs }`. Use it to paste an eval or to set reference data.
+
+```json title="refunds eval"
+{
+  "samples": [
+    {
+      "id": "refund-late",
+      "input": "I got my order 45 days ago. Can I still return it?",
+      "reference": { "expected": { "offer": "store credit" } }
+    },
+    {
+      "id": "order-status",
+      "input": "Where is order 1042?",
+      "reference": { "expected": { "offer": "1042" } }
+    }
+  ],
+  "checks": [
+    { "type": "llmJudge", "name": "completed", "rubric": "The request was completed." },
+    { "type": "hasToolCall", "tool": "grep" },
+    { "type": "toolCallContains", "tool": "mcp__orders", "arguments": { "order": 1042 } },
+    { "type": "outputMatches", "mode": "contains", "referencePath": "expected.offer" },
+    { "type": "outputMatches", "mode": "notContains", "value": "password", "caseSensitive": false }
+  ],
+  "epochs": 2
+}
+```
+
+| Check | JSON |
+| --- | --- |
+| Judge response quality | `{ "type": "llmJudge", "name", "rubric" }` |
+| Tool was called | `{ "type": "hasToolCall", "tool" }` |
+| Tool call contains arguments | `{ "type": "toolCallContains", "tool", "arguments" }` |
+| Output matches text | `{ "type": "outputMatches", "mode": "contains" \| "notContains", "value" or "referencePath", "caseSensitive"? }` |
+
+## Run an eval
+
+Click **Run** next to the eval. One eval runs at a time per agent. While it runs, the results show how many trials are done. **Edit** and **Delete** wait until it finishes.
+
+## Read the results
+
+Results come on three separate axes. There is never one overall score.
+
+| Axis | What it shows |
+| --- | --- |
+| **Structural** | The tool and text checks: **All passed** or **Not all passed**, with passed, failed, and abstained counts. **No structural checks** when the eval has none. |
+| **Behavioral** | Each judge by its score name: the mean score ± the standard deviation across trials and epochs, with completed and abstained counts. **No judges** when there are none. |
+| **Efficiency** | The agent's tokens, the **eval overhead** (the judges' tokens), and the mean latency per trial. |
+
+Below the axes, each test case lists its trials: the reply, the tools called with their arguments, and each check's result with its reason.
+
+An **abstention** is neither a pass nor a fail. A check abstains when it cannot be measured:
+
+| Reason | Why |
+| --- | --- |
+| `SETUP_INVALID` | A reference path does not lead to a non-empty text value in the test case's reference data. |
+| `TRIAL_ERROR` | The agent gave no reply, so no check can read it. |
+| `JUDGE_FAILED` | The judge gave no PASS or FAIL. |
+
+An eval saved in the earlier format still opens. Checks it could not carry over are named on the eval; edit it to add them as checks.
+
+## Limits
+
+| | |
+| --- | --- |
+| Test cases | 100 per eval |
+| Checks | 20 per eval |
+| Epochs | 1 to 3 |
+| Trials | 300 per run (test cases × epochs) |
+| Time per trial | 600 seconds |
+| Evals | 20 per agent |
+| Runs kept | The last 20 runs of each eval |
+
+## API
+
+`GET`, `PUT`, and `DELETE` on `/api/ai-agents/{pipeline}/{phase}/{name}/evals/{eval}` with the JSON above. `POST …/evals/{eval}/run` starts a run; `GET …/evals/{eval}/runs/{run}` reads it. See [API](/ai-agents/api/).

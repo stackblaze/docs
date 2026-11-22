@@ -1,0 +1,69 @@
+---
+title: Optimizations
+description: Try cheaper ways to run an agent against its own recent sessions, and keep a change only where quality holds.
+---
+
+An **optimization** tries cheaper ways to run the agent: a cheaper model, fewer tools, a tighter prompt. It measures each one against the agent's own recent sessions and recommends a change only where quality holds. Nothing changes until you accept.
+
+Open the agent and go to **Agent → Optimizations**.
+
+## Before you start
+
+- The agent's model must go through its **AI Gateway**. Costs are priced there. An agent on an AI model (GPU) cannot be optimized.
+- The agent needs at least **10 recent completed sessions**, not counting evals. The tab says so until it has them.
+
+## Start a run
+
+1. Set a **Budget** from $1 to $500. The default is $50.
+2. Click **New optimization**.
+
+The run stops once it has spent the budget. Every trial is a real chat on the **Eval** channel and shows in [Sessions](/ai-agents/sessions/). The run goes on in the agent if you close the panel. One run goes at a time.
+
+## What a run does
+
+1. **Builds an eval from recent sessions.** It takes the 10 newest completed sessions. Each becomes a sample: the first message, the tools called, and the reply. A reference of what a good reply achieves is written for each.
+2. **Runs the current setup** against that eval. The current setup must pass its own history.
+3. **Repairs samples that fail.** Each failure is diagnosed: it needed a fact the message does not give, the reference was too strict, or it cannot be reproduced. The sample is revised or dropped, for up to 2 rounds.
+4. **Tries cheaper setups**, each against the same eval:
+   - **A cheaper model** of the same provider on the gateway.
+   - **Fewer tools**: the built-in tools the sessions never called are removed. Integration tools are not removed.
+   - **A tighter prompt**: a rewrite of the instructions.
+   - **Combined**: the winning model with the winning tool trim. The prompt rewrite is never combined with a model change.
+
+**The eval** at the bottom of a run lists every sample, what it is judged against, and which samples were repaired or dropped.
+
+## Read the verdicts
+
+Each setup shows its verdict, its quality, its **Cost per run**, and its trials, side by side with the current setup (**Baseline**).
+
+| Verdict | Meaning |
+| --- | --- |
+| **Quality held** | Quality is within 5 points of the baseline, or better. |
+| **Slight drop** | Quality dropped by no more than 15 points. |
+| **Quality dropped** | Quality dropped by more than 15 points. |
+| **Behavior changed** | The setup lost a tool call or a check that the baseline passed. |
+| **Not enough trials** | Too few trials completed, or too few samples were scored on both sides, to tell. |
+
+Quality is the share of trials the judge passed, on samples scored on both sides. Cost is dollars per run at the AI Gateway's list prices.
+
+Only a setup that is cheaper and has **Quality held** is **Recommended**. If several are, the cheapest wins. If none is, the run ends with "Done: no cheaper setup held up".
+
+## Accept or dismiss
+
+When a change is recommended, the run waits for you:
+
+- **Accept** applies the change to the agent's settings and restarts the agent. There is no one-click undo. Change the settings back by hand.
+- **Dismiss** declines it. Nothing changes.
+- **Cancel run** stops a run. A change waiting for a decision is dismissed.
+
+Accept checks the change again first: the model must still be on the gateway, and tools may only be removed.
+
+## The run's own key
+
+Each run gets its own gateway key. It is capped at the run's budget, allowed only the current model and the cheaper ones of its provider, and valid for 12 hours. The agent holds it in memory for the run. It is deleted when you accept, dismiss, or cancel.
+
+The last 10 runs are kept.
+
+## API
+
+`GET /api/ai-agents/{pipeline}/{phase}/{name}/optimizations` returns whether the agent can be optimized and its runs. `POST …/optimizations` with `{ "budget": 50 }` starts one. `GET …/optimizations/{run}` reads it. `POST …/optimizations/{run}/accept`, `…/dismiss`, and `…/cancel` decide. See [API](/ai-agents/api/).

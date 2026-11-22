@@ -1,0 +1,71 @@
+---
+title: Security and limits
+description: Where an agent's keys live, how the AI Gateway isolates provider keys, what a public agent cannot do, and the limits that apply.
+---
+
+## Provider keys stay in the AI Gateway
+
+No model provider key is ever stored on an agent.
+
+- By default each agent gets its own **AI Gateway**, a LiteLLM service in the same environment. Your provider key is kept in the gateway's [variables](/security/env-vars/).
+- The agent gets its own gateway key, limited to its one model. That key is its only model credential.
+- StackBlaze reaches the gateway's admin API privately, never over a public URL. The gateway's master key is never returned, logged, or written to the agent.
+- An agent on an [AI model](/cli/models/) of the same environment connects to it like any app.
+
+Inside the agent, each chat process gets only its model key and its own settings, not the rest of the service's environment.
+
+## Agent keys and secrets
+
+| Secret | Prefix | Where it is kept |
+| --- | --- | --- |
+| API key | `sbag_` | Shown once. The agent keeps only a SHA-256 hash. |
+| Webhook secret | `sbwh_` | Shown once. The agent keeps only a SHA-256 hash and compares it in constant time. |
+| Integration token | (the service's own) | In the agent's variables, masked. Never returned. Sent only to its own server. |
+
+Revoke a key or webhook from **Triggers** when it is no longer needed. Message text is never logged.
+
+**Open chat** signs you in with a link that is valid for 120 seconds. Each team member gets their own session.
+
+## Private and public agents
+
+An agent is **private** by default. Only your team (with **Open chat**), callers with an API key or webhook secret, and its schedules start chats.
+
+Turning on the **Website widget** makes it **public**: anonymous visitors can chat with it. A public agent:
+
+- has no shell or file-editing tools: `bash`, `edit`, and `write` are refused, whatever the settings say;
+- has no [integrations](/ai-agents/integrations/), because a visitor could talk the agent into using them;
+- is shown only inside the sites you list, and visitors can only continue their own chats.
+
+The widget is not the service's network access. It does not change who can reach the agent's URL; API keys and webhook secrets still protect the API.
+
+## What the tools can reach
+
+File tools only reach the agent's knowledge folder (and, for agents with write tools, the chat's scratch folder). URLs, internal addresses, `~`, system folders, and links that point outside are refused. Skills can be read, never written.
+
+The tools you can turn on are `read`, `grep`, `glob`, `web_search`, `todo`, `bash`, `edit`, and `write`. Tools that run code or reach outside the knowledge folder in other ways are not offered.
+
+## Who can change an agent
+
+Agents follow the project's [team permissions](/security/team-permissions/). Reading an agent, its sessions, and its files needs read access. Creating, changing, deleting, starting runs, and **Open chat** need write access.
+
+## Limits
+
+| | Limit |
+| --- | --- |
+| Instructions | 20,000 characters |
+| Message | 8,000 characters |
+| Turns per chat | 30 |
+| Reply time | 120 seconds |
+| Live chats at once | 5 |
+| Chat history | Removed after 90 days without an update |
+| Knowledge | 10 MB per file, 200 files, 200 MB |
+| Skills | 50; steps up to 40,000 characters |
+| Integrations | 10 |
+| API keys | 20 |
+| Webhooks | 20; 64 KB body; 60 calls per minute each |
+| Schedules | 20; message up to 4,000 characters |
+| Widget | 20 sites; 10 messages per visitor per minute; 60 messages and 10 new visitors per IP per minute; 3 new chats per visitor per day |
+| Evals | 20 per agent; 100 test cases, 20 checks, 3 epochs, 300 trials, 600 s per trial; last 20 runs kept |
+| Optimizations | Budget $1 to $500; one run at a time; last 10 runs kept |
+
+The agent and its gateway are services, so your [plan limits](/reference/limits/) apply to them too.
