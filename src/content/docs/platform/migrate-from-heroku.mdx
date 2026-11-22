@@ -47,6 +47,8 @@ Unlike Heroku, StackBlaze runs on dedicated compute. There are no dyno hour limi
 
    Create managed services directly from the StackBlaze dashboard: Heroku Postgres becomes StackBlaze PostgreSQL, Heroku Redis becomes StackBlaze Redis, and Heroku Scheduler becomes a StackBlaze Cron Job. Each service runs on your private network.
 
+   To bring your Postgres data along, download a backup of your Heroku database (it's a `pg_dump` custom-format archive) and load it with `stackblaze addons import`. See [Import a database dump](/databases/import-dump/).
+
 5. **Wire up DATABASE_URL and REDIS_URL**
 
    Attaching a managed add-on to your app injects its connection string automatically, so `DATABASE_URL` and `REDIS_URL` point at the new StackBlaze services with no manual editing. If you kept placeholder values from Heroku, remove them so the injected ones take over.

@@ -328,6 +328,7 @@ export default defineConfig({
 								{ slug: 'databases/scylladb', label: 'ScyllaDB' },
 								{ slug: 'databases/couchdb', label: 'CouchDB' },
 								{ slug: 'databases/memcached', label: 'Memcached' },
+								{ slug: 'databases/import-dump', label: 'Import a database dump' },
 								{ slug: 'messaging/kafka', label: 'Kafka' },
 								{ slug: 'messaging/rabbitmq', label: 'RabbitMQ' },
 							],

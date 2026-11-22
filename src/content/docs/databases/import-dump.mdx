@@ -1,0 +1,95 @@
+---
+title: Import a database dump
+description: Move an existing PostgreSQL or MySQL / MariaDB database to StackBlaze by loading a dump with stackblaze addons import.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+To move an existing database, dump it where it runs today, then load the dump into your StackBlaze add-on with [`stackblaze addons import`](/cli/addons/#import-a-dump). The data travels through the same private tunnel as [`stackblaze connect --local`](/cli/connect/), so the database is never exposed publicly.
+
+## Before you start
+
+- **StackBlaze CLI 1.1.9 or newer.** Older versions have no `addons import`. Check with `stackblaze --version`, and [upgrade](/cli/upgrade/) if needed.
+- **A linked app with the database add-on attached.** Run `stackblaze login` and `stackblaze link` in your project folder. `stackblaze addons list --attached` shows the add-on.
+- **The database client tools on your machine.** `psql` and `pg_restore` for PostgreSQL, `mysql` for MySQL / MariaDB. They must be on your `PATH`. For PostgreSQL, `pg_restore` must be at least as new as the `pg_dump` that wrote the dump.
+
+## PostgreSQL
+
+<Steps>
+
+1. **Dump the current database**
+
+   Use the custom format and leave out owners and grants. The source system's roles don't exist on StackBlaze.
+
+   ```bash
+   pg_dump -Fc --no-owner --no-acl -d "<current connection string>" -f backup.dump
+   ```
+
+2. **Load it into the add-on**
+
+   From your linked project folder:
+
+   ```bash
+   stackblaze addons import backup.dump
+   ```
+
+   The CLI shows which add-on and database it will load into and asks before it starts. If the app has more than one database add-on, name one with `--instance <name>`.
+
+3. **Check the data**
+
+   Open a shell through the tunnel and compare a few row counts with the source:
+
+   ```bash
+   stackblaze connect postgres --local
+   ```
+
+   In `psql`, `\dt` lists the tables and `SELECT count(*) FROM <table>;` counts rows.
+
+</Steps>
+
+The import detects the dump format from the file's contents, not its name:
+
+| Dump | Made with | Loaded with |
+| --- | --- | --- |
+| Custom archive (recommended) | `pg_dump -Fc` | `pg_restore --no-owner --no-acl` |
+| Tar archive | `pg_dump -Ft` | `pg_restore --no-owner --no-acl` |
+| Directory | `pg_dump -Fd` (pass the directory) | `pg_restore --no-owner --no-acl` |
+| Plain SQL, also gzipped (`.sql.gz`) | `pg_dump` | `psql` |
+
+Archives are always loaded without the source's owners and grants; the add-on's user owns everything. A plain SQL dump runs as written, so make it with `--no-owner --no-acl`.
+
+## MySQL / MariaDB
+
+Dump with `mysqldump` or `mariadb-dump`, then load it the same way:
+
+```bash
+mysqldump --single-transaction <database> > dump.sql
+stackblaze addons import dump.sql
+```
+
+The dump is loaded with `mysql`; gzipped dumps (`.sql.gz`) work too. Check the data with `stackblaze connect mysql --local`.
+
+## Options
+
+| Flag | Description |
+| --- | --- |
+| `--instance <name>` | Which add-on, when the app has more than one database add-on |
+| `--clean` | PostgreSQL archives only: drop the objects the dump recreates before loading them. Use it to re-run an import into a database that already has the tables |
+| `--stop-on-error` | Stop at the first error instead of carrying on |
+| `-y, --yes` | Skip the confirmation |
+
+The dump is loaded into the add-on's existing database. Start from an empty database, or use `--clean` with an archive.
+
+## Troubleshooting
+
+| You see | What to do |
+| --- | --- |
+| `unknown command 'import'` | Upgrade the CLI to 1.1.9 or newer |
+| `role "…" does not exist` | The plain SQL dump names the source's roles. Re-dump with `--no-owner --no-acl`, or use `pg_dump -Fc` |
+| `unsupported version` or a header error from `pg_restore` | Your `pg_restore` is older than the `pg_dump` that wrote the file. Install newer client tools |
+| `already exists` | The database already has those objects. Re-run with `--clean` (PostgreSQL archives), or start from an empty database |
+| `psql`, `pg_restore` or `mysql` not found | Install the database client tools and put them on your `PATH` |
+
+Any failed statement makes the command exit `1`, and the database may then be partly loaded: fix the cause and re-run with `--clean`. Exit code `3` means the API refused the tunnel; check that you're signed in to the right account with `stackblaze whoami`.
+
+`stackblaze import` is a different command: it creates services from a stack file. For database dumps, use `stackblaze addons import`.
