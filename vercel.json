@@ -1,5 +1,1083 @@
 {
   "framework": "astro",
   "buildCommand": "npm run build",
-  "outputDirectory": "dist"
+  "outputDirectory": "dist",
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/access",
+      "destination": "https://www.stackblaze.com/docs/security/team-permissions",
+      "permanent": true
+    },
+    {
+      "source": "/agents",
+      "destination": "https://www.stackblaze.com/docs/ai/agent",
+      "permanent": true
+    },
+    {
+      "source": "/ai",
+      "destination": "https://www.stackblaze.com/docs/ai/models",
+      "permanent": true
+    },
+    {
+      "source": "/ai-agents",
+      "destination": "https://www.stackblaze.com/docs/ai-agents",
+      "permanent": true
+    },
+    {
+      "source": "/ai-agents/api",
+      "destination": "https://www.stackblaze.com/docs/ai-agents/api",
+      "permanent": true
+    },
+    {
+      "source": "/ai-agents/create",
+      "destination": "https://www.stackblaze.com/docs/ai-agents/create",
+      "permanent": true
+    },
+    {
+      "source": "/ai-agents/evals",
+      "destination": "https://www.stackblaze.com/docs/ai-agents/evals",
+      "permanent": true
+    },
+    {
+      "source": "/ai-agents/integrations",
+      "destination": "https://www.stackblaze.com/docs/ai-agents/integrations",
+      "permanent": true
+    },
+    {
+      "source": "/ai-agents/knowledge",
+      "destination": "https://www.stackblaze.com/docs/ai-agents/knowledge",
+      "permanent": true
+    },
+    {
+      "source": "/ai-agents/optimizations",
+      "destination": "https://www.stackblaze.com/docs/ai-agents/optimizations",
+      "permanent": true
+    },
+    {
+      "source": "/ai-agents/security",
+      "destination": "https://www.stackblaze.com/docs/ai-agents/security",
+      "permanent": true
+    },
+    {
+      "source": "/ai-agents/sessions",
+      "destination": "https://www.stackblaze.com/docs/ai-agents/sessions",
+      "permanent": true
+    },
+    {
+      "source": "/ai-agents/skills",
+      "destination": "https://www.stackblaze.com/docs/ai-agents/skills",
+      "permanent": true
+    },
+    {
+      "source": "/ai-agents/triggers",
+      "destination": "https://www.stackblaze.com/docs/ai-agents/triggers",
+      "permanent": true
+    },
+    {
+      "source": "/ai/connectors",
+      "destination": "https://www.stackblaze.com/docs/ai/mcp",
+      "permanent": true
+    },
+    {
+      "source": "/ai/mcp",
+      "destination": "https://www.stackblaze.com/docs/ai/mcp",
+      "permanent": true
+    },
+    {
+      "source": "/blueprint",
+      "destination": "https://www.stackblaze.com/docs/blueprint",
+      "permanent": true
+    },
+    {
+      "source": "/build-deploy",
+      "destination": "https://www.stackblaze.com/docs/deploy/web-services",
+      "permanent": true
+    },
+    {
+      "source": "/build-deploy/apps",
+      "destination": "https://www.stackblaze.com/docs/deploy/web-services",
+      "permanent": true
+    },
+    {
+      "source": "/cicd/auto-deploy",
+      "destination": "https://www.stackblaze.com/docs/cicd/auto-deploy",
+      "permanent": true
+    },
+    {
+      "source": "/cicd/deploy-hooks",
+      "destination": "https://www.stackblaze.com/docs/cicd/deploy-hooks",
+      "permanent": true
+    },
+    {
+      "source": "/cicd/monorepo",
+      "destination": "https://www.stackblaze.com/docs/cicd/monorepo",
+      "permanent": true
+    },
+    {
+      "source": "/cicd/pr-previews",
+      "destination": "https://www.stackblaze.com/docs/cicd/pr-previews",
+      "permanent": true
+    },
+    {
+      "source": "/cicd/rollbacks",
+      "destination": "https://www.stackblaze.com/docs/cicd/rollbacks",
+      "permanent": true
+    },
+    {
+      "source": "/cli",
+      "destination": "https://www.stackblaze.com/docs/reference/cli",
+      "permanent": true
+    },
+    {
+      "source": "/cli/addons",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/databases",
+      "permanent": true
+    },
+    {
+      "source": "/cli/agent",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/agents",
+      "permanent": true
+    },
+    {
+      "source": "/cli/api",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/account",
+      "permanent": true
+    },
+    {
+      "source": "/cli/apply",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/iac",
+      "permanent": true
+    },
+    {
+      "source": "/cli/apps",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/projects",
+      "permanent": true
+    },
+    {
+      "source": "/cli/audit",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/account",
+      "permanent": true
+    },
+    {
+      "source": "/cli/backups",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/backups",
+      "permanent": true
+    },
+    {
+      "source": "/cli/billing",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/account",
+      "permanent": true
+    },
+    {
+      "source": "/cli/builds",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/deploy",
+      "permanent": true
+    },
+    {
+      "source": "/cli/cdn",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/domains",
+      "permanent": true
+    },
+    {
+      "source": "/cli/completion",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/account",
+      "permanent": true
+    },
+    {
+      "source": "/cli/connect",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/databases",
+      "permanent": true
+    },
+    {
+      "source": "/cli/context",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/projects",
+      "permanent": true
+    },
+    {
+      "source": "/cli/cron",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/cron",
+      "permanent": true
+    },
+    {
+      "source": "/cli/db",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/databases",
+      "permanent": true
+    },
+    {
+      "source": "/cli/deploy",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/deploy",
+      "permanent": true
+    },
+    {
+      "source": "/cli/deployments",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/deploy",
+      "permanent": true
+    },
+    {
+      "source": "/cli/destroy",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/iac",
+      "permanent": true
+    },
+    {
+      "source": "/cli/diagnose",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/logs",
+      "permanent": true
+    },
+    {
+      "source": "/cli/docs",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/account",
+      "permanent": true
+    },
+    {
+      "source": "/cli/domain",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/domains",
+      "permanent": true
+    },
+    {
+      "source": "/cli/down",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/scaling",
+      "permanent": true
+    },
+    {
+      "source": "/cli/env",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/variables",
+      "permanent": true
+    },
+    {
+      "source": "/cli/events",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/logs",
+      "permanent": true
+    },
+    {
+      "source": "/cli/export",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/iac",
+      "permanent": true
+    },
+    {
+      "source": "/cli/files",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/storage",
+      "permanent": true
+    },
+    {
+      "source": "/cli/functions",
+      "destination": "https://www.stackblaze.com/docs/reference/cli",
+      "permanent": true
+    },
+    {
+      "source": "/cli/import",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/iac",
+      "permanent": true
+    },
+    {
+      "source": "/cli/init",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/projects",
+      "permanent": true
+    },
+    {
+      "source": "/cli/inspect",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/deploy",
+      "permanent": true
+    },
+    {
+      "source": "/cli/link",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/projects",
+      "permanent": true
+    },
+    {
+      "source": "/cli/list",
+      "destination": "https://www.stackblaze.com/docs/reference/cli",
+      "permanent": true
+    },
+    {
+      "source": "/cli/log-drains",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/logs",
+      "permanent": true
+    },
+    {
+      "source": "/cli/login",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/account",
+      "permanent": true
+    },
+    {
+      "source": "/cli/logout",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/account",
+      "permanent": true
+    },
+    {
+      "source": "/cli/logs",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/logs",
+      "permanent": true
+    },
+    {
+      "source": "/cli/mcp",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/agents",
+      "permanent": true
+    },
+    {
+      "source": "/cli/members",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/account",
+      "permanent": true
+    },
+    {
+      "source": "/cli/metrics",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/logs",
+      "permanent": true
+    },
+    {
+      "source": "/cli/models",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/models",
+      "permanent": true
+    },
+    {
+      "source": "/cli/notifications",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/account",
+      "permanent": true
+    },
+    {
+      "source": "/cli/open",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/projects",
+      "permanent": true
+    },
+    {
+      "source": "/cli/orgs",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/account",
+      "permanent": true
+    },
+    {
+      "source": "/cli/pending",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/variables",
+      "permanent": true
+    },
+    {
+      "source": "/cli/phases",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/projects",
+      "permanent": true
+    },
+    {
+      "source": "/cli/pipelines",
+      "destination": "https://www.stackblaze.com/docs/reference/cli",
+      "permanent": true
+    },
+    {
+      "source": "/cli/plan",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/iac",
+      "permanent": true
+    },
+    {
+      "source": "/cli/previews",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/projects",
+      "permanent": true
+    },
+    {
+      "source": "/cli/projects",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/projects",
+      "permanent": true
+    },
+    {
+      "source": "/cli/proxy",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/logs",
+      "permanent": true
+    },
+    {
+      "source": "/cli/redeploy",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/deploy",
+      "permanent": true
+    },
+    {
+      "source": "/cli/regions",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/projects",
+      "permanent": true
+    },
+    {
+      "source": "/cli/restart",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/deploy",
+      "permanent": true
+    },
+    {
+      "source": "/cli/resume",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/scaling",
+      "permanent": true
+    },
+    {
+      "source": "/cli/run",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/variables",
+      "permanent": true
+    },
+    {
+      "source": "/cli/sandboxes",
+      "destination": "https://www.stackblaze.com/docs/reference/cli",
+      "permanent": true
+    },
+    {
+      "source": "/cli/scale",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/scaling",
+      "permanent": true
+    },
+    {
+      "source": "/cli/setup",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/agents",
+      "permanent": true
+    },
+    {
+      "source": "/cli/shell",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/variables",
+      "permanent": true
+    },
+    {
+      "source": "/cli/skills",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/agents",
+      "permanent": true
+    },
+    {
+      "source": "/cli/snapshots",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/storage",
+      "permanent": true
+    },
+    {
+      "source": "/cli/ssh",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/logs",
+      "permanent": true
+    },
+    {
+      "source": "/cli/ssh-keys",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/logs",
+      "permanent": true
+    },
+    {
+      "source": "/cli/status",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/iac",
+      "permanent": true
+    },
+    {
+      "source": "/cli/templates",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/templates",
+      "permanent": true
+    },
+    {
+      "source": "/cli/tokens",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/account",
+      "permanent": true
+    },
+    {
+      "source": "/cli/unlink",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/projects",
+      "permanent": true
+    },
+    {
+      "source": "/cli/up",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/deploy",
+      "permanent": true
+    },
+    {
+      "source": "/cli/upgrade",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/account",
+      "permanent": true
+    },
+    {
+      "source": "/cli/variables",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/variables",
+      "permanent": true
+    },
+    {
+      "source": "/cli/volume",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/storage",
+      "permanent": true
+    },
+    {
+      "source": "/cli/waf",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/domains",
+      "permanent": true
+    },
+    {
+      "source": "/cli/wait",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/deploy",
+      "permanent": true
+    },
+    {
+      "source": "/cli/whoami",
+      "destination": "https://www.stackblaze.com/docs/reference/cli/account",
+      "permanent": true
+    },
+    {
+      "source": "/concepts",
+      "destination": "https://www.stackblaze.com/docs/concepts",
+      "permanent": true
+    },
+    {
+      "source": "/data-storage",
+      "destination": "https://www.stackblaze.com/docs/databases/overview",
+      "permanent": true
+    },
+    {
+      "source": "/databases",
+      "destination": "https://www.stackblaze.com/docs/databases/overview",
+      "permanent": true
+    },
+    {
+      "source": "/databases/backups",
+      "destination": "https://www.stackblaze.com/docs/databases/backups",
+      "permanent": true
+    },
+    {
+      "source": "/databases/cassandra",
+      "destination": "https://www.stackblaze.com/docs/databases/cassandra",
+      "permanent": true
+    },
+    {
+      "source": "/databases/clickhouse",
+      "destination": "https://www.stackblaze.com/docs/databases/clickhouse",
+      "permanent": true
+    },
+    {
+      "source": "/databases/cockroachdb",
+      "destination": "https://www.stackblaze.com/docs/databases/cockroachdb",
+      "permanent": true
+    },
+    {
+      "source": "/databases/couchdb",
+      "destination": "https://www.stackblaze.com/docs/databases/couchdb",
+      "permanent": true
+    },
+    {
+      "source": "/databases/memcached",
+      "destination": "https://www.stackblaze.com/docs/databases/memcached",
+      "permanent": true
+    },
+    {
+      "source": "/databases/milvus",
+      "destination": "https://www.stackblaze.com/docs/databases/milvus",
+      "permanent": true
+    },
+    {
+      "source": "/databases/mongodb",
+      "destination": "https://www.stackblaze.com/docs/databases/mongodb",
+      "permanent": true
+    },
+    {
+      "source": "/databases/mysql",
+      "destination": "https://www.stackblaze.com/docs/databases/mysql",
+      "permanent": true
+    },
+    {
+      "source": "/databases/opensearch",
+      "destination": "https://www.stackblaze.com/docs/databases/opensearch",
+      "permanent": true
+    },
+    {
+      "source": "/databases/pitr",
+      "destination": "https://www.stackblaze.com/docs/databases/backups",
+      "permanent": true
+    },
+    {
+      "source": "/databases/postgresql",
+      "destination": "https://www.stackblaze.com/docs/databases/postgresql",
+      "permanent": true
+    },
+    {
+      "source": "/databases/redis",
+      "destination": "https://www.stackblaze.com/docs/databases/redis",
+      "permanent": true
+    },
+    {
+      "source": "/databases/scylladb",
+      "destination": "https://www.stackblaze.com/docs/databases/scylladb",
+      "permanent": true
+    },
+    {
+      "source": "/deploy/background-workers",
+      "destination": "https://www.stackblaze.com/docs/deploy/background-workers",
+      "permanent": true
+    },
+    {
+      "source": "/deploy/cli",
+      "destination": "https://www.stackblaze.com/docs/deploy/cli",
+      "permanent": true
+    },
+    {
+      "source": "/deploy/cron-jobs",
+      "destination": "https://www.stackblaze.com/docs/deploy/cron-jobs",
+      "permanent": true
+    },
+    {
+      "source": "/deploy/docker",
+      "destination": "https://www.stackblaze.com/docs/deploy/docker",
+      "permanent": true
+    },
+    {
+      "source": "/deploy/docker-compose",
+      "destination": "https://www.stackblaze.com/docs/deploy/docker",
+      "permanent": true
+    },
+    {
+      "source": "/deploy/environments",
+      "destination": "https://www.stackblaze.com/docs/concepts",
+      "permanent": true
+    },
+    {
+      "source": "/deploy/github",
+      "destination": "https://www.stackblaze.com/docs/deploy/github",
+      "permanent": true
+    },
+    {
+      "source": "/deploy/staged-changes",
+      "destination": "https://www.stackblaze.com/docs/concepts",
+      "permanent": true
+    },
+    {
+      "source": "/deploy/static-sites",
+      "destination": "https://www.stackblaze.com/docs/deploy/static-sites",
+      "permanent": true
+    },
+    {
+      "source": "/deploy/web-services",
+      "destination": "https://www.stackblaze.com/docs/deploy/web-services",
+      "permanent": true
+    },
+    {
+      "source": "/enterprise",
+      "destination": "https://www.stackblaze.com/docs/security/sso",
+      "permanent": true
+    },
+    {
+      "source": "/enterprise/audit-logs",
+      "destination": "https://www.stackblaze.com/docs/security/team-permissions",
+      "permanent": true
+    },
+    {
+      "source": "/enterprise/saml",
+      "destination": "https://www.stackblaze.com/docs/security/sso",
+      "permanent": true
+    },
+    {
+      "source": "/functions",
+      "destination": "https://www.stackblaze.com/docs",
+      "permanent": true
+    },
+    {
+      "source": "/guides",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/actix-web",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/angular",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/aspnet-core",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/astro",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/axum",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/beego",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/bun",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/django",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/express",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/fastapi",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/fastify",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/flask",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/gatsby",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/gin",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/go-fiber",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/hono",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/ktor",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/laravel",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/luminus",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/nestjs",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/nextjs",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/nuxt",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/phoenix",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/phoenix-distillery",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/play",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/rails",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/react",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/remix",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/rocket",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/sails",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/solid",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/spring-boot",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/sveltekit",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/symfony",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/tanstack-start",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/guides/vue",
+      "destination": "https://www.stackblaze.com/guides",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "destination": "https://www.stackblaze.com/docs",
+      "permanent": true
+    },
+    {
+      "source": "/integrations",
+      "destination": "https://www.stackblaze.com/docs/deploy/github",
+      "permanent": true
+    },
+    {
+      "source": "/languages-frameworks",
+      "destination": "https://www.stackblaze.com/docs/deploy/web-services",
+      "permanent": true
+    },
+    {
+      "source": "/messaging/kafka",
+      "destination": "https://www.stackblaze.com/docs/messaging/kafka",
+      "permanent": true
+    },
+    {
+      "source": "/messaging/rabbitmq",
+      "destination": "https://www.stackblaze.com/docs/messaging/rabbitmq",
+      "permanent": true
+    },
+    {
+      "source": "/networking",
+      "destination": "https://www.stackblaze.com/docs/networking/custom-domains",
+      "permanent": true
+    },
+    {
+      "source": "/networking/custom-domains",
+      "destination": "https://www.stackblaze.com/docs/networking/custom-domains",
+      "permanent": true
+    },
+    {
+      "source": "/networking/private-networking",
+      "destination": "https://www.stackblaze.com/docs/networking/private-networking",
+      "permanent": true
+    },
+    {
+      "source": "/networking/redirects",
+      "destination": "https://www.stackblaze.com/docs/networking/redirects",
+      "permanent": true
+    },
+    {
+      "source": "/networking/ssl",
+      "destination": "https://www.stackblaze.com/docs/networking/ssl",
+      "permanent": true
+    },
+    {
+      "source": "/networking/waf",
+      "destination": "https://www.stackblaze.com/docs/security/ip-allowlist",
+      "permanent": true
+    },
+    {
+      "source": "/networking/websockets",
+      "destination": "https://www.stackblaze.com/docs/networking/websockets",
+      "permanent": true
+    },
+    {
+      "source": "/observability",
+      "destination": "https://www.stackblaze.com/docs/operations/observability",
+      "permanent": true
+    },
+    {
+      "source": "/observability/logs",
+      "destination": "https://www.stackblaze.com/docs/operations/observability",
+      "permanent": true
+    },
+    {
+      "source": "/observability/metrics",
+      "destination": "https://www.stackblaze.com/docs/operations/observability",
+      "permanent": true
+    },
+    {
+      "source": "/operations/observability",
+      "destination": "https://www.stackblaze.com/docs/operations/observability",
+      "permanent": true
+    },
+    {
+      "source": "/operations/troubleshooting",
+      "destination": "https://www.stackblaze.com/docs/operations/troubleshooting",
+      "permanent": true
+    },
+    {
+      "source": "/overview/advanced-concepts",
+      "destination": "https://www.stackblaze.com/docs/concepts",
+      "permanent": true
+    },
+    {
+      "source": "/overview/best-practices",
+      "destination": "https://www.stackblaze.com/docs/concepts",
+      "permanent": true
+    },
+    {
+      "source": "/overview/keyboard-shortcuts",
+      "destination": "https://www.stackblaze.com/docs",
+      "permanent": true
+    },
+    {
+      "source": "/overview/production-readiness",
+      "destination": "https://www.stackblaze.com/docs/concepts",
+      "permanent": true
+    },
+    {
+      "source": "/platform",
+      "destination": "https://www.stackblaze.com/docs",
+      "permanent": true
+    },
+    {
+      "source": "/platform/migrate-from-heroku",
+      "destination": "https://www.stackblaze.com/compare/heroku",
+      "permanent": true
+    },
+    {
+      "source": "/platform/philosophy",
+      "destination": "https://www.stackblaze.com/docs",
+      "permanent": true
+    },
+    {
+      "source": "/platform/support",
+      "destination": "https://www.stackblaze.com/docs/operations/troubleshooting",
+      "permanent": true
+    },
+    {
+      "source": "/platform/use-cases",
+      "destination": "https://www.stackblaze.com/docs",
+      "permanent": true
+    },
+    {
+      "source": "/projects",
+      "destination": "https://www.stackblaze.com/docs/concepts",
+      "permanent": true
+    },
+    {
+      "source": "/quickstart",
+      "destination": "https://www.stackblaze.com/docs/quickstart",
+      "permanent": true
+    },
+    {
+      "source": "/reference",
+      "destination": "https://www.stackblaze.com/docs/reference/api",
+      "permanent": true
+    },
+    {
+      "source": "/reference/api",
+      "destination": "https://www.stackblaze.com/docs/reference/api",
+      "permanent": true
+    },
+    {
+      "source": "/reference/cli",
+      "destination": "https://www.stackblaze.com/docs/reference/cli",
+      "permanent": true
+    },
+    {
+      "source": "/reference/limits",
+      "destination": "https://www.stackblaze.com/docs/reference/limits",
+      "permanent": true
+    },
+    {
+      "source": "/reference/pricing",
+      "destination": "https://www.stackblaze.com/docs/reference/pricing",
+      "permanent": true
+    },
+    {
+      "source": "/scaling/autoscaling",
+      "destination": "https://www.stackblaze.com/docs/scaling/autoscaling",
+      "permanent": true
+    },
+    {
+      "source": "/scaling/horizontal",
+      "destination": "https://www.stackblaze.com/docs/scaling/horizontal",
+      "permanent": true
+    },
+    {
+      "source": "/scaling/limits",
+      "destination": "https://www.stackblaze.com/docs/scaling/limits",
+      "permanent": true
+    },
+    {
+      "source": "/scaling/zero-downtime",
+      "destination": "https://www.stackblaze.com/docs/scaling/zero-downtime",
+      "permanent": true
+    },
+    {
+      "source": "/security/env-vars",
+      "destination": "https://www.stackblaze.com/docs/security/env-vars",
+      "permanent": true
+    },
+    {
+      "source": "/security/ip-allowlist",
+      "destination": "https://www.stackblaze.com/docs/security/ip-allowlist",
+      "permanent": true
+    },
+    {
+      "source": "/security/secret-files",
+      "destination": "https://www.stackblaze.com/docs/security/secret-files",
+      "permanent": true
+    },
+    {
+      "source": "/security/team-permissions",
+      "destination": "https://www.stackblaze.com/docs/security/team-permissions",
+      "permanent": true
+    },
+    {
+      "source": "/security/two-factor-auth",
+      "destination": "https://www.stackblaze.com/docs/security/two-factor-auth",
+      "permanent": true
+    },
+    {
+      "source": "/storage/health-checks",
+      "destination": "https://www.stackblaze.com/docs/storage/health-checks",
+      "permanent": true
+    },
+    {
+      "source": "/storage/object-storage",
+      "destination": "https://www.stackblaze.com/docs/storage/persistent-disks",
+      "permanent": true
+    },
+    {
+      "source": "/storage/persistent-disks",
+      "destination": "https://www.stackblaze.com/docs/storage/persistent-disks",
+      "permanent": true
+    },
+    {
+      "source": "/templates",
+      "destination": "https://www.stackblaze.com/templates",
+      "permanent": true
+    },
+    {
+      "source": "/templates/create",
+      "destination": "https://www.stackblaze.com/docs/blueprint",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "destination": "https://www.stackblaze.com/docs",
+      "permanent": true
+    }
+  ]
 }
