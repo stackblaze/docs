@@ -1,24 +1,31 @@
 ---
 title: Languages & frameworks
-description: Nixpacks detects the runtime. A Dockerfile always wins.
+description: Railpack detects the runtime. A Dockerfile in the service root is used instead.
 ---
 
-You do not pick a “language product.” Add a [service](/build-deploy/apps/) from Git. Nixpacks detects the runtime from the repo. If a `Dockerfile` is present, that file is used instead.
+You do not pick a “language product.” Add a [service](/build-deploy/apps/) from Git. Railpack, the default build method, detects the runtime from the repo. If the service root has a `Dockerfile`, StackBlaze builds from that instead.
 
 | Runtime | Detected by |
 | --- | --- |
-| Node.js | `package.json` |
-| Python | `requirements.txt`, `pyproject.toml`, `Pipfile` |
-| Go | `go.mod` |
+| Node.js | `package.json` (Bun when `bun.lock` or `bun.lockb` is present) |
+| Python | `requirements.txt`, `pyproject.toml`, `Pipfile`, or a `main.py` / `app.py` |
+| Go | `go.mod` or `main.go` |
 | Ruby | `Gemfile` |
 | Rust | `Cargo.toml` |
-| PHP | `composer.json` |
-| Java | `pom.xml`, `build.gradle` |
+| PHP | `composer.json` or `index.php` |
+| Java / Kotlin | `pom.xml` or the Gradle wrapper (`gradlew`) |
+| .NET | `*.csproj` |
 | Elixir | `mix.exs` |
+| Deno | `deno.json` |
+| Static site | `index.html` or a `public/` folder |
 | Docker | `Dockerfile` |
 
-Override install, build, and start on the service if detection is wrong.
+Railpack has no provider for sbt (Scala) or Leiningen (Clojure) projects. Use a `Dockerfile` for those.
 
-Frameworks are just Node/Python/Ruby/Go apps on that path. Generate a domain if they serve HTTP. Attach databases from **+ Service → Databases**.
+When you pick a repo, StackBlaze pre-fills the port from the detected runtime: 3000 for Node.js and Ruby, 8000 for Python and PHP (5000 for Flask), and 8080 for Go, Rust, and Java. It sets `PORT` to the service port at runtime, so bind to `PORT`.
 
-Per-framework notes live under **Languages & frameworks** in the sidebar — [Next.js](/guides/nextjs/), [Django](/guides/django/), [Rails](/guides/rails/), [FastAPI](/guides/fastapi/), and the rest of the Railway-shaped catalog.
+If detection is wrong, change **Build method** (Docker, Railpack, or Buildpacks), **Build command**, or **Start command** on the service. Run database migrations in **Pre-deploy**: the build cannot reach your databases. Service variables are passed to Railpack, so `RAILPACK_*` variables on the service tune the build.
+
+Frameworks are just Node, Python, Ruby, Go, and other apps on that path. A service exposed to the internet gets a `*.stackblaze.app` URL. Attach databases from **+ Service → Database or cache**.
+
+Per-framework notes live under **Languages & frameworks** in the sidebar: [Next.js](/guides/nextjs/), [Django](/guides/django/), [Rails](/guides/rails/), [FastAPI](/guides/fastapi/), and more.

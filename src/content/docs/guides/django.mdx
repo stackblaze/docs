@@ -3,26 +3,26 @@ title: Django
 description: Deploy Django on StackBlaze from GitHub or a Dockerfile.
 ---
 
-Add a service from your Django repo. Nixpacks detects **python** from `manage.py`. A `Dockerfile` in the service root always wins.
+Add a service from your Django repo. Railpack detects **python** from `requirements.txt`, `pyproject.toml`, or `Pipfile`. If the service root has a `Dockerfile`, StackBlaze builds from it instead.
 
-Set `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` to your `*.stackblaze.app` domain. Run migrations as a release command or one-off.
+Set `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` to your `*.stackblaze.app` domain. With no start command, Railpack runs `python manage.py migrate` and then Gunicorn on `PORT`. The build cannot reach your databases, so run migrations at start or in **Pre-deploy**, not in the build.
 
 ## Deploy from GitHub
 
-1. [Dashboard](https://dashboard.stackblaze.cloud) → **New project** (or open an existing canvas).
-2. **+ Service → Git repository**. Pick the repo and branch.
-3. Review [staged changes](/deploy/staged-changes/) and **Deploy**.
-4. Generate a `*.stackblaze.app` domain, or attach a [custom domain](/networking/custom-domains/).
+1. [Dashboard](https://dashboard.stackblaze.cloud) → **New Project** (or open an existing canvas).
+2. **+ Service → GitHub repository**. Pick the repo and branch.
+3. Click **Commit 1 change**, review the [staged changes](/deploy/staged-changes/), and **Deploy**.
+4. A service exposed to the internet gets a `*.stackblaze.app` URL. Attach a [custom domain](/networking/custom-domains/) if you want your own.
 
-Override install / build / start on the service if detection is wrong. Typical start: `gunicorn myproject.wsgi --bind 0.0.0.0:$PORT`.
+StackBlaze sets `PORT` to the service port and pre-fills `8000` for Django repos. If detection is wrong, change **Build method**, **Build command**, or **Start command** on the service. Typical start: `gunicorn myproject.wsgi --bind 0.0.0.0:$PORT`.
 
 ## Docker
 
-If you already have a Dockerfile, StackBlaze uses it. The process must listen on `PORT`.
+If you already have a `Dockerfile`, StackBlaze uses it. The process must listen on `PORT`.
 
 ## Data
 
-**+ Service → Databases** for Postgres, Redis/Valkey, MySQL, and others. Wire `DATABASE_URL` from the service **Variables** tab or `fromDatabase` in [stackblaze.yaml](/blueprint/).
+**+ Service → Database or cache** for PostgreSQL, MariaDB, Valkey, and more. Wire `DATABASE_URL` from the service **Variables** tab or `fromDatabase` in [stackblaze.yaml](/blueprint/).
 
 ## CLI
 

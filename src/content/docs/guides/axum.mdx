@@ -3,26 +3,26 @@ title: Axum
 description: Deploy Axum on StackBlaze from GitHub or a Dockerfile.
 ---
 
-Add a service from your Axum repo. Nixpacks detects **rust** from `Cargo.toml`. A `Dockerfile` in the service root always wins.
+Add a service from your Axum repo. Railpack detects **rust** from `Cargo.toml`. If the service root has a `Dockerfile`, StackBlaze builds from it instead.
 
-Bind `0.0.0.0:PORT`. Release builds take longer; cache is per service.
+Bind `0.0.0.0:$PORT`. The first release build is slow; later builds reuse the build cache.
 
 ## Deploy from GitHub
 
-1. [Dashboard](https://dashboard.stackblaze.cloud) → **New project** (or open an existing canvas).
-2. **+ Service → Git repository**. Pick the repo and branch.
-3. Review [staged changes](/deploy/staged-changes/) and **Deploy**.
-4. Generate a `*.stackblaze.app` domain, or attach a [custom domain](/networking/custom-domains/).
+1. [Dashboard](https://dashboard.stackblaze.cloud) → **New Project** (or open an existing canvas).
+2. **+ Service → GitHub repository**. Pick the repo and branch.
+3. Click **Commit 1 change**, review the [staged changes](/deploy/staged-changes/), and **Deploy**.
+4. A service exposed to the internet gets a `*.stackblaze.app` URL. Attach a [custom domain](/networking/custom-domains/) if you want your own.
 
-Override install / build / start on the service if detection is wrong. Typical start: `the compiled binary`.
+StackBlaze sets `PORT` to the service port and pre-fills `8080` for Axum repos. If detection is wrong, change **Build method**, **Build command**, or **Start command** on the service. Typical start: Railpack runs the compiled binary.
 
 ## Docker
 
-If you already have a Dockerfile, StackBlaze uses it. The process must listen on `PORT`.
+If you already have a `Dockerfile`, StackBlaze uses it. The process must listen on `PORT`.
 
 ## Data
 
-**+ Service → Databases** for Postgres, Redis/Valkey, MySQL, and others. Wire `DATABASE_URL` from the service **Variables** tab or `fromDatabase` in [stackblaze.yaml](/blueprint/).
+**+ Service → Database or cache** for PostgreSQL, MariaDB, Valkey, and more. Wire `DATABASE_URL` from the service **Variables** tab or `fromDatabase` in [stackblaze.yaml](/blueprint/).
 
 ## CLI
 
