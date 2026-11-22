@@ -31,10 +31,6 @@ The external connection string is available in the dashboard under **Settings �
 postgresql://user:password@db.stackblaze.cloud:5432/dbname?sslmode=require
 ```
 
-## Importing an existing database
-
-Moving from another host? Dump the database with `pg_dump -Fc --no-owner --no-acl` and load it with `stackblaze addons import`. See [Import a database dump](/databases/import-dump/).
-
 ## Running migrations
 
 The safest pattern is to run migrations as a pre-deploy command so they complete before new traffic reaches your updated service. Configure this under **Settings → Deploy → Pre-deploy command**.
