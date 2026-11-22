@@ -1,9 +1,9 @@
 ---
 title: stackblaze init
-description: "Create a pipeline (project) and link the current directory to it."
+description: "Create a project and link the current directory to it."
 ---
 
-Creates a pipeline and writes `.stackblaze/project.json` in the current directory, linking it to that pipeline and phase. If a pipeline with that name already exists, it is linked instead. Alias: `stackblaze new`.
+Creates a project and writes `.stackblaze/project.json` in the current directory, linking it to that project and environment. If a project with that name already exists, it is linked instead. Alias: `stackblaze new`.
 
 ## Usage
 
@@ -15,22 +15,24 @@ stackblaze init [options]
 
 | Flag | Description |
 | --- | --- |
-| `-p, --pipeline <name>` | Pipeline name (default: the directory name) |
-| `--phase <name>` | Phase to link (default: the first of `--phases`, else `production`) |
-| `--phases <names...>` | Phases to create on a new pipeline (default: `production`) |
-| `--domain <host>` | Wildcard domain for the new pipeline |
+| `-p, --project <name>` | Project name (default: the directory name) |
+| `-e, --env <name>` | Environment to link (default: the first of `--phases`, else `production`) |
+| `--phases <names...>` | Environments to create on a new project (default: `production`) |
+| `--domain <host>` | Wildcard domain for the new project |
 | `-y, --yes` | Accept the defaults without prompting |
 
 Also accepts `--token`, `--api-url`, `-o, --output` and `--json`.
 
-In a terminal, `init` asks for the pipeline and phase names unless you pass `--pipeline` or `-y`.
+In a terminal, `init` asks for the project and environment names unless you pass `--project` or `-y`. When the project already exists and has no environment with the default name, `init` links its first environment; an `--env` it does not have is an error.
+
+With `-o json` the result is `{"pipeline", "phase", "file", "linked": true}`.
 
 ## Examples
 
 ```bash
 stackblaze init
 stackblaze init -y
-stackblaze init --pipeline shop --phases staging production --phase staging
+stackblaze init --project shop --phases staging production --env staging
 ```
 
-Next: [`stackblaze up`](/cli/up/). `init` does not link an app; `up` adds it.
+Next: [`stackblaze up`](/cli/up/). `init` does not link an app; `up` adds it. To create a project without linking the directory, use [`stackblaze projects create`](/cli/projects/).

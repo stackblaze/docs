@@ -9,7 +9,7 @@ Alias: `deployment`.
 
 ```text
 stackblaze deployments list [-n <limit>]
-stackblaze deployments rollback [deploy-id] [--wait] [-y]
+stackblaze deployments rollback [deploy-id] [--image-only] [--wait] [--timeout <seconds>] [-y]
 ```
 
 | Subcommand | Description |
@@ -23,10 +23,12 @@ stackblaze deployments rollback [deploy-id] [--wait] [-y]
 | --- | --- | --- |
 | `-n, --limit <n>` | `list` | Maximum entries (server default 100) |
 | `--build <name>` | `rollback` | Build name to roll back to (same as the positional ID) |
-| `--wait` | `rollback` | Wait up to 90 seconds until the app is running again; exits `1` if it does not become ready |
+| `--image-only` | `rollback` | Redeploy only the image tag; keep the current configuration and auto-deploy |
+| `--wait` | `rollback` | Wait until the app is running again; exits `1` if it does not become ready |
+| `--timeout <seconds>` | `rollback` | Maximum `--wait` time (default `600`) |
 | `-y, --yes` | `rollback` | Skip the confirmation |
 
-Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
 ## Examples
 
@@ -41,9 +43,9 @@ stackblaze deployments rollback <deploy-id> -y --wait --json | jq .wait.ready
 
 `<deploy-id>` is an ID from `stackblaze deployments list`: a history entry's ID or a build name. What a rollback does depends on the entry:
 
-- **Image deploys and builds** roll back to that entry's image tag. This works for image apps as well as apps built from source.
+- **Image deploys and builds** come back in full: the entry's image and the configuration it ran with. Auto-deploy turns off, so the next push does not bring the change back; turn it back on in the app's settings once the fix is pushed. Add-ons, volumes, domains and the plan stay as they are. With `--image-only`, only the image tag is redeployed. This works for image apps as well as apps built from source.
 - **Configuration releases** (variable and scale changes) roll back the configuration to that revision.
 
-Without an ID, `rollback` picks the newest deploy that succeeded and is not the one running now. The confirmation names the target: `image tag …` or `configuration revision …`.
+Without an ID, `rollback` picks the newest deploy that succeeded and is not the one running now. The confirmation names the target: `image tag … and the configuration it ran with`, `image tag …` or `configuration revision …`.
 
-With `--wait --json`, stdout carries one JSON document: the rollback result (`deploy`, `kind` `image` or `config`, `tag` or `revisionId`) with the readiness check under `wait`. The exit code is `1` when the app does not come up.
+With `--wait --json`, stdout carries one JSON document: the rollback result (`deploy`, `kind` `image` or `config`, `tag` or `revisionId`; for image rollbacks `full`, and `autodeploy: false` when it was a full rollback) with the readiness check under `wait`. The exit code is `1` when the app does not come up.

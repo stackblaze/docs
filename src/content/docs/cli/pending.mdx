@@ -3,7 +3,7 @@ title: stackblaze pending
 description: "List, apply or discard changes staged with --skip-deploy."
 ---
 
-Changes made with `--skip-deploy` (on [`variables`](/cli/variables/) and [`scale`](/cli/scale/)) are staged on the server for the app instead of deployed. `pending` shows them and ships or drops them.
+Changes made with `--skip-deploy` (on [`variables`](/cli/variables/), [`scale`](/cli/scale/) and `apps scale`) are staged on the server for the app instead of deployed. `pending` shows them and ships or drops them.
 
 ## Usage
 
@@ -23,10 +23,10 @@ stackblaze pending discard [-y]
 
 | Flag | Applies to | Description |
 | --- | --- | --- |
-| `-m, --message <text>` | `apply` | Release message shown in the deployment history |
+| `-m, --message <text>` | `apply` | Release message shown in the deployments timeline |
 | `-y, --yes` | `discard` | Skip the confirmation |
 
-Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
 ## Examples
 

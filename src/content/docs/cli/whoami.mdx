@@ -1,9 +1,9 @@
 ---
 title: stackblaze whoami
-description: "Show the signed-in user, API URL and pipeline count."
+description: "Show the signed-in user, API URL and project count."
 ---
 
-Shows which API you are talking to and who you are: email, username, the number of pipelines you can see, and whether Infrastructure as Code is enabled.
+Shows which API you are talking to and who you are: email, username, the number of projects you can see, and whether Infrastructure as Code is enabled.
 
 ## Usage
 
@@ -11,9 +11,11 @@ Shows which API you are talking to and who you are: email, username, the number 
 stackblaze whoami [options]
 ```
 
-Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
-With `--pipeline`, the Infrastructure as Code line reports that project.
+With `--project`, the Infrastructure as Code line reports that project. Without it, the line says the status is unknown, because it is per project. To see or switch your organization, use [`stackblaze orgs`](/cli/orgs/).
+
+The JSON result has `apiUrl`, `user` (`id`, `email`, `username`), `pipelines` (the project count) and `iac`.
 
 ## Example
 

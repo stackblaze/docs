@@ -14,14 +14,15 @@ To restart the running version without building or pulling, use [`stackblaze res
 ## Usage
 
 ```text
-stackblaze redeploy [--tag <tag>] [options]
+stackblaze redeploy [--tag <tag>] [-m <text>] [options]
 ```
 
 | Flag | Description |
 | --- | --- |
 | `--tag <tag>` | Deploy this image tag |
+| `-m, --message <text>` | Release message shown in the deployments timeline |
 
-Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
 ## Examples
 

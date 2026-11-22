@@ -1,0 +1,55 @@
+---
+title: stackblaze cron
+description: "List, run, follow and edit an app's scheduled tasks."
+---
+
+Manages the scheduled tasks (cron jobs) of the linked app. These are the same tasks as the dashboard's Scheduled tasks panel. Running `stackblaze cron` with no subcommand lists them.
+
+## Usage
+
+```text
+stackblaze cron list
+stackblaze cron run <name> [--wait] [--timeout <s>] [--ci]
+stackblaze cron logs <name> [-f] [--job <run>] [-n <n>]
+stackblaze cron set <name> [--schedule <cron>] [--command <cmd>] [--image <image>]
+stackblaze cron delete <name> [-y]
+```
+
+| Subcommand | Description |
+| --- | --- |
+| `list` (`ls`) | Scheduled tasks with their schedule, command and last run |
+| `run <name>` | Run a scheduled task now (a one-off run) |
+| `logs <name>` | Logs of a task's runs. `-f` follows live |
+| `set <name>` | Create or update a task (one release) |
+| `delete <name>` (`rm`) | Remove a task. Asks you to type the task name unless `-y` |
+
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `--wait` | `run` | Wait until the run finishes. Exits `1` if it fails |
+| `--timeout <seconds>` | `run` | Longest `--wait` (default `3600`) |
+| `--ci` | `run` | Print NDJSON events |
+| `-f, --follow` | `logs` | Follow live until Ctrl-C (NDJSON with `--json`) |
+| `--job <run>` | `logs` | Only this run (a name from `cron list --json` or `cron run`) |
+| `-n, --limit <n>` | `logs` | Newest N lines |
+| `--schedule <cron>` | `set` | 5-field cron expression in UTC, for example `"0 2 * * *"`, or `@hourly` / `@daily`. Required for a new task |
+| `--command <cmd>` | `set` | Command to run in the app image. There is no shell: use `sh -c '…'` for pipes |
+| `--image <image>` | `set` | Run this image instead of the app's |
+| `-y, --yes` | `delete` | Skip the confirmation |
+
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+- `set` with only some flags changes just those fields of an existing task. It needs at least one of `--schedule`, `--command` or `--image`.
+- Task names are lowercase letters, digits and `-`, up to 52 characters.
+- Tasks managed by a Scheduled tasks node are listed, run and tailed here, but you edit them on that node.
+- Right after a task is created, `run` retries for up to 30 seconds while the task is not ready yet.
+
+## Examples
+
+```bash
+stackblaze cron set cleanup --schedule "0 3 * * *" --command "node scripts/cleanup.js"
+stackblaze cron set report --schedule "@hourly" --command "sh -c 'npm run report | tee /tmp/r'"
+stackblaze cron set cleanup --schedule "30 3 * * *"   # change the schedule only
+stackblaze cron run cleanup --wait
+stackblaze cron logs cleanup -f
+stackblaze cron delete cleanup -y
+```

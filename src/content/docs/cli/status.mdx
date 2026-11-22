@@ -3,7 +3,7 @@ title: stackblaze status
 description: "Check the API connection and whether Infrastructure as Code is enabled."
 ---
 
-Checks that the API is reachable with your credentials and reports whether Infrastructure as Code ([plan](/cli/plan/), [apply](/cli/apply/), [export](/cli/export/), [destroy](/cli/destroy/)) is enabled. Pass `--pipeline` (or run in a linked directory) to check one project.
+Checks that the API is reachable with your credentials and reports whether Infrastructure as Code ([plan](/cli/plan/), [apply](/cli/apply/), [export](/cli/export/), [destroy](/cli/destroy/)) is enabled. Pass `--project` (or run in a linked directory) to check one project.
 
 ## Usage
 
@@ -11,8 +11,8 @@ Checks that the API is reachable with your credentials and reports whether Infra
 stackblaze status [options]
 ```
 
-Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
 When the scope names an app (flags or a linked directory), `status` also shows that app's state, for example `paused` (see [`stackblaze resume`](/cli/resume/)).
 
-The Infrastructure as Code line is informational. IaC is off by default, and `status` exits `0` either way; `plan`, `apply`, `export` and `destroy` refuse on their own when it is off. Authentication and API errors still exit `2` and `3`.
+The Infrastructure as Code line is informational. IaC is off by default for a new project; turn it on with [`stackblaze projects iac on`](/cli/projects/). `status` exits `0` either way; `plan`, `apply` and `destroy` refuse on their own when it is off. Authentication and API errors still exit `2` and `3`.

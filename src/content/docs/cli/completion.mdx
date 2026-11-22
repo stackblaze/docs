@@ -1,6 +1,6 @@
 ---
 title: stackblaze completion
-description: "Generate shell completion for bash, zsh or fish."
+description: "Generate shell completion for bash, zsh, fish or PowerShell."
 ---
 
 Prints a completion script for your shell to stdout.
@@ -8,7 +8,7 @@ Prints a completion script for your shell to stdout.
 ## Usage
 
 ```text
-stackblaze completion bash|zsh|fish
+stackblaze completion bash|zsh|fish|powershell
 ```
 
 ## Install
@@ -24,6 +24,13 @@ stackblaze completion zsh > "${fpath[1]}/_stackblaze"
 
 # fish
 stackblaze completion fish > ~/.config/fish/completions/stackblaze.fish
+```
+
+```powershell
+# PowerShell (`pwsh` and `ps` also work as the shell name)
+stackblaze completion powershell >> $PROFILE
+# or, for the current session only:
+stackblaze completion powershell | Out-String | Invoke-Expression
 ```
 
 Regenerate the script after upgrading to pick up new commands.

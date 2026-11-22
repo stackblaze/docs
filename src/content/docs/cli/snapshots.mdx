@@ -1,6 +1,6 @@
 ---
 title: stackblaze snapshots
-description: "List, create and restore volume snapshots for an app."
+description: "List and create volume snapshots for an app."
 ---
 
 Alias: `snapshot`.
@@ -10,27 +10,24 @@ Alias: `snapshot`.
 ```text
 stackblaze snapshots list
 stackblaze snapshots create [--group-id <id>]
-stackblaze snapshots restore --group-id <id> [-y]
-stackblaze snapshots restore --pvc-name <name> --snapshot-name <name> [-y]
 ```
 
 | Subcommand | Description |
 | --- | --- |
 | `list` | Snapshots of the app's volumes |
-| `create` | Snapshot every snapshot-capable volume of the app as one group |
-| `restore` | Restore a whole group, or one volume from one snapshot. Asks for confirmation unless `-y` |
+| `create` | Snapshot every snapshot-capable volume of the app as one group. Your platform admin may turn this off |
 
 | Flag | Applies to | Description |
 | --- | --- | --- |
-| `--group-id <id>` | `create`, `restore` | Group ID to create, or the group to restore |
-| `--pvc-name <name>`, `--snapshot-name <name>` | `restore` | Restore a single volume |
-| `-y, --yes` | `restore` | Skip the confirmation |
+| `--group-id <id>` | `create` | Custom snapshot group ID |
 
-Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
 ## Example
 
 ```bash
 stackblaze snapshots create --group-id before-migration
-stackblaze snapshots restore --group-id before-migration -y
+stackblaze snapshots list
 ```
+
+`snapshots restore` was removed: a restore never replaces a running volume. To get data back, create new volumes (and databases) from a recovery point with [`stackblaze backups restore`](/cli/backups/), then attach them when you are ready.

@@ -3,7 +3,7 @@ title: stackblaze logout
 description: "Delete the saved CLI credentials from this machine."
 ---
 
-Deletes the saved credentials file (`~/.config/stackblaze/config.json`, or `STACKBLAZE_CONFIG`). The token itself is not revoked; revoke it in the dashboard under **Settings → API tokens**.
+Deletes the saved credentials file (`config.json` in the CLI config directory, or `STACKBLAZE_CONFIG`; see [login](/cli/login/)). A file left by an older CLI in `~/.config/stackblaze/` is removed too. The token itself is not revoked; revoke it in the dashboard under **Personal settings → API tokens** or with [`stackblaze tokens revoke`](/cli/tokens/).
 
 ## Usage
 
@@ -11,4 +11,4 @@ Deletes the saved credentials file (`~/.config/stackblaze/config.json`, or `STAC
 stackblaze logout [-o text|json]
 ```
 
-`STACKBLAZE_TOKEN` and `STACKBLAZE_API_URL` in your environment are not affected.
+`STACKBLAZE_TOKEN` and `STACKBLAZE_API_URL` in your environment are not affected. With `-o json` the result is `{"loggedOut": true, "removed", "configPath"}`.

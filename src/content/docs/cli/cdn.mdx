@@ -1,0 +1,27 @@
+---
+title: stackblaze cdn
+description: "Purge the edge cache (CDN) of an app's public hostnames."
+---
+
+Manages the edge cache in front of the linked app.
+
+## Usage
+
+```text
+stackblaze cdn purge [-a <app>]
+```
+
+| Subcommand | Description |
+| --- | --- |
+| `purge` | Purge the CDN cache of the app's own public hostnames (never another app's) |
+
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+On success it lists the purged hostnames. It exits `1` when nothing was purged: no CDN is configured on the platform, the app has no public hostname, or the purge did not complete on every edge (try again in a minute). With `--json` the result has `pipeline`, `phase`, `app`, `purged` and `hosts`.
+
+## Examples
+
+```bash
+stackblaze cdn purge
+stackblaze cdn purge -a web -e staging --json
+```

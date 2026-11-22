@@ -1,0 +1,41 @@
+---
+title: stackblaze tokens
+description: "List, create and revoke your API tokens."
+---
+
+Manages your API tokens. Tokens start with `sb_pat_`; older tokens that start with `kbr_pat_` keep working. Alias: `token`.
+
+## Usage
+
+```text
+stackblaze tokens list
+stackblaze tokens create <name> [--expires <when>]
+stackblaze tokens revoke <id|name> [-y]
+```
+
+| Subcommand | Description |
+| --- | --- |
+| `list` (alias `ls`) | Your tokens: names, prefixes and dates, never the secrets |
+| `create <name>` | Create a token in the current organization and print it once |
+| `revoke <id>` (alias `delete`) | Revoke a token by ID or name; asks first unless `-y` |
+
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `--expires <when>` | `create` | Lifetime (`30d`, `12h`, `2w`, `1y`) or a date (`2027-01-31`). Default `30d`. Must be in the future |
+| `-y, --yes` | `revoke` | Skip the confirmation |
+
+Every subcommand accepts `--token`, `--api-url`, `-o, --output` and `--json` (see [scope and output flags](/cli/#scope-and-common-flags)).
+
+`tokens create` is the only command that prints a token. It goes to stdout (with `--json`, the `token` field) and cannot be shown again; a warning on stderr says so. Store it straight away. A token is created in the organization your login acts in (see [orgs](/cli/orgs/)).
+
+When two tokens have the same name, `revoke` asks for the ID. Anything using a revoked token stops working. With `-o json` the result is `{"revoked": true, "id": "…", "name": "…"}`.
+
+## Examples
+
+```bash
+stackblaze tokens list
+stackblaze tokens create ci --expires 90d --json | jq -r .token | gh secret set STACKBLAZE_TOKEN
+stackblaze tokens revoke ci -y
+```
+
+You can also create tokens in the dashboard under **Personal settings → API tokens**.

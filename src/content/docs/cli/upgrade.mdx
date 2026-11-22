@@ -16,7 +16,7 @@ stackblaze upgrade [--channel stable|dev] [--version <x.y.z>] [--install-path <f
 | `--channel <name>` | `stable` (default) or `dev` (prereleases); also `STACKBLAZE_CHANNEL` |
 | `--version <tag>` | Install a specific version, e.g. `1.0.0` |
 | `--install-path <path>` | Binary to replace (default: the running binary; also `STACKBLAZE_INSTALL_PATH`) |
-| `--oras` | Download with the `oras` tool instead of the built-in client |
+| `--oras` | Pull from `ghcr.io` with the `oras` tool instead of GitHub Releases |
 
 ## Examples
 
@@ -26,6 +26,8 @@ stackblaze upgrade --channel dev
 stackblaze upgrade --version 1.0.0
 ```
 
-On Linux and macOS the old binary is kept next to the new one as `stackblaze.bak` (if it can be renamed). On Windows, the running binary cannot be replaced: `upgrade` writes `stackblaze.new.exe` next to it and asks you to swap the files after closing the terminal. Re-running the [installer](/cli/#install) also upgrades.
+On Linux and macOS the old binary is kept next to the new one as `stackblaze.bak` (if it can be renamed). On Windows, `upgrade` renames the running `stackblaze.exe` to `stackblaze.old.exe`, moves the new binary into place, and removes the old file on a later start.
+
+A CLI installed with Homebrew is not replaced: `upgrade` stops and tells you to run `brew upgrade stackblaze`. Re-running the [installer](/cli/#install) also upgrades.
 
 Check the version with `stackblaze --version`.

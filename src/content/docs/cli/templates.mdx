@@ -1,6 +1,6 @@
 ---
 title: stackblaze templates
-description: "Search the template catalog and deploy a template into a pipeline."
+description: "Search the template catalog and deploy a template into a project environment."
 ---
 
 Alias: `template`.
@@ -15,18 +15,20 @@ stackblaze templates deploy <template> [options]
 | Subcommand | Description |
 | --- | --- |
 | `search [query]` | Search or browse the catalog; without a query, lists templates |
-| `deploy <template>` | Deploy a template as a new app in the pipeline in scope (phase default `production`) |
+| `deploy <template>` | Deploy a template into the project in scope (environment default `production`). A multi-service template is deployed whole |
 
-Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`. `templates deploy` takes the environment as `--phase`, because `--env` sets variables there.
 
 ## `templates deploy`
 
 | Flag | Description |
 | --- | --- |
-| `--name <name>` | App name (default: from the template) |
+| `--name <name>` | App name (default: from the template). For a multi-service template, the main app |
 | `--deployment-type <id>` | Variant: `standard` (default) or `ha`, when the template offers it |
-| `--env <KEY=value>` | Override a template variable (repeatable) |
-| `--wait` | Wait until the app is running. With `--json`, stdout carries one JSON document with the readiness check under `wait`; a wait that does not end ready exits `1` |
+| `--phase <name>` | Environment (default `production`) |
+| `--env <KEY=value>` | Override a template variable (repeatable). Set on the main app, and on companion services that inherit its environment |
+| `--wait` | Wait until the app (every app of a multi-service template) is running. With `--json`, stdout carries one JSON document with the readiness check under `wait`; a wait that does not end ready exits `1` |
+| `--timeout <seconds>` | Maximum `--wait` time (default `600`) |
 
 ## Examples
 
@@ -35,3 +37,7 @@ stackblaze templates search postgres
 stackblaze templates search --category analytics -n 5
 stackblaze templates deploy n8n -p automations --name n8n --wait
 ```
+
+## Multi-service templates
+
+A template with companion services (for example Supabase, Plane, or n8n's worker) is deployed whole, in one request. The server first checks your plan limits and room for every service, then creates them all, the main app first. If one fails, the services already created keep running, and the command exits `3` and names the ones that exist.

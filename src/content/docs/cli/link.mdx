@@ -1,9 +1,9 @@
 ---
 title: stackblaze link
-description: "Link the current directory to an existing pipeline, phase and app."
+description: "Link the current directory to an existing project, environment and app."
 ---
 
-Writes `.stackblaze/project.json` so later commands in this directory (and its subdirectories) default to that pipeline, phase and app.
+Writes `.stackblaze/project.json` so later commands in this directory (and its subdirectories) default to that project, environment and app.
 
 ## Usage
 
@@ -11,15 +11,17 @@ Writes `.stackblaze/project.json` so later commands in this directory (and its s
 stackblaze link [options]
 ```
 
-Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
-In a terminal, anything you do not pass is picked from a list: pipeline, then phase, then app. Without a terminal, pass at least `--pipeline`.
+In a terminal, anything you do not pass is picked from a list: project, then environment, then app. Without a terminal, pass at least `--project`.
+
+`link` checks the names: a project that does not exist, or an environment the project does not have, is an error. You can type an app's display name; the link stores its resource name, so renaming the app does not break the link.
 
 ## Examples
 
 ```bash
 stackblaze link                                  # pick interactively
-stackblaze link -p shop --phase production -a web
+stackblaze link -p shop -e production -a web
 ```
 
 See also: [unlink](/cli/unlink/), [context](/cli/context/), [phases use](/cli/phases/).

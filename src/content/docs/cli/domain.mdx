@@ -9,7 +9,7 @@ Manages custom domains for the linked app. Alias: `domains`. `stackblaze domain`
 
 ```text
 stackblaze domain [list]
-stackblaze domain add <host> [--wait] [--timeout <seconds>]
+stackblaze domain add <host> [--wait] [--timeout <seconds>] [--takeover]
 stackblaze domain verify <host> [--wait] [--timeout <seconds>]
 stackblaze domain remove <host> [-y]
 stackblaze domain status [host]
@@ -21,7 +21,7 @@ stackblaze domain status [host]
 | `add <host>` | Add a custom domain and print the DNS records to create |
 | `verify <host>` | Check DNS now and move the domain forward |
 | `remove <host>` | Remove a custom domain; asks for confirmation unless `-y`. Alias: `rm` |
-| `status [host]` | The app's ingress hosts, whether each has TLS, and the pipeline's wildcard domain |
+| `status [host]` | The app's ingress hosts, whether each has TLS, and the project's wildcard domain |
 
 ## Options
 
@@ -30,9 +30,10 @@ stackblaze domain status [host]
 | `--wait` | `add`, `verify` | Keep checking until the domain is active (HTTPS ready) |
 | `--timeout <seconds>` | `add`, `verify` | Maximum `--wait` time (default `600`) |
 | `--interval <seconds>` | `add`, `verify` | Seconds between checks while waiting (default `10`) |
+| `--takeover` | `add` | Claim a domain that another account verified but no longer controls in DNS. It moves here once your TXT record is live and theirs has been gone for consecutive checks (at least 10 minutes apart) |
 | `-y, --yes` | `remove` | Skip the confirmation |
 
-Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --pipeline`, `--phase`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+Every subcommand accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
 
 ## Examples
 
@@ -63,7 +64,9 @@ The TXT record proves you own the domain; the CNAME sends its traffic to the app
 | `active` | `active` | The domain serves the app over HTTPS |
 | `error` | `error` | Verification failed; the reason is shown |
 
-The platform re-checks pending domains every 5 minutes. Run `domain verify <host>` to check right away, or pass `--wait` to `add` or `verify` to keep checking until the domain is active. `--wait` exits `1` with the reason when the domain ends in `error` or the timeout passes; `verify` without `--wait` also exits `1` on `error`.
+The platform re-checks pending domains every 5 minutes. Run `domain verify <host>` to check right away, or pass `--wait` to `add` or `verify` to keep checking until the domain is active. `--wait` exits `1` with the reason when the domain ends in `error` or the timeout passes. `verify` exits `0` only when the domain is active; it exits `1` while the domain is still pending and on `error`. With `--json` the JSON document is printed either way.
+
+Until a domain is verified, other accounts can claim it too: the first claim whose TXT record verifies gets it, and the others are released. To take over a domain another account verified, run `domain add <host> --takeover` and keep your TXT record in place; with `--wait`, pass `--timeout 1800` or more, since a takeover needs two checks 10 or more minutes apart.
 
 The app's platform URL is listed too, but cannot be removed. Removing a custom domain stops it from serving the app; visitors using it get errors until it is added again.
 

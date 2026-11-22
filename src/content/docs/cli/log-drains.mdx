@@ -1,0 +1,50 @@
+---
+title: stackblaze log-drains
+description: "Ship an app's logs to syslog, an HTTP endpoint, Datadog or Quickwit."
+---
+
+Manages the durable log drains of the linked app. A drain ships the app's logs (web, worker, build and add-on sources, or any subset) to a syslog socket, an HTTP endpoint, Datadog or Quickwit. Aliases: `logdrains`, `drains`. Running `stackblaze log-drains` with no subcommand lists the drains.
+
+## Usage
+
+```text
+stackblaze log-drains list
+stackblaze log-drains add <name> --type <sink> [--endpoint <url>] [--secret <name>] [filters]
+stackblaze log-drains remove <name> [-y]
+```
+
+| Subcommand | Description |
+| --- | --- |
+| `list` (`ls`) | The app's drains: sources, sink, endpoint, filter |
+| `add <name>` | Add a drain to the app (one rollout) |
+| `remove <name>` (`rm`) | Remove a drain from the app (one rollout). Asks you to type `yes` unless `-y` |
+
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `--type <sink>` | `add` | Where the logs go: `quickwit`, `syslog`, `http` or `datadog` (required) |
+| `--endpoint <url>` | `add` | `http(s)://` URL, or `host:port` for syslog (optional for Datadog) |
+| `--secret <name>` | `add` | Name of a secret in the app's namespace that holds the sink credentials. Credentials never go on the command line |
+| `--source <name>` | `add` | `web`, `worker`, `build` or `addons`, repeatable (default: all four) |
+| `--addon <instance>` | `add` | With `--source addons`: only these add-on instances (repeatable) |
+| `--stream <name>` | `add` | `stdout`, `stderr` or `all` (default: both) |
+| `--min-level <level>` | `add` | Drop lines below `debug`, `info`, `warn` or `error` |
+| `--include <regex>` | `add` | Ship only lines matching this pattern |
+| `--exclude <regex>` | `add` | Drop lines matching this pattern |
+| `--sample-rate <n>` | `add` | Keep 1 line in N |
+| `-y, --yes` | `remove` | Skip the confirmation |
+
+Also accepts the [scope and output flags](/cli/#scope-and-common-flags): `-p, --project`, `-e, --env`, `-a, --app`, `--token`, `--api-url`, `-o, --output`, `--json`.
+
+Drains are saved on the app, like the dashboard's **Settings → Log drains**, and the app rolls out with the change. Drain names are 1 to 40 lowercase letters, digits or hyphens. The server checks the name, sources and sink, and that the endpoint is a public address; a bad value exits `1` with its message. When your platform admin has switched log drains off, `add` and `remove` exit `3`, and `list` still shows what is configured.
+
+## Examples
+
+```bash
+stackblaze log-drains
+stackblaze log-drains add archive --type http --endpoint https://logs.example.com/ingest --secret logs-token
+stackblaze log-drains add ops --type syslog --endpoint syslog.example.com:514 --source web --source worker --min-level warn
+stackblaze log-drains add dd --type datadog --secret datadog-api-key
+stackblaze log-drains remove archive -y
+```
+
+To read logs from the terminal, use [`stackblaze logs`](/cli/logs/).
