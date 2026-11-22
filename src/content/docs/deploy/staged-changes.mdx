@@ -5,7 +5,7 @@ description: Canvas edits are collected into a changeset. Review, then deploy â€
 
 import Diagram from '../../../components/Diagram.astro';
 
-Edits on the project canvas are **staged** until you deploy. Adding a service, attaching a database, changing variables, or removing a tile does not hit production until you confirm.
+Edits on the project canvas are **staged** until you deploy. Adding a service, attaching a database, changing variables, or removing a tile does not touch the running environment until you confirm.
 
 <Diagram file="staged-changes.svg" alt="Canvas edits become a staged changeset, then you review and either deploy or discard" />
 
@@ -14,25 +14,32 @@ This is the same idea as a reviewable changeset: you compose, then apply.
 ## What gets staged
 
 - New services (Git, Docker, template, import)
-- New databases
-- Config changes on an existing service
+- New databases and add-ons
+- Connections between services and databases
+- Config changes on an existing service (variables, settings)
 - Removals (shown as a delete preview on the canvas)
 
 Staged tiles render on the canvas so you can see the topology before it exists.
 
 ## Deploy
 
-Open the staged-changes panel, review the list, and **Deploy**. StackBlaze applies the changeset: create services, provision databases, roll out config. A commit message is stored with the deploy.
+When something is staged, the canvas toolbar shows **Commit N changes**. Click it (or press Enter) to open the review:
 
-If a build fails, already-running services stay on the previous revision.
+1. The dialog lists each staged change for the environment you are viewing. Click a row's unstage button to drop just that change.
+2. Optionally type a **Commit message**: how these releases appear in the history.
+3. Click **Deploy N changes**. If every change is a removal, the button reads **Delete N resources** and asks you to type a confirmation word first.
+
+StackBlaze applies the changeset: it creates services, provisions databases, and rolls out config. Anything that fails stays staged so you can fix it and try again.
+
+If a build fails, the running service stays on its previous deploy.
 
 ## Discard
 
-Discard drops the staged changeset. Live services are untouched.
+**Discard all** in the review dialog drops the staged changeset. Live services are untouched.
 
 ## After deploy
 
-Watch build and deploy logs on the service sheet. Generate a domain when the revision is healthy. Further git pushes can [auto-deploy](/cicd/auto-deploy/) without staging a new tile.
+Watch build and deploy logs on the service's **Deployment** tab. Further git pushes [auto-deploy](/cicd/auto-deploy/) without staging anything.
 
 ## Config as code
 

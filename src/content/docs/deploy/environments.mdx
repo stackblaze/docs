@@ -1,6 +1,6 @@
 ---
 title: Environments
-description: Production, custom environments, and pull-request previews — isolated copies of the project canvas.
+description: Production, dev / test / stage environments, and pull-request previews — isolated copies of the project canvas.
 ---
 
 import Diagram from '../../../components/Diagram.astro';
@@ -11,23 +11,25 @@ An **environment** is an isolated copy of a project's canvas: the same services 
 
 ## Production
 
-Created with the project. This is the live environment. Auto-deploy typically tracks your main branch.
+Created with the project. This is the live environment. Its services usually deploy your main branch.
 
 ## Custom environments
 
-Add an environment from project settings when you need a durable staging or QA copy. Services and databases in that environment have their own [variables](/security/env-vars/) and private network. They do not share disks or database data with production.
+Turn on more environments in **Project settings → General → Environments**: `dev`, `test`, and `stage` sit next to `production`. A newly enabled environment deploys to the same region as your existing ones. Services and databases in each environment have their own [variables](/security/env-vars/) and private network. They do not share volumes or database data with production.
+
+Your plan limits how many environments a project can have.
 
 ## Pull-request previews
 
-When review apps are on, opening a pull request provisions a **review** environment from a source service you configure on the project. Each PR gets its own add-on instances so previews do not share production data. The environment is removed when the PR closes.
+When preview environments are on for the project, opening a pull request creates a `pr-<number>` environment: a copy of the environment that deploys the PR's target branch. Its databases start empty, so previews do not share production data. The environment is removed when the PR is merged or closed, or after a number of days without a push.
 
 See [PR previews](/cicd/pr-previews/) for branch mapping and teardown.
 
 | Environment | When created | Lifespan |
 | --- | --- | --- |
 | production | With the project | Until you delete the project |
-| custom | From project settings | Until you delete it |
-| review | When a PR opens (if enabled) | Until the PR closes |
+| dev / test / stage | From project settings | Until you turn it off |
+| `pr-<number>` | When a PR opens (if previews are on) | Until the PR closes or the preview expires |
 
 ## Switching environments
 
@@ -35,4 +37,4 @@ The canvas is always showing **one** environment. Use the environment switcher i
 
 ## API names
 
-Environments are `phase` in API paths: `/api/apps/{pipeline}/{phase}/{app}`.
+Projects are `pipeline` and environments are `phase` in API paths: `/api/apps/{pipeline}/{phase}/{app}`.

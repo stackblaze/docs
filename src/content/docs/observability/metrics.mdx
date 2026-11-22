@@ -1,14 +1,13 @@
 ---
 title: Metrics
-description: CPU, memory, and Coroot service maps.
+description: CPU, memory, and HTTP metrics on the service, and Coroot.
 ---
 
-The service sheet shows CPU and memory for the current revision. Deeper metrics, traces, and the service map are **Coroot**, opened from the service (one-time handoff).
+The service's **Metrics** tab shows **Resources** (CPU and memory) and **HTTP** (request rate and response time) over 2 hours, 24 hours, or 7 days. Deeper metrics, traces, and the service map are in **Coroot**: click **Open in Coroot** (one-time handoff).
 
 ```bash
-stackblaze metrics
+stackblaze metrics               # current CPU and memory
+stackblaze metrics --since 24h   # history, up to 7d
 ```
-
-Billing charts query PromQL `query_range` with an API key. There is no instant PromQL `/query` on this control plane.
 
 See [Observability](/operations/observability/).

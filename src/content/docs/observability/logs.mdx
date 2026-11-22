@@ -1,11 +1,11 @@
 ---
 title: Logs
-description: Runtime logs on the service, search, and the CLI.
+description: Runtime logs on the service, search, log drains, and the CLI.
 ---
 
-Every service has a **Logs** tab. That is stdout/stderr from the running revision.
+Every service has a **Logs** tab: stdout/stderr from the running revision, with a search box. It also links to the build logs and system events. A deploy's build and rollout logs open from **Inspect Deployment** on the **Deployment** tab.
 
-Search uses the durable index (dashboard search, MCP `search_logs`, or `stackblaze logs --search`). An empty live tail is not the same as “no logs” — the pod may have rotated.
+Searching history uses the durable log store (the Logs tab, or `stackblaze logs --search`). An empty live tail is not the same as “no logs”: the instance may have restarted.
 
 ```bash
 stackblaze logs
@@ -13,4 +13,4 @@ stackblaze logs -f
 stackblaze logs --search -q error --minutes 60
 ```
 
-Retention follows the [plan](/reference/pricing/). Metrics and traces are [Coroot](/operations/observability/).
+Retention follows your [plan](/reference/pricing/) (shown under the service's **Settings → Logs**). To keep logs longer, forward them with a log drain under **Settings → Log drains**. Metrics and traces: [Observability](/operations/observability/).

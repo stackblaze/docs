@@ -25,9 +25,13 @@ The default. The container stays running. Use this for HTTP APIs, frontends, que
 
 A [cron job](/deploy/cron-jobs/) runs until completion on a cron expression, then exits. Same build path as always-on services.
 
+### Functions
+
+A [function](/functions/) is one TypeScript file run on Bun, with no build. It sleeps when idle, or runs on a schedule.
+
 ### Databases
 
-From **+ Service → Databases**, provision Postgres, Redis/Valkey, MySQL, and other managed engines. They join the environment's [private network](/networking/private-networking/). Wire connection strings with [variables](/security/env-vars/) (`fromDatabase` in config as code).
+From **+ Service → Database or cache**, provision PostgreSQL, MariaDB, Valkey, and other managed engines. They join the environment's [private network](/networking/private-networking/). Wire connection strings with [variables](/security/env-vars/) (`fromDatabase` in config as code).
 
 ## Create a service
 
@@ -37,19 +41,22 @@ From **+ Service → Databases**, provision Postgres, Redis/Valkey, MySQL, and o
 
 2. Click **+ Service** and pick a source:
 
-   - **Git repository** — GitHub or a public git URL
-   - **Docker images** — registry image
-   - **Templates** — a pre-wired stack
-   - **Databases** — managed engine
+   - **Template** — one-click apps from the catalog
+   - **GitHub repository** — build and deploy from a repo
+   - **Docker image** — run a public or private image
+   - **Database or cache** — managed engine
+   - **Function** — one TypeScript file, no build (when Functions is on for your plan)
    - **Import** — Compose, `render.yaml`, or `fly.toml`
 
-3. Review the [staged change](/deploy/staged-changes/) and **Deploy**.
+3. Click **Commit N changes** in the toolbar, review the [staged changes](/deploy/staged-changes/), and click **Deploy N changes**.
 
 </Steps>
 
 ## Service source
 
-If a `Dockerfile` is in the repo, StackBlaze uses it. Otherwise Nixpacks detects the runtime from files such as `package.json` or `requirements.txt`. Override install, build, and start commands in the service sheet.
+If a `Dockerfile` is in the repo, StackBlaze proposes it (build method **Docker**). Otherwise it builds with **Railpack**, which detects the runtime from files such as `package.json` or `requirements.txt`. **Buildpacks** is also available. Pick the **Build method** in the service **Settings**.
+
+In **Settings → Deploy** you can set a **Build command** and **Start command** (blank uses the framework default) and a **Pre-deploy** command, such as `npm run migrate`, that runs before each deploy goes live. If the pre-deploy command fails, the deploy stops and the current version keeps running.
 
 Change source later from the service **Settings** tab.
 

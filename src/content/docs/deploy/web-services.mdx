@@ -3,17 +3,23 @@ title: Public HTTP
 description: Give a service a public URL, TLS, health checks, and rolling deploys.
 ---
 
-A service becomes public HTTP when you generate a domain on it. StackBlaze terminates TLS, load-balances, health-checks, and rolls out new revisions without a separate “web service” product.
+A service is public HTTP when its access is **Public**. StackBlaze gives it a URL, terminates TLS, load-balances, health-checks, and rolls out new revisions, without a separate “web service” product.
 
 ## Public HTTP on a service
 
-Any always-on service that listens on a TCP port can receive internet traffic. Generate a `https://your-service.stackblaze.app` domain from the service sheet, or attach a [custom domain](/networking/custom-domains/).
+In the service **Settings → Access**, pick one of:
+
+- **Public** — public URL using the service's port.
+- **Internal** — HTTP service reachable only inside the project; no public URL or domain.
+- **Worker** — background process; no HTTP port, no domain. See [Private services](/deploy/background-workers/).
+
+A public service gets a default `https://<service>-<suffix>.stackblaze.app` URL on its first deploy. Attach your own hostname with a [custom domain](/networking/custom-domains/).
 
 HTTP/1.1, HTTP/2, and WebSockets work without extra config. Do not terminate TLS in the container — the platform forwards HTTP to it.
 
-## Port detection
+## Port
 
-StackBlaze reads the `PORT` environment variable to know which port your container listens on. The default is `8080`. Always bind to `0.0.0.0` (not `127.0.0.1`) so the process can receive traffic.
+Each service has one HTTP port, set in the service settings. The repo scan or the framework preset fills it in (for example `3000` for Node.js, `8000` for FastAPI or Django, `8080` for Go). StackBlaze sets the `PORT` variable to that port. Bind to `0.0.0.0` (not `127.0.0.1`) so the process can receive traffic.
 
 ```javascript title="server.js"
 // Node.js example
@@ -31,20 +37,23 @@ app.listen(port, '0.0.0.0', () => {
 ```
 
 :::caution
-Do not hardcode a port number. Always read from `process.env.PORT` (Node.js) or `os.environ["PORT"]` (Python). StackBlaze may change the port assignment between plan upgrades.
+Do not hardcode a port number. Read `process.env.PORT` (Node.js) or `os.environ["PORT"]` (Python), so the service keeps working if you change its port.
 :::
 
 ## Health checks
 
-StackBlaze uses readiness probes to determine when a new instance is ready to receive traffic. Traffic is only sent to an instance after it passes the readiness check. If an instance fails health checks repeatedly, it is restarted automatically (liveness probe).
+A new instance gets traffic only after it passes its health check. Health checks are on by default for public and internal services.
 
-### Default health check
+Set them under **Settings → Health checks**:
 
-By default, StackBlaze sends HTTP GET requests to `/` on your service port. A 2xx or 3xx response is considered healthy.
+| Setting | Default for a new service | Meaning |
+| --- | --- | --- |
+| **Path** | `/` | HTTP path StackBlaze requests (`GET`) |
+| **Startup** | 90 s | How long a new instance may take to start |
+| **Timeout** | 3 s | Max wait for one response |
+| **Interval** | 10 s | Time between probes |
 
-### Custom health check path
-
-Specify a custom health check path in Service Settings → Health Check. A dedicated endpoint like `/health` or `/ping` is recommended — it should return quickly without triggering expensive database queries.
+A dedicated endpoint such as `/health` is recommended. It should answer quickly without expensive database queries.
 
 ```javascript title="server.js"
 // Recommended: lightweight health endpoint
@@ -53,20 +62,11 @@ app.get('/health', (req, res) => {
 })
 ```
 
-### Health check settings
-
-| Setting | Default | Description |
-| --- | --- | --- |
-| Path | `/` | HTTP path to probe |
-| Initial delay | 5s | Wait before first probe (gives app time to start) |
-| Period | 10s | Time between probes |
-| Timeout | 5s | Max wait for a response |
-| Success threshold | 1 | Consecutive successes to mark ready |
-| Failure threshold | 3 | Consecutive failures before restart |
+Turning health checks off means rollouts are not gated. See [Zero-downtime deploys](/scaling/zero-downtime/).
 
 ## Start command
 
-The start command is the entrypoint of your container — it is what StackBlaze runs to start your application. It should start your HTTP server and block (not exit). If it exits, the platform considers the instance failed and restarts it.
+Set the **Start command** under **Settings → Deploy** (blank uses the framework default, or the image's default process for a Docker image service). It is what StackBlaze runs to start your application. It should start your HTTP server and block (not exit). If it exits, the platform considers the instance failed and restarts it.
 
 | Runtime | Typical start command |
 | --- | --- |
@@ -80,31 +80,16 @@ The start command is the entrypoint of your container — it is what StackBlaze 
 
 ## Scaling
 
-You can scale web services horizontally (more replicas) or vertically (more CPU and memory per replica). StackBlaze supports both manual and automatic scaling.
-
-### Manual scaling
-
-From the dashboard, go to Service → Settings → Scaling. Set the number of replicas. The change takes effect immediately, no redeploy needed.
-
-### Autoscaling
-
-Set a minimum and maximum replica count and StackBlaze's autoscaler will adjust replicas based on CPU utilization (target: 70%). Scale-out happens within seconds; scale-in is delayed 5 minutes to avoid oscillation.
+Set the instance count under **Settings → Scale**, or turn on **Autoscale** with a min, a max, and a CPU or memory target (CPU at 80% by default). Your plan sets the maximum instances per service.
 
 See [Horizontal scaling](/scaling/horizontal/) and [Autoscaling](/scaling/autoscaling/).
 
 ## Zero-downtime rolling updates
 
-Every deploy uses a rolling update strategy. New instances are started and must pass health checks before old instances are terminated.
-
-| Parameter | Value | Meaning |
-| --- | --- | --- |
-| maxSurge | 1 | One extra instance above desired count during update |
-| maxUnavailable | 0 | No instances taken down until replacements are ready |
-
-This means a deploy with 2 replicas will temporarily run 3 instances: the 2 old ones serving traffic and 1 new one warming up. Once the new instance is healthy, one old instance is terminated, and so on until all replicas are updated.
+Every deploy is a rolling update: new instances start and must pass their health check before old ones stop. A service with a volume that only one instance can mount stops the old instance first, so expect a brief gap.
 
 :::tip
-If your application requires a database schema migration before the new code can run, use a pre-deploy hook or run the migration in your container's startup sequence before binding the port.
+For database migrations, set a **Pre-deploy** command under **Settings → Deploy** (for example `npm run migrate`). It runs in the new image before the new version starts; if it fails, the current version keeps running.
 :::
 
 ## Node.js example
@@ -151,13 +136,14 @@ def root():
 
 ## Environment variables
 
-StackBlaze injects the following variables automatically into every web service:
+StackBlaze sets these variables on a service:
 
 | Variable | Description |
 | --- | --- |
 | `PORT` | The port your service should listen on |
-| `STACKBLAZE_ENV` | production or preview |
-| `STACKBLAZE_SERVICE_NAME` | The name of this service |
-| `STACKBLAZE_DEPLOYMENT_ID` | The current deployment ID (commit SHA) |
+| `STACKBLAZE_PUBLIC_URL` | `https://` plus the service's first public hostname |
+| `STACKBLAZE_PUBLIC_DOMAIN` | The service's first public hostname |
+| `STACKBLAZE_PREVIEW` | `true` in a [PR preview](/cicd/pr-previews/) |
+| `STACKBLAZE_PR_NUMBER`, `STACKBLAZE_PR_BRANCH` | The pull request, in a PR preview |
 
-Read more about environment variables in [Security → Environment Variables](/security/env-vars/).
+Read more about variables in [Security → Environment Variables](/security/env-vars/).

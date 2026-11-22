@@ -5,11 +5,11 @@ description: App Shield — per-service web application firewall.
 
 import Diagram from '../../../components/Diagram.astro';
 
-**App Shield** is a WAF you attach to a public HTTP service. It is not a separate catalog database; it shows up on the canvas next to the service (`waf-<service>`) with Overview, Protection, and Rules.
+**App Shield** is a web application firewall (OWASP Coraza with the OWASP Core Rule Set) that you attach to a public service. It runs inside the service's own instances, not as a shared firewall. It shows up on the canvas next to the service, with **Overview**, **Protection**, and **Rules** tabs.
 
 <Diagram file="app-shield.svg" alt="Internet HTTPS traffic passing through App Shield protection and rules before reaching a public HTTP service" />
 
-Enable it from the service sheet or:
+Add it from the service's **Add-ons** tab (or **+ Service → Add-on → App Shield**), or with the CLI:
 
 ```bash
 stackblaze waf status
@@ -20,6 +20,6 @@ stackblaze waf under-attack enable
 
 Under-attack mode is a blocking posture for abuse spikes. Turn it off when the event is over.
 
-MCP feature tools are `waf__*`.
+App Shield counts inside the service's CPU and memory share; see [Memory & CPU limits](/scaling/limits/).
 
 App Shield is not a CDN and not a global anycast network. TLS and public routing are still [public networking](/networking/custom-domains/).

@@ -1,37 +1,66 @@
 ---
 title: Functions
-description: Knative services that scale to zero. Not the same thing as a canvas app.
+description: One TypeScript file run on Bun, with no build. It sleeps when idle, or runs on a schedule.
 ---
 
-import Diagram from '../../components/Diagram.astro';
+A **function** is a service on the project canvas whose program is **one TypeScript file**. StackBlaze runs it on a stock Bun image. There is no build step and no image to push.
 
-A **function** is a request-driven container (Knative Serving). It scales to zero when idle and cold-starts on the first request. It is **not** an always-on [service](/build-deploy/apps/).
+A function works in one of two ways:
 
-<Diagram file="functions-scale-to-zero.svg" alt="Always-on service replicas stay running, compared with a Knative function that cold-starts on the first request and scales to zero when idle" />
+- **No schedule** — a web service with its own URL. It sleeps after 15 minutes without a request. The next request wakes it; that request waits for the function and gets its answer.
+- **With a schedule** — the same file runs on a cron schedule (UTC). It has no URL and serves no HTTP.
 
-Functions live in the same project environment as your apps and can use the same private add-ons. The public invoke URL looks like:
+Use an always-on [service](/build-deploy/apps/) for a long-running API or anything you build from a repo.
 
-```text
-https://<name>-<project>-<environment>.fn.<domain>
+## Create a function
+
+1. On the canvas, click **+ Service** and pick **Function** ("One TypeScript file, no build").
+2. Edit the file on the **Code** tab. A new function starts with a small `Bun.serve` example.
+3. Click **Deploy**.
+
+The **Function** row only shows when Functions is turned on for your platform and allowed on your plan. If it is off, creating a function is refused; existing functions can still be edited and deleted.
+
+## The code
+
+- The file is `index.ts`, run with `bun run`. Import npm packages directly; Bun installs them on first use.
+- Listen on `process.env.PORT` (default `8080`).
+- The file can be at most **96 KB**.
+- Set [variables](/security/env-vars/) on the **Variables** tab like any other service.
+
+```ts title="index.ts"
+Bun.serve({
+  port: Number(process.env.PORT ?? 8080),
+  fetch(req) {
+    return new Response("Hello from your function");
+  },
+});
 ```
 
-The image must already exist in a registry the cluster can pull. StackBlaze does not build functions from source — you push a prebuilt image.
+The **Code** tab shows the function's URL when it has one. A sleeping function shows **Sleeping** on the canvas.
 
-## Dashboard
+## Schedule
 
-On the canvas, add a function from the functions surface for that environment. Set image, port, env, and scale bounds.
+Open **Settings → Schedule** and pick **No schedule**, **Every 5 minutes**, **Every hour**, **Every day**, **Every week**, or **Custom** (a five-field cron expression, for example `0 2 * * *`). Times are UTC.
 
-## CLI
+A scheduled function has no **Domains** section and no URL. Each run shows in its logs.
 
-```bash
-stackblaze functions list
-stackblaze functions new --name hello --image ghcr.io/org/fn:tag
-stackblaze functions invoke hello
-stackblaze functions delete hello
+## Settings
+
+StackBlaze owns a function's image, start command, replicas, and sleep. You set the code, the schedule, the domains (web functions only), and the variables. A function cannot be turned into a regular service, or a regular service into a function.
+
+## Config as code
+
+In [`stackblaze.yaml`](/blueprint/), use `type: function` with the source inline in `code`. Add `schedule` for a scheduled function.
+
+```yaml title="stackblaze.yaml"
+services:
+  - name: hello
+    type: function
+    code: |
+      Bun.serve({
+        port: Number(process.env.PORT ?? 8080),
+        fetch: () => new Response("hi"),
+      });
 ```
 
-## MCP
-
-Feature tools are `fn__*` (`list_functions`, `get_function`, `deploy_function`). Same image-already-built rule.
-
-If you need a long-running HTTP API, use a [service](/build-deploy/apps/) instead.
+Build fields (`runtime`, `rootDir`, `image`, `startCommand`, scaling, disks, auto-deploy) are not allowed on a function.

@@ -5,22 +5,23 @@ description: Services, variables, environments, GitHub, Docker, and deploys from
 
 import { LinkCard, CardGrid } from '@astrojs/starlight/components';
 
-Compose on the canvas, then deploy. A **service** is the unit of work — Git, Docker, cron, or a database.
+Compose on the canvas, then deploy. A **service** is the unit of work — Git, Docker, template, cron, function, or a database.
 
 ## On the canvas
 
 <CardGrid>
-  <LinkCard title="Services" href="/build-deploy/apps/" description="Git repos, Docker images, templates, cron, and databases as tiles." />
+  <LinkCard title="Services" href="/build-deploy/apps/" description="Git repos, Docker images, templates, cron, functions, and databases as tiles." />
   <LinkCard title="Variables" href="/security/env-vars/" description="Service config, secrets, and database-linked values." />
-  <LinkCard title="Environments" href="/deploy/environments/" description="Production, custom environments, and pull-request previews." />
-  <LinkCard title="Staged changes" href="/deploy/staged-changes/" description="Review canvas edits, then deploy." />
+  <LinkCard title="Environments" href="/deploy/environments/" description="Production, dev / test / stage, and pull-request previews." />
+  <LinkCard title="Staged changes" href="/deploy/staged-changes/" description="Review canvas edits with Commit N changes, then deploy." />
   <LinkCard title="Deploy from GitHub" href="/deploy/github/" description="Connect a repo and auto-deploy on push." />
   <LinkCard title="Docker" href="/deploy/docker/" description="Build from a Dockerfile or run a registry image." />
   <LinkCard title="Import" href="/deploy/docker-compose/" description="Compose, render.yaml, and fly.toml onto the canvas." />
-  <LinkCard title="Cron jobs" href="/deploy/cron-jobs/" description="Scheduled runs on standard cron syntax." />
+  <LinkCard title="Cron jobs" href="/deploy/cron-jobs/" description="Scheduled tasks on standard cron syntax (UTC)." />
   <LinkCard title="Public HTTP" href="/deploy/web-services/" description="Give a service a public URL and TLS." />
   <LinkCard title="Private services" href="/deploy/background-workers/" description="Always-on processes with no public domain." />
-  <LinkCard title="Static sites" href="/deploy/static-sites/" description="Build assets and serve them as a service." />
+  <LinkCard title="Static sites" href="/deploy/static-sites/" description="Serve built files from a container such as nginx." />
+  <LinkCard title="Functions" href="/functions/" description="One TypeScript file on Bun, no build." />
 </CardGrid>
 
 ## Deployments
@@ -29,16 +30,16 @@ Compose on the canvas, then deploy. A **service** is the unit of work — Git, D
   <LinkCard title="Auto deploy on push" href="/cicd/auto-deploy/" description="Every push to the deploy branch triggers a build." />
   <LinkCard title="PR previews" href="/cicd/pr-previews/" description="A live environment for every pull request." />
   <LinkCard title="Deploy hooks" href="/cicd/deploy-hooks/" description="Trigger a redeploy from CI or an external system." />
-  <LinkCard title="Rollbacks" href="/cicd/rollbacks/" description="Revert to a previous successful deployment." />
-  <LinkCard title="Monorepo" href="/cicd/monorepo/" description="Root directories for multiple services in one repo." />
+  <LinkCard title="Rollbacks" href="/cicd/rollbacks/" description="Instant rollback to an earlier deploy, or roll back config only." />
+  <LinkCard title="Monorepo" href="/cicd/monorepo/" description="Build paths and build filters for multiple services in one repo." />
 </CardGrid>
 
 ## Scaling
 
 <CardGrid>
-  <LinkCard title="Horizontal scaling" href="/scaling/horizontal/" description="Replica counts across instances." />
+  <LinkCard title="Horizontal scaling" href="/scaling/horizontal/" description="Instance counts within your plan." />
   <LinkCard title="Autoscaling" href="/scaling/autoscaling/" description="Scale from CPU or memory thresholds." />
-  <LinkCard title="Memory & CPU limits" href="/scaling/limits/" description="Instance sizes and what happens at the cap." />
-  <LinkCard title="Zero-downtime deploys" href="/scaling/zero-downtime/" description="Rolling updates that wait for health checks." />
+  <LinkCard title="Memory & CPU limits" href="/scaling/limits/" description="Plan sizes per service and what happens at the cap." />
+  <LinkCard title="Zero-downtime deploys" href="/scaling/zero-downtime/" description="Rolling updates gated by health checks and pre-deploy." />
   <LinkCard title="Health checks" href="/storage/health-checks/" description="Readiness probes so traffic only hits healthy instances." />
 </CardGrid>
